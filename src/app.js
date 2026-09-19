@@ -43,10 +43,6 @@ function footer(){return `<footer class="site-footer">
       <a href="#/opt-out">Opt out</a>
     </div>
   </div>
-  <div class="footer-bottom">
-    <span>Built on Solana</span>
-    <span>Creator fees → treasury → recipient</span>
-  </div>
 </footer>`;}
 function tokenCard(t,compact=false){return `<a class="token-card ${compact?'compact':''}" href="#/token/${encodeURIComponent(t.mint||t.contract)}"><div class="token-img">${avatar(t.symbol||t.name,true,t.image_url)}</div><div class="token-meta"><div class="meta-line">${platformBadge(t.platform||'Pump')}<span class="muted">@${esc(t.profile||t.recipient_handle||'')}</span><span class="muted">${esc(t.age||ago(t.created_at))}</span></div><div class="token-name"><strong>${esc(t.name)}</strong><span>${esc(t.symbol)}</span></div><div class="token-numbers"><span>${fmtMc(t.mc??t.market_cap_usd)} <small>MC</small></span><span>${fmtNum(t.sent)} <small>Sent</small></span>${compact?'':`<span>${fmtNum(t.owed)} <small>Owed</small></span>`}</div>${compact?'':`<div class="contract">${esc((t.mint||'').slice(0,6))}…${esc((t.mint||'').slice(-6))}</div>`}</div></a>`;}
 function paymentCard(p,i){const amount=p.amount_usd??p.amount??0;const to=p.display_name||p.recipient_handle||p.to||'recipient';const mints=String(p.mints||'').split(',').filter(Boolean);return `<button class="payment-card expandable" data-expand="payment-${i}"><div class="row"><div><strong>${fmtMoney(amount)}</strong><span>${['sent','claimed'].includes(p.status)?'sent':'scheduled'} to <b>${esc(to)}</b> ${['sent','claimed'].includes(p.status)?'<em>✓</em>':''}</span></div><span class="chev">⌄</span></div><div class="mini-tokens">${mints.slice(0,5).map((x,j)=>`${j?'<span class="arrow">→</span>':''}<span class="mini-icon">${esc(x[0]||'T')}</span>`).join('')}<time>${esc(ago(p.sent_at||p.created_at))}</time></div><div class="details hidden"><div><span>Status</span><b>${esc(p.status||'queued')}</b></div><div><span>Provider</span><b>${esc(p.provider||'')}</b></div><div><span>Reference</span><b>${esc(p.provider_ref||p.id||'')}</b></div>${p.public_confirmation_url?`<div><span>Confirmation</span><b>${esc(p.public_confirmation_url)}</b></div>`:''}</div></button>`;}
@@ -426,19 +422,15 @@ function homeOnRampCard(x,i){
   const usd=Number(x.received_usd||x.gross_usd||0);
   const native=Number(x.volume_native||0);
   const pair=String(x.pair||'SOLUSD').toUpperCase();
-  const status=String(x.status||'queued');
+  const status=String(x.status||'received');
   const amount=usd>0?fmtMoney(usd):(native>0?`${fmtNum(native)} SOL`:'$0.00');
   return `<button class="home-on-card expandable" data-expand="home-on-${i}">
     <div class="home-on-main">
       <div class="home-on-copy">
         <strong>${esc(amount)}</strong>
-        <span>from ${esc(provider)}</span>
+        <span>from <b>${esc(provider)}</b></span>
       </div>
-      <div class="home-on-route">
-        <span class="home-on-provider">${esc((provider[0]||'K').toUpperCase())}</span>
-        <span class="home-on-arrow">→</span>
-        <span class="home-on-sol">≋</span>
-      </div>
+      <span class="home-on-money">$</span>
       <div class="home-on-meta">
         <span class="home-on-status">${esc(status)}</span>
         <time>${esc(ago(x.filled_at||x.created_at))}</time>
@@ -456,28 +448,20 @@ function homeOnRampCard(x,i){
 
 function homeOnRamp(h){
   const orders=(h.money?.exchange||[]).filter(isOnRampOrder).slice(0,6);
+  const inTransit=orders.reduce((sum,x)=>sum+Number(x.received_usd||x.gross_usd||0),0);
   return `<section class="wrap section home-on-ramp">
     <div class="home-on-head">
       <h2>On-ramp</h2>
-      <div class="home-on-total">
-        <b>${fmtMoney(orders.reduce((sum,x)=>sum+Number(x.received_usd||x.gross_usd||0),0))}</b>
-        <span>received</span>
-      </div>
+      <div class="home-on-transit"><b>${fmtMoney(inTransit)}</b><span>in transit</span></div>
       <div class="home-on-pager"><button disabled>‹</button><span>1</span><button disabled>›</button></div>
-    </div>
-    <div class="home-on-tabs">
-      <button class="active">All</button>
-      <button disabled>Kraken</button>
-      <button disabled>Bank</button>
-      <button disabled>Other</button>
     </div>
     <div class="home-on-list">
       ${orders.length
         ? orders.map(homeOnRampCard).join('')
         : `<div class="home-on-empty">
-            <div class="home-on-empty-route"><i>K</i><span>→</span><b>≋</b></div>
+            <div class="home-on-empty-route"><i>$</i></div>
             <strong>No on-ramp activity yet.</strong>
-            <span>Confirmed funding events will appear here without demo data.</span>
+            <span>Confirmed funding events will appear here.</span>
           </div>`}
     </div>
   </section>`;

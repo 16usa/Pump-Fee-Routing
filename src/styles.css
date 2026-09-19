@@ -1440,3 +1440,129 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     font-size:6.5px;
   }
 }
+
+
+/* home-polish-v1 */
+
+/* Match the mobile reference's consistent 16px side gutter on Home. */
+@media(max-width:640px){
+  .home-page .wrap{
+    width:calc(100% - 32px);
+  }
+  .home-page .section{
+    padding-top:30px;
+    padding-bottom:30px;
+  }
+  .home-top-tokens,
+  .home-top-profiles,
+  .home-recent-payments,
+  .home-most-payments,
+  .home-off-ramp,
+  .home-on-ramp{
+    padding-top:30px!important;
+  }
+
+  .home-top-tokens-head>h2,
+  .home-top-profiles-head h2,
+  .home-recent-payments-head h2,
+  .home-most-payments-head h2,
+  .home-off-head h2,
+  .home-on-head h2{
+    font-size:17px;
+  }
+}
+
+/* On-ramp: reference uses one central money rail icon, no category tabs. */
+.home-on-head{
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  margin-bottom:14px;
+}
+.home-on-transit{
+  width:max-content;
+  justify-self:start;
+  display:flex;
+  align-items:baseline;
+  gap:5px;
+  padding:6px 9px;
+  border:1px solid #2d2d2d;
+  border-radius:999px;
+  background:#151515;
+}
+.home-on-transit b{
+  color:#f1f1f1;
+  font-size:10px;
+  font-weight:650;
+}
+.home-on-transit span{
+  color:#696969;
+  font-size:7px;
+}
+.home-on-main{
+  grid-template-columns:minmax(0,1fr) 38px auto 12px;
+}
+.home-on-copy span b{color:#fff;font-weight:650}
+.home-on-money{
+  width:38px;
+  height:38px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:#050505;
+  border:1px solid #292929;
+  color:#fff;
+  font-size:18px;
+  font-weight:850;
+}
+.home-on-status{
+  color:#c9c9c9;
+  background:#303030;
+}
+.home-on-empty-route{
+  margin-bottom:5px;
+}
+.home-on-empty-route i{
+  width:38px;
+  height:38px;
+  font-size:17px;
+  font-weight:850;
+}
+.home-on-tabs,
+.home-on-route,
+.home-on-provider,
+.home-on-sol,
+.home-on-arrow,
+.home-on-total{
+  display:none!important;
+}
+
+/* Keep footer as the clean four-part reference footer; no invented bottom strip. */
+.site-footer .footer-bottom{
+  display:none!important;
+}
+.site-footer .footer-inner{
+  padding-bottom:48px;
+}
+
+@media(max-width:640px){
+  .home-on-head{
+    grid-template-columns:auto 1fr auto;
+    gap:9px;
+  }
+  .home-on-transit{
+    padding:5px 8px;
+  }
+  .home-on-transit b{font-size:9px}
+  .home-on-main{
+    grid-template-columns:minmax(0,1fr) 34px auto 10px;
+    gap:7px;
+  }
+  .home-on-money{
+    width:34px;
+    height:34px;
+    font-size:16px;
+  }
+  .site-footer .footer-inner{
+    padding-bottom:38px;
+  }
+}
