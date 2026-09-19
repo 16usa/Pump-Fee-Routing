@@ -117,6 +117,52 @@ function homePreviewDeck(h,top){
   </section>`;
 }
 
+function homeTopTokenCard(t){
+  const handle=t.profile||t.recipient_handle||'';
+  const mint=t.mint||t.contract||'';
+  const ageText=t.age||ago(t.created_at);
+  return `<a class="home-top-token-card" href="#/token/${encodeURIComponent(mint)}">
+    <div class="home-top-token-media">
+      ${t.image_url?`<img src="${esc(t.image_url)}" alt="">`:`<div class="home-top-token-fallback">${esc(initials(t.symbol||t.name||'T'))}</div>`}
+      <div class="home-top-token-platform">${platformBadge(t.platform||'Pump')}</div>
+      <div class="home-top-token-age">${esc(ageText||'')}</div>
+      <div class="home-top-token-recipient">
+        ${avatar(handle||t.symbol)}
+        <span>${handle?`@${esc(handle)}`:'Recipient'}</span>
+      </div>
+    </div>
+    <div class="home-top-token-body">
+      <div class="home-top-token-title"><strong>${esc(t.name)}</strong><span>${esc(t.symbol||'')}</span></div>
+      <div class="home-top-token-sub"><span>${fmtMc(t.mc??t.market_cap_usd)} MC</span><span>${fmtMoney(t.owed||0)} Owed</span></div>
+      <div class="home-top-token-paid"><small>Sent</small><b>${fmtMoney(t.sent||0)}</b></div>
+    </div>
+  </a>`;
+}
+
+function homeTopTokens(top){
+  const rows=top.slice(0,20);
+  return `<section class="wrap section home-top-tokens">
+    <div class="home-top-tokens-head">
+      <h2>Top Tokens</h2>
+      <div class="home-top-tokens-controls">
+        <div class="home-top-token-tabs">
+          <button class="active">● Pump</button>
+          <button disabled>■ Pons</button>
+          <button>All</button>
+        </div>
+        <div class="home-top-token-pager"><button disabled>‹</button><span>1</span><button disabled>›</button></div>
+      </div>
+    </div>
+    ${rows.length
+      ? `<div class="home-top-token-grid">${rows.map(homeTopTokenCard).join('')}</div>`
+      : `<div class="home-top-token-empty">
+          <div class="home-top-token-skeleton"><i></i><span>No registered tokens yet.</span></div>
+          <div class="home-top-token-skeleton"><i></i><span>Verified tokens will appear here.</span></div>
+        </div>`}
+    <a class="home-top-tokens-view" href="#/explore">View all tokens →</a>
+  </section>`;
+}
+
 function homeMostPayments(h){
   const top=h.money?.topPaid||[];
   return `<section class="wrap section home-most-payments">${sectionTitle('Most Payments')}
@@ -158,12 +204,7 @@ function homePage(){
 
     ${homePreviewDeck(h,top)}
 
-    <section class="wrap section home-top-tokens">
-      ${sectionTitle('Top Tokens','#/explore')}
-      <div class="tabs"><button class="active">● Pump</button><button disabled>■ Pons</button><button>All</button></div>
-      <div class="token-grid">${top.slice(0,12).map(t=>tokenCard(t,true)).join('')||'<div class="empty">No registered tokens yet.</div>'}</div>
-      ${top.length?pager(1,Math.max(1,Math.ceil(top.length/12))):''}
-    </section>
+    ${homeTopTokens(top)}
 
     <section class="wrap section profiles-section">
       ${sectionTitle('Top X Profiles')}
