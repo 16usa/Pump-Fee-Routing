@@ -2845,3 +2845,55 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   }
   .docs-page-v1 .money-footer{margin-top:46px}
 }
+
+/* launch-page-v1-reference */
+.launch-page-v1{padding-top:54px;background:#000;color:#fff}
+.launch-page-v1 .wrap{width:min(100% - 32px,940px)}
+.launch-v1-hero{padding:8px 0 38px}
+.launch-v1-hero h1{max-width:720px;margin:0;font-size:54px;line-height:.98;letter-spacing:-.055em;font-weight:560}
+.launch-v1-hero p{max-width:720px;margin:20px 0 0;color:#888;font-size:15px;line-height:1.55}
+.launch-v1-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(270px,.65fr);gap:22px;align-items:start}
+.launch-v1-form-card,.launch-preview-card{border:1px solid #292929;border-radius:18px;background:#101010}
+.launch-v1-form-card{padding:24px}
+.launch-mode-tabs,.launch-venue-row{display:flex;gap:8px}
+.launch-mode-tabs{margin-bottom:18px}
+.launch-venue-row{margin-bottom:26px}
+.launch-mode-tabs button,.launch-venue-row button{border:0;border-radius:999px;background:#1c1c1c;color:#777;font-size:12px;font-weight:650}
+.launch-mode-tabs button{padding:10px 15px}
+.launch-venue-row button{padding:9px 14px}
+.launch-mode-tabs button.active,.launch-venue-row button.active{background:#fff;color:#000}
+.launch-venue-row small{color:#666;font-size:8px}
+.launch-form-v1{display:grid;gap:18px}
+.launch-field{display:grid;gap:9px}
+.launch-field label,.launch-form-v1>label{color:#cfcfcf;font-size:12px;font-weight:600}
+.launch-field label small{color:#666;font-weight:500}
+.launch-form-v1 input,.launch-form-v1 textarea,.launch-success-v1 input{width:100%;min-width:0;border:1px solid #303030;border-radius:12px;outline:none;background:#0a0a0a;color:#fff;font:inherit}
+.launch-form-v1 input,.launch-success-v1 input{height:46px;padding:0 13px}
+.launch-form-v1 textarea{resize:vertical;min-height:105px;padding:13px}
+.launch-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.launch-help{margin:0;color:#666;font-size:10px;line-height:1.45}
+.launch-divider{height:1px;background:#252525;margin:3px 0}
+.launch-file-shell{min-height:74px;position:relative;display:grid;place-items:center;border:1px dashed #333;border-radius:13px;background:#0a0a0a;overflow:hidden}
+.launch-file-shell input{position:absolute;inset:0;height:100%;opacity:0;cursor:pointer}
+.launch-file-shell span{color:#b8b8b8;font-size:11px}
+.launch-money-input{position:relative}.launch-money-input>span{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#777;font-size:10px}.launch-money-input input{padding-left:44px}
+.launch-routing-block{display:grid;gap:16px;padding:18px;border:1px solid #282828;border-radius:14px;background:#0c0c0c}
+.launch-routing-block h2{margin:0;font-size:17px;font-weight:550}.launch-routing-block>p{margin:-7px 0 0;color:#696969;font-size:10px}
+.launch-config-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.launch-config-grid>div{min-height:68px;display:grid;align-content:space-between;gap:10px;padding:11px;border:1px solid #272727;border-radius:10px;background:#111}
+.launch-config-grid span{color:#666;font-size:8px}.launch-config-grid b{overflow:hidden;text-overflow:ellipsis;color:#fff;font-size:10px;font-weight:550}
+.launch-terms{display:grid!important;grid-template-columns:18px 1fr;align-items:start;gap:9px;color:#8b8b8b!important;font-size:10px!important;line-height:1.45}.launch-terms input{width:16px;height:16px;margin:0}.launch-terms a{color:#fff;text-decoration:underline}
+.launch-submit{min-height:48px}
+.launch-preview-card{position:sticky;top:86px;overflow:hidden}
+.launch-preview-card>p{margin:0;padding:15px 16px;color:#666;border-bottom:1px solid #242424;font-size:10px;text-transform:uppercase;letter-spacing:.08em}
+.launch-preview-image{height:200px;display:grid;place-items:center;background:radial-gradient(circle at 50% 45%,#202020,#080808 68%);font-size:62px;font-weight:850;font-style:italic}
+.launch-preview-title{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px;border-top:1px solid #242424}.launch-preview-title>div{min-width:0;display:grid;gap:4px}.launch-preview-title strong{font-size:16px}.launch-preview-title>div span,.launch-preview-title>span{color:#707070;font-size:10px}
+.launch-preview-stat{display:grid;gap:9px;padding:0 16px 16px;color:#777;font-size:10px}.launch-preview-stat b{color:#fff}
+.launch-preview-split{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #242424}.launch-preview-split>div{min-height:76px;display:grid;align-content:space-between;gap:10px;padding:13px 14px}.launch-preview-split>div+div{border-left:1px solid #242424}.launch-preview-split span{color:#666;font-size:8px}.launch-preview-split b{font-size:15px;font-weight:550}
+.launch-success-v1{margin:0;padding:0;border:0;background:transparent}.launch-success-v1 code{display:block;margin:12px 0 18px;padding:13px;border:1px solid #292929;border-radius:11px;background:#090909;white-space:pre-wrap}.launch-pump-link{display:inline-block;margin-bottom:18px;color:#fff;font-size:12px;font-weight:650}.launch-success-v1 .launch-field{margin-bottom:14px}
+.launch-page-v1 .money-footer{margin-top:74px}
+@media(max-width:760px){
+  .launch-page-v1{padding-top:42px}.launch-page-v1 .wrap{width:calc(100% - 32px)}.launch-v1-hero{padding:4px 0 30px}.launch-v1-hero h1{font-size:40px}.launch-v1-hero p{margin-top:17px;font-size:12px}
+  .launch-v1-grid{grid-template-columns:1fr;gap:18px}.launch-v1-form-card{padding:18px;border-radius:15px}.launch-mode-tabs{overflow:auto;scrollbar-width:none}.launch-mode-tabs button{flex:0 0 auto;font-size:10px;padding:9px 12px}.launch-venue-row button{font-size:10px;padding:8px 11px}
+  .launch-form-v1{gap:15px}.launch-field label,.launch-form-v1>label{font-size:10px}.launch-form-v1 input,.launch-success-v1 input{height:43px;font-size:11px}.launch-form-v1 textarea{min-height:92px;font-size:11px}.launch-two{gap:8px}.launch-help{font-size:9px}
+  .launch-routing-block{padding:14px}.launch-config-grid{gap:7px}.launch-preview-card{position:static;border-radius:15px}.launch-preview-image{height:166px}.launch-page-v1 .money-footer{margin-top:58px}
+}

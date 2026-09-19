@@ -966,7 +966,127 @@ function docsPage(){
 }
 function docSection(n,title,body){return `<section class="doc-section"><h2><span>${n}</span>${esc(title)}</h2>${body}</section>`;}
 function legalPage(){return `<main><article class="wrap doc legal-doc"><p class="eyebrow">Legal</p><h1>Terms and disclosures</h1><p class="lead">Replace these placeholders with terms reviewed for your actual operator, jurisdictions, launch workflow, token mechanics and payout providers before production launch.</p>${docSection('1','Independent service','<p>This project is not affiliated with X, X Money, pump.fun, Kraken or any other third-party provider merely because it integrates with or references them.</p>')}${docSection('2','No endorsement','<p>A token naming an X handle must not be presented as an endorsement, partnership or approval by that account.</p>')}${docSection('3','Third-party rails','<p>Launchpads, wallets, exchanges, social networks and payout providers have their own terms and availability rules.</p>')}</article>${footer()}</main>`;}
-function launchPage(){const treasury=state.brand.treasuryAddress||'';return `<main><section class="wrap launch-page"><p class="eyebrow">Launch</p><h1>Route a token</h1><p class="lead">Create the recipient line, launch the token on pump.fun, then make the creator-fee share permanent at 100% to this treasury.</p><form class="launch-form" id="launchForm"><label>X handle<input id="launchHandle" placeholder="@recipient" required></label><label>Creator wallet<input id="creatorPubkey" placeholder="Connect wallet or paste public key"></label><label>Token mint<input id="launchMint" placeholder="Paste mint after the token exists"></label><div class="config-box"><span>Treasury</span><b class="mono-small">${esc(treasury||'Configure TREASURY_ADDRESS')}</b><span>Fee share</span><b>100%</b><span>Recipient / protocol accounting</span><b>80% / 20%</b></div><button class="btn-light full" type="submit">Create launch intent</button></form><div class="success-card hidden" id="launchSuccess"><div class="success-icon">✓</div><h2>Launch intent ready</h2><p>Put this exact line in the token description:</p><code id="descriptionLine"></code><p class="muted">After the mint exists, connect the creator wallet and route the fee-sharing config.</p><div class="launch-actions"><button class="btn-light" data-action="connect-wallet">Connect Solana wallet</button><button class="btn-light" data-action="route-fees">Route fees 100%</button><button class="text-button" data-action="verify-mint">Verify registration</button></div><div id="launchStatus" class="status-box"></div></div></section>${footer()}</main>`;}
+function updateLaunchPreview(){
+  const name=document.querySelector('#launchName')?.value.trim()||'Token name';
+  const ticker=document.querySelector('#launchTicker')?.value.trim().toUpperCase()||'TICKER';
+  const handle=document.querySelector('#launchHandle')?.value.trim().replace(/^@/,'')||'—';
+  document.querySelector('#launchPreviewName')?.replaceChildren(document.createTextNode(name));
+  document.querySelector('#launchPreviewTicker')?.replaceChildren(document.createTextNode(ticker));
+  document.querySelector('#launchPreviewHandle')?.replaceChildren(document.createTextNode(handle==='—'?'—':`@${handle}`));
+}
+
+function launchPage(){
+  const treasury=state.brand.treasuryAddress||'';
+  const recipientPct=fmtNum((state.brand.recipientShareBps||8000)/100);
+  const protocolPct=fmtNum((state.brand.protocolShareBps||2000)/100);
+  return `<main class="launch-page-v1">
+    <section class="wrap launch-v1-hero">
+      <h1>Launch and direct fees through X Money</h1>
+      <p>Prepare a token for pump.fun, name the X recipient, then register the mint and permanently route 100% of creator fees to the configured treasury.</p>
+    </section>
+
+    <section class="wrap launch-v1-grid">
+      <div class="launch-v1-form-card">
+        <div class="launch-mode-tabs">
+          <button type="button" class="active">Launch</button>
+          <button type="button" disabled>Register</button>
+          <button type="button" disabled>Walletless</button>
+        </div>
+
+        <div class="launch-venue-row">
+          <button type="button" class="active">● Pump</button>
+          <button type="button" disabled>■ Pons <small>Soon</small></button>
+        </div>
+
+        <form class="launch-form launch-form-v1" id="launchForm">
+          <div class="launch-field">
+            <label for="launchHandle">X Money sent to</label>
+            <input id="launchHandle" placeholder="Search X for an account" required autocomplete="off">
+          </div>
+
+          <div class="launch-divider"></div>
+
+          <div class="launch-two">
+            <div class="launch-field"><label for="launchName">Name</label><input id="launchName" placeholder="Ledger Cat" maxlength="32"></div>
+            <div class="launch-field"><label for="launchTicker">Ticker</label><input id="launchTicker" placeholder="LCAT" maxlength="10" autocapitalize="characters"></div>
+          </div>
+
+          <div class="launch-field">
+            <label for="launchImage">Token image</label>
+            <div class="launch-file-shell"><input id="launchImage" type="file" accept="image/png,image/jpeg,image/gif,image/webp"><span>Choose image</span></div>
+          </div>
+
+          <div class="launch-field"><label for="launchDescription">Description</label><textarea id="launchDescription" rows="4" placeholder="Describe the token"></textarea></div>
+
+          <div class="launch-field">
+            <label>Social links <small>(optional)</small></label>
+            <p class="launch-help">You can use the registered token page as the website link.</p>
+            <div class="launch-two"><input id="launchTelegram" placeholder="Telegram"><input id="launchX" placeholder="X"></div>
+          </div>
+
+          <div class="launch-divider"></div>
+
+          <div class="launch-field">
+            <label for="launchPaymentNote">Payment note</label>
+            <input id="launchPaymentNote" maxlength="250" value="Creator fees via ${esc(state.brand.name)}">
+            <p class="launch-help">Memo attached to the recipient payout record.</p>
+          </div>
+
+          <div class="launch-field">
+            <label for="launchDevBuy">Dev Buy <small>(optional)</small></label>
+            <div class="launch-money-input"><span>SOL</span><input id="launchDevBuy" inputmode="decimal" placeholder="0.00"></div>
+            <p class="launch-help">Planning only for now; this app does not execute a dev buy.</p>
+          </div>
+
+          <div class="launch-routing-block">
+            <h2>Routing setup</h2>
+            <p>Used by the existing on-chain registration flow after the token exists.</p>
+            <div class="launch-field"><label for="creatorPubkey">Creator wallet</label><input id="creatorPubkey" placeholder="Connect wallet or paste public key"></div>
+            <div class="launch-field"><label for="launchMint">Token mint</label><input id="launchMint" placeholder="Paste mint after the token exists"></div>
+            <div class="launch-config-grid">
+              <div><span>Treasury</span><b class="mono-small">${esc(treasury||'Configure TREASURY_ADDRESS')}</b></div>
+              <div><span>Fee route</span><b>100% permanent</b></div>
+              <div><span>Recipient share</span><b>${recipientPct}%</b></div>
+              <div><span>Protocol share</span><b>${protocolPct}%</b></div>
+            </div>
+          </div>
+
+          <label class="launch-terms"><input type="checkbox" required><span>I agree to the <a href="#/legal">Terms</a> and have read the disclosures.</span></label>
+          <button class="btn-light full launch-submit" type="submit">Create launch intent</button>
+        </form>
+
+        <div class="success-card launch-success-v1 hidden" id="launchSuccess">
+          <div class="success-icon">✓</div>
+          <h2>Launch intent ready</h2>
+          <p>Put this exact line in the token description:</p>
+          <code id="descriptionLine"></code>
+          <a class="launch-pump-link" href="https://pump.fun/create" target="_blank" rel="noopener">Open pump.fun ↗</a>
+          <div class="launch-field"><label for="launchMintSuccess">Token mint</label><input id="launchMintSuccess" placeholder="Paste mint after launch"></div>
+          <div class="launch-field"><label for="creatorPubkeySuccess">Creator wallet</label><input id="creatorPubkeySuccess" placeholder="Connect wallet or paste public key"></div>
+          <div class="launch-actions">
+            <button class="btn-light" data-action="connect-wallet">Connect Solana wallet</button>
+            <button class="btn-light" data-action="route-fees">Route fees 100%</button>
+            <button class="text-button" data-action="verify-mint">Verify registration</button>
+          </div>
+          <div id="launchStatus" class="status-box"></div>
+        </div>
+      </div>
+
+      <aside class="launch-preview-card">
+        <p>Preview</p>
+        <div class="launch-preview-image">P</div>
+        <div class="launch-preview-title"><div><strong id="launchPreviewName">Token name</strong><span id="launchPreviewTicker">TICKER</span></div><span>$0 MC</span></div>
+        <div class="launch-preview-stat"><span>$0 Sent</span><span>X Money sent to <b id="launchPreviewHandle">—</b></span></div>
+        <div class="launch-preview-split">
+          <div><span>Recipient share</span><b>${recipientPct}%</b></div>
+          <div><span>$PAID buybacks and burn</span><b>${protocolPct}%</b></div>
+        </div>
+      </aside>
+    </section>
+    ${moneyFooter()}
+  </main>`;
+}
+
 function capitalFlowStep(n,title,body,kind=''){
   return `<section class="capital-flow-step ${kind}">
     <div class="capital-flow-step-index">${esc(n)}</div>
@@ -1149,13 +1269,13 @@ async function loadBase(){const [cfg,home,money,tokens]=await Promise.all([api('
 async function refreshTokens(){const q=new URLSearchParams({search:state.explore.query,sort:state.explore.sort,venue:state.explore.venue,limit:'200'});const j=await api(`/api/tokens?${q}`);state.tokens=j.tokens||[];}
 async function render(){const path=(location.hash||'#/').slice(2).split('?')[0];app.innerHTML=header()+loadingPage()+launchModal();try{if(!state.home)await loadBase();let page;if(path===''||path==='/')page=homePage();else if(path==='explore'){await refreshTokens();page=explorePage();}else if(path==='money'){state.money=await api('/api/money');page=moneyPage();}else if(path==='docs')page=docsPage();else if(path==='legal')page=legalPage();else if(path==='launch')page=launchPage();else if(path==='capital-flow'){state.money=await api('/api/money');page=capitalFlowPage();}else if(path==='paid'){state.money=await api('/api/money');page=paidPage();}else if(path==='opt-out')page=optOutPage();else if(path==='admin')page=adminPage();else if(path.startsWith('token/'))page=await tokenPage(decodeURIComponent(path.slice(6)));else if(path.startsWith('profile/'))page=await profilePage(decodeURIComponent(path.slice(8)));else page=homePage();app.innerHTML=header()+page+launchModal();window.scrollTo(0,0);}catch(e){app.innerHTML=header()+errorPage(e)+launchModal();}}
 let currentLaunch=null,currentWallet=null;
-async function connectWallet(){const provider=window.phantom?.solana||window.solana;if(!provider?.connect)throw new Error('No Solana wallet found in this browser');const out=await provider.connect();currentWallet=provider;const pub=out.publicKey?.toString?.()||provider.publicKey?.toString?.();if(document.querySelector('#creatorPubkey'))document.querySelector('#creatorPubkey').value=pub||'';return pub;}
+async function connectWallet(){const provider=window.phantom?.solana||window.solana;if(!provider?.connect)throw new Error('No Solana wallet found in this browser');const out=await provider.connect();currentWallet=provider;const pub=out.publicKey?.toString?.()||provider.publicKey?.toString?.();for(const id of ['creatorPubkey','creatorPubkeySuccess']){const el=document.querySelector(`#${id}`);if(el)el.value=pub||'';}return pub;}
 function setLaunchStatus(text,good=false){const el=document.querySelector('#launchStatus');if(el){el.textContent=text;el.classList.toggle('good',good);}}
-async function routeFees(){if(!currentLaunch)throw new Error('Create the launch intent first');const mint=document.querySelector('#launchMint')?.value.trim();let creator=document.querySelector('#creatorPubkey')?.value.trim();if(!creator)creator=await connectWallet();if(!mint)throw new Error('Paste the token mint first');if(!currentWallet)await connectWallet();setLaunchStatus('Building fee-sharing transaction…');const p=await api('/api/launch/prepare-routing',{method:'POST',body:JSON.stringify({mint,creator_pubkey:creator})});if(!window.solanaWeb3?.VersionedTransaction)throw new Error('Solana web3 browser bundle did not load');const bytes=Uint8Array.from(atob(p.transactionBase64),c=>c.charCodeAt(0));const tx=window.solanaWeb3.VersionedTransaction.deserialize(bytes);setLaunchStatus('Approve the transaction in your wallet…');let sig;if(currentWallet.signAndSendTransaction){const out=await currentWallet.signAndSendTransaction(tx);sig=out.signature||out;}else{const signed=await currentWallet.signTransaction(tx);sig=await currentWallet.sendTransaction(signed);}setLaunchStatus(`Submitted ${sig}. Verifying on-chain…`);await new Promise(r=>setTimeout(r,2500));const out=await api('/api/launch/confirm',{method:'POST',body:JSON.stringify({intent_id:currentLaunch.id,mint,recipient_handle:currentLaunch.handle,tx_signature:String(sig)})});setLaunchStatus(out.ok?`Registered. Fees are permanently routed to treasury for @${out.recipient}.`:`Not registered yet: ${out.reason}`,out.ok);if(out.ok){state.home=null;await loadBase();}}
+async function routeFees(){if(!currentLaunch)throw new Error('Create the launch intent first');const mint=(document.querySelector('#launchMintSuccess')?.value||document.querySelector('#launchMint')?.value||'').trim();let creator=(document.querySelector('#creatorPubkeySuccess')?.value||document.querySelector('#creatorPubkey')?.value||'').trim();if(!creator)creator=await connectWallet();if(!mint)throw new Error('Paste the token mint first');if(!currentWallet)await connectWallet();setLaunchStatus('Building fee-sharing transaction…');const p=await api('/api/launch/prepare-routing',{method:'POST',body:JSON.stringify({mint,creator_pubkey:creator})});if(!window.solanaWeb3?.VersionedTransaction)throw new Error('Solana web3 browser bundle did not load');const bytes=Uint8Array.from(atob(p.transactionBase64),c=>c.charCodeAt(0));const tx=window.solanaWeb3.VersionedTransaction.deserialize(bytes);setLaunchStatus('Approve the transaction in your wallet…');let sig;if(currentWallet.signAndSendTransaction){const out=await currentWallet.signAndSendTransaction(tx);sig=out.signature||out;}else{const signed=await currentWallet.signTransaction(tx);sig=await currentWallet.sendTransaction(signed);}setLaunchStatus(`Submitted ${sig}. Verifying on-chain…`);await new Promise(r=>setTimeout(r,2500));const out=await api('/api/launch/confirm',{method:'POST',body:JSON.stringify({intent_id:currentLaunch.id,mint,recipient_handle:currentLaunch.handle,tx_signature:String(sig)})});setLaunchStatus(out.ok?`Registered. Fees are permanently routed to treasury for @${out.recipient}.`:`Not registered yet: ${out.reason}`,out.ok);if(out.ok){state.home=null;await loadBase();}}
 
 app.addEventListener('click',async e=>{
   try{
-    const a=e.target.closest('[data-action]');if(a){const action=a.dataset.action;if(action==='open-launch')document.querySelector('#launchModal')?.classList.remove('hidden');if(action==='close-launch')document.querySelector('#launchModal')?.classList.add('hidden');if(action==='menu')document.querySelector('#mobileMenu')?.classList.toggle('hidden');if(action==='go-launch')location.hash='#/launch';if(action==='reload'){state.home=null;render();}if(action==='connect-wallet'){const pub=await connectWallet();setLaunchStatus(`Wallet connected: ${pub}`,true);}if(action==='route-fees')await routeFees();if(action==='verify-mint'){const mint=document.querySelector('#launchMint')?.value.trim();if(!mint)throw new Error('Paste the mint first');const out=await api('/api/tokens/register',{method:'POST',body:JSON.stringify({mint,recipient_handle:currentLaunch?.handle||''})});setLaunchStatus(out.ok?`Registered for @${out.recipient}`:`Not ready: ${out.reason}`,out.ok);}}
+    const a=e.target.closest('[data-action]');if(a){const action=a.dataset.action;if(action==='open-launch')document.querySelector('#launchModal')?.classList.remove('hidden');if(action==='close-launch')document.querySelector('#launchModal')?.classList.add('hidden');if(action==='menu')document.querySelector('#mobileMenu')?.classList.toggle('hidden');if(action==='go-launch')location.hash='#/launch';if(action==='reload'){state.home=null;render();}if(action==='connect-wallet'){const pub=await connectWallet();setLaunchStatus(`Wallet connected: ${pub}`,true);}if(action==='route-fees')await routeFees();if(action==='verify-mint'){const mint=(document.querySelector('#launchMintSuccess')?.value||document.querySelector('#launchMint')?.value||'').trim();if(!mint)throw new Error('Paste the mint first');const out=await api('/api/tokens/register',{method:'POST',body:JSON.stringify({mint,recipient_handle:currentLaunch?.handle||''})});setLaunchStatus(out.ok?`Registered for @${out.recipient}`:`Not ready: ${out.reason}`,out.ok);}}
     const exp=e.target.closest('.expandable');if(exp){exp.classList.toggle('open');exp.querySelector('.details,.tx-details')?.classList.toggle('hidden');}
     const sort=e.target.closest('[data-sort]');if(sort){state.explore.sort=sort.dataset.sort;await refreshTokens();document.querySelector('#launchGrid').innerHTML=state.tokens.map(exploreTokenCard).join('')||'<div class="explore-empty"><span>No launches.</span></div>';document.querySelectorAll('[data-sort]').forEach(b=>b.classList.toggle('active',b.dataset.sort===state.explore.sort));}
     const venue=e.target.closest('[data-venue]');if(venue){state.explore.venue=state.explore.venue===venue.dataset.venue?'':venue.dataset.venue;await refreshTokens();document.querySelector('#launchGrid').innerHTML=state.tokens.map(exploreTokenCard).join('')||'<div class="explore-empty"><span>No launches.</span></div>';document.querySelectorAll('[data-venue]').forEach(b=>b.classList.toggle('active',b.dataset.venue===state.explore.venue));}
@@ -1164,6 +1284,6 @@ app.addEventListener('click',async e=>{
   }catch(err){setLaunchStatus(err.message);const out=document.querySelector('#adminOutput');if(out)out.textContent=err.message;}
 });
 let searchTimer;
-app.addEventListener('input',e=>{if(e.target.id==='tokenSearch'){clearTimeout(searchTimer);state.explore.query=e.target.value;searchTimer=setTimeout(async()=>{try{await refreshTokens();const grid=document.querySelector('#launchGrid');if(grid)grid.innerHTML=state.tokens.map(exploreTokenCard).join('')||'<div class="explore-empty"><span>No launches match this search.</span></div>';}catch{}},180);}});
-app.addEventListener('submit',async e=>{if(e.target.id==='launchForm'){e.preventDefault();try{const handle=document.querySelector('#launchHandle').value.trim();const creator=document.querySelector('#creatorPubkey').value.trim();const mint=document.querySelector('#launchMint').value.trim();const out=await api('/api/launch/intents',{method:'POST',body:JSON.stringify({recipient_handle:handle,creator_pubkey:creator,mint})});currentLaunch={...out,handle:handle.replace(/^@/,'')};e.target.classList.add('hidden');document.querySelector('#launchSuccess').classList.remove('hidden');document.querySelector('#descriptionLine').textContent=out.descriptionLine;setLaunchStatus(out.treasuryAddress?'Intent created. Launch token, then route fee sharing.':'Set TREASURY_ADDRESS on the server before routing.');}catch(err){alert(err.message);}}});
+app.addEventListener('input',e=>{if(e.target.id==='tokenSearch'){clearTimeout(searchTimer);state.explore.query=e.target.value;searchTimer=setTimeout(async()=>{try{await refreshTokens();const grid=document.querySelector('#launchGrid');if(grid)grid.innerHTML=state.tokens.map(exploreTokenCard).join('')||'<div class="explore-empty"><span>No launches match this search.</span></div>';}catch{}},180);}if(['launchName','launchTicker','launchHandle'].includes(e.target.id))updateLaunchPreview();});
+app.addEventListener('submit',async e=>{if(e.target.id==='launchForm'){e.preventDefault();try{const handle=document.querySelector('#launchHandle').value.trim();const creator=document.querySelector('#creatorPubkey').value.trim();const mint=document.querySelector('#launchMint').value.trim();const out=await api('/api/launch/intents',{method:'POST',body:JSON.stringify({recipient_handle:handle,creator_pubkey:creator,mint})});currentLaunch={...out,handle:handle.replace(/^@/,'')};const mintSuccess=document.querySelector('#launchMintSuccess');const creatorSuccess=document.querySelector('#creatorPubkeySuccess');if(mintSuccess)mintSuccess.value=mint;if(creatorSuccess)creatorSuccess.value=creator;e.target.classList.add('hidden');document.querySelector('#launchSuccess').classList.remove('hidden');document.querySelector('#descriptionLine').textContent=out.descriptionLine;setLaunchStatus(out.treasuryAddress?'Intent created. Launch token, then route fee sharing.':'Set TREASURY_ADDRESS on the server before routing.');}catch(err){alert(err.message);}}});
 window.addEventListener('hashchange',render);render();
