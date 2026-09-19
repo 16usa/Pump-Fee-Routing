@@ -5,3 +5,74 @@
 a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:none}.avatar img{width:100%;height:100%;object-fit:cover;border-radius:inherit}.mono-small{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.launch-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}.text-button{border:1px solid #2b2b2b;background:#111;color:#aaa;border-radius:999px;padding:9px 13px;font-size:10px}.status-box{margin-top:14px;border:1px solid #242424;background:#0b0b0b;border-radius:12px;padding:12px;color:#818181;font-size:10px;line-height:1.5;white-space:pre-wrap;word-break:break-word}.status-box.good{border-color:#294421;color:#a8d99b}.center-button{display:block;text-align:center;text-decoration:none}.token-hero{gap:16px}.token-mint{margin-top:18px;background:#070707;border:1px solid #202020;border-radius:10px;padding:10px;color:#777;font-size:9px;overflow-wrap:anywhere}.money-stats{grid-template-columns:repeat(2,1fr)}.back a{color:inherit;text-decoration:none}@media(max-width:640px){.launch-actions>*{flex:1 1 auto}.mono-small{max-width:170px}.money-stats{grid-template-columns:1fr 1fr}}
 
 .hidden{display:none!important}
+
+
+/* home-v1-usepaid */
+.home-page{overflow:hidden}
+.home-hero{padding-top:72px;padding-bottom:42px;min-height:510px}
+.home-hero .hero-copy{align-self:center}
+.home-hero .hero-copy h1{font-size:clamp(46px,6.4vw,74px);line-height:.94;letter-spacing:-.06em;font-weight:650}
+.home-hero .hero-copy>p{max-width:555px;margin:22px 0 26px;color:#8e8e8e;font-size:15px;line-height:1.58}
+.home-hero-card{width:min(100%,390px);justify-self:end;background:#090909;border:1px solid #1f1f1f;border-radius:20px;padding:18px;box-shadow:0 35px 100px rgba(0,0,0,.55)}
+.home-hero-card-head{display:flex;align-items:center;justify-content:space-between;color:#6e6e6e;font-size:10px}
+.home-hero-card-head b{color:#d8d8d8;font-size:10px;font-weight:600}
+.home-hero-token{display:flex;gap:12px;align-items:center;margin-top:23px}
+.home-hero-art{width:72px;height:72px;border-radius:12px;background:#111;display:grid;place-items:center;overflow:hidden;flex:0 0 auto}
+.home-hero-art .avatar{width:72px;height:72px;border-radius:12px;font-size:24px}
+.home-hero-placeholder{font-weight:900;font-style:italic;font-size:28px}
+.home-hero-token-copy{display:grid;min-width:0}
+.home-hero-token-copy small,.home-hero-token-copy span{font-size:9px;color:#666}
+.home-hero-token-copy strong{font-size:15px;margin:4px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.home-route-rail{display:flex;align-items:center;gap:8px;margin:20px 0 13px}
+.home-route-rail span{height:1px;background:#242424;flex:1}
+.home-route-rail i{display:block;width:7px;height:7px;border-radius:50%;background:#eee;box-shadow:0 0 16px rgba(255,255,255,.55)}
+.home-payout-box{border:1px solid #252525;background:#111;border-radius:13px;padding:15px;display:grid}
+.home-payout-box small,.home-payout-box span,.home-payout-box em{font-size:9px;color:#656565;font-style:normal}
+.home-payout-box strong{font-size:27px;letter-spacing:-.045em;margin:5px 0}
+.home-payout-box em{margin-top:8px;color:#8b8b8b}
+.home-preview-shell{padding:42px 0 26px}
+.home-preview-head{display:flex;justify-content:space-between;margin-bottom:12px;color:#656565;font-size:9px}
+.home-preview-track{display:flex;gap:10px;overflow-x:auto;padding:0 max(16px,calc((100vw - 1080px)/2)) 14px;scroll-snap-type:x mandatory;scrollbar-width:none}
+.home-preview-track::-webkit-scrollbar{display:none}
+.home-preview-card{scroll-snap-align:start;flex:0 0 300px;min-height:205px;border:1px solid #1f1f1f;background:#0b0b0b;border-radius:17px;padding:14px;display:flex;flex-direction:column}
+.home-preview-label{display:flex;justify-content:space-between;align-items:center;font-size:10px;margin-bottom:16px}
+.home-preview-label span{color:#777}
+.home-preview-token{display:flex;gap:10px;align-items:center;margin-top:auto;margin-bottom:auto}
+.home-preview-token .avatar{width:64px;height:64px;border-radius:12px;font-size:22px}
+.home-preview-token>div:last-child{display:grid;min-width:0}
+.home-preview-token small,.home-preview-token span{font-size:9px;color:#6a6a6a}
+.home-preview-token strong{font-size:13px;margin:4px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.home-preview-token i{font-style:normal;color:#666;font-weight:500}
+.home-preview-empty{margin:auto;color:#5f5f5f;font-size:10px}
+.home-preview-payment{margin:auto 0;display:grid}
+.home-preview-payment strong,.home-preview-analytics strong{font-size:30px;letter-spacing:-.05em}
+.home-preview-payment span,.home-preview-payment small,.home-preview-analytics small{font-size:9px;color:#6b6b6b}
+.home-preview-payment small{margin-top:10px}
+.home-preview-analytics{margin:auto 0;display:grid}
+.home-mini-chart{height:50px;display:flex;gap:3px;align-items:end;margin-top:18px}
+.home-mini-chart i{display:block;flex:1;background:#2a2a2a;border-radius:2px 2px 0 0}
+.home-preview-route,.home-preview-doc{display:grid;margin:auto 0}
+.home-preview-route small,.home-preview-route span,.home-preview-doc small,.home-preview-doc span{font-size:9px;color:#686868}
+.home-preview-route>strong,.home-preview-doc>strong{font-size:15px;margin:5px 0 8px}
+.home-preview-route>div{margin-top:18px;border-top:1px solid #242424;padding-top:12px;display:flex;justify-content:space-between;align-items:center}
+.home-preview-route>div i{width:7px;height:7px;border-radius:50%;background:#fff}
+.home-preview-route>div b{font-size:20px}
+.home-preview-doc code{margin:12px 0;padding:10px;border:1px solid #222;background:#060606;border-radius:9px;color:#8b8b8b;font-size:9px}
+.home-top-tokens{padding-top:42px}
+.home-most-payments .rank-list{max-width:none}
+.home-page .section-title h2{font-size:18px}
+.home-page .section{padding-top:42px;padding-bottom:42px}
+.home-page footer{margin-top:20px}
+@media(max-width:640px){
+  .home-hero{padding-top:56px;padding-bottom:30px}
+  .home-hero .hero-copy h1{font-size:48px}
+  .home-hero .hero-copy>p{font-size:13px;line-height:1.58}
+  .home-hero-card{margin-top:38px;width:100%;max-width:none;padding:15px;border-radius:17px}
+  .home-hero-art,.home-hero-art .avatar{width:64px;height:64px}
+  .home-payout-box strong{font-size:24px}
+  .home-preview-shell{padding-top:25px}
+  .home-preview-track{padding-left:10px;padding-right:10px}
+  .home-preview-card{flex-basis:270px;min-height:190px}
+  .home-page .section{padding-top:34px;padding-bottom:34px}
+}
+

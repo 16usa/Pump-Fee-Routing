@@ -20,7 +20,128 @@ function tokenCard(t,compact=false){return `<a class="token-card ${compact?'comp
 function paymentCard(p,i){const amount=p.amount_usd??p.amount??0;const to=p.display_name||p.recipient_handle||p.to||'recipient';const mints=String(p.mints||'').split(',').filter(Boolean);return `<button class="payment-card expandable" data-expand="payment-${i}"><div class="row"><div><strong>${fmtMoney(amount)}</strong><span>${['sent','claimed'].includes(p.status)?'sent':'scheduled'} to <b>${esc(to)}</b> ${['sent','claimed'].includes(p.status)?'<em>✓</em>':''}</span></div><span class="chev">⌄</span></div><div class="mini-tokens">${mints.slice(0,5).map((x,j)=>`${j?'<span class="arrow">→</span>':''}<span class="mini-icon">${esc(x[0]||'T')}</span>`).join('')}<time>${esc(ago(p.sent_at||p.created_at))}</time></div><div class="details hidden"><div><span>Status</span><b>${esc(p.status||'queued')}</b></div><div><span>Provider</span><b>${esc(p.provider||'')}</b></div><div><span>Reference</span><b>${esc(p.provider_ref||p.id||'')}</b></div>${p.public_confirmation_url?`<div><span>Confirmation</span><b>${esc(p.public_confirmation_url)}</b></div>`:''}</div></button>`;}
 function txCard(x,i){return `<button class="transfer-card expandable" data-expand="tx-${i}"><div class="tx-icon">≋</div><div class="tx-main"><strong>${x.received_usd?fmtMoney(x.received_usd):`${fmtNum(x.volume_native)} SOL`}</strong><span>${esc(x.pair||'SOLUSD')} · ${esc(x.side||'sell')}</span></div><div class="tx-side"><span class="tx-status">${esc(x.status||'queued')}</span><small>${esc(ago(x.filled_at||x.created_at))}</small></div><span class="chev">⌄</span><div class="tx-details hidden"><div><span>Provider</span><b>${esc(x.provider||'')}</b></div><div><span>Reference</span><b>${esc(x.provider_ref||x.id||'')}</b></div></div></button>`;}
 function moneySections(money){const exchanges=money?.exchange||[];const top=money?.topPaid||[];return `<section class="wrap section">${sectionTitle('Off-ramp')}<div class="tabs small-tabs"><button class="active">All</button><button disabled>Deposits</button><button disabled>Swaps</button><button disabled>ACH</button></div><div class="tx-list">${exchanges.length?exchanges.map(txCard).join(''):'<div class="empty">No exchange orders recorded yet.</div>'}</div></section><section class="wrap section"><div class="section-title bridge-heading"><h2>Bridge <span class="bridge-dot">■</span><small>Configured treasury rail</small></h2></div><div class="empty">Bridge events appear here when a bridge adapter is configured.</div><p class="note">Payouts do not need to wait on this rail; the payout worker can use a pre-funded provider balance.</p></section><section class="wrap section">${sectionTitle('Top paid profiles')}<div class="rank-list">${top.length?top.map(x=>`<a class="rank-card" href="#/profile/${encodeURIComponent(x.handle)}">${avatar(x.display_name||x.handle)}<div><b>${esc(x.display_name||x.handle)}</b><span>@${esc(x.handle)}</span></div><strong>${fmtMoney(x.received)}</strong></a>`).join(''):'<div class="empty">No completed payouts yet.</div>'}</div></section>`;}
-function homePage(){const h=state.home||{tokens:[],profiles:[],payments:[],money:{}};const top=h.tokens||[];return `<main><section class="hero wrap"><div class="hero-copy"><p class="eyebrow">Token creator fees → payouts</p><h1>${esc(state.brand.heroLine1||'Route token fees')}<br>${esc(state.brand.heroLine2||'through X Money')}</h1><p>${esc(state.brand.description||'Creator-fee routing with a public ledger.')}</p><div class="hero-buttons"><button class="btn-light" data-action="open-launch">Launch a token</button><a class="text-link" href="#/docs">Read the docs <span>→</span></a></div></div><div class="route-demo"><div class="route-top"><span>Fees route to</span><b>@recipient</b></div><div class="profile-row">${avatar('P',true)}<div><b>Recipient</b><span>@recipient</span></div></div><div class="route-line"></div><div class="paying"><span>Paying out</span><b>$1,000.00</b><small>via configured payout rail</small></div></div></section>${top.length?`<section class="marquee"><div class="marquee-track">${top.slice(0,16).concat(top.slice(0,16)).map(t=>`<div class="marquee-item">${avatar(t.symbol)}<div><small>@${esc(t.profile)} · ${esc(t.age)}</small><b>${esc(t.name)} <i>${esc(t.symbol)}</i></b><span>${fmtMc(t.mc)} MC · ${fmtMoney(t.sent)} Sent</span></div></div>`).join('')}</div></section>`:''}<section class="wrap section">${sectionTitle('Top Tokens','#/explore')}<div class="tabs"><button class="active">● Pump</button><button disabled>■ Pons Soon</button><button disabled>Four Soon</button><button>All</button></div><div class="token-grid">${top.slice(0,12).map(t=>tokenCard(t,true)).join('')||'<div class="empty">No registered tokens yet.</div>'}</div></section><section class="wrap section profiles-section">${sectionTitle('Top X Profiles')}<div class="profile-grid">${(h.profiles||[]).map(p=>`<a class="profile-card" href="#/profile/${encodeURIComponent(p.handle)}">${avatar(p.display_name||p.handle)}<div><b>${esc(p.display_name||p.handle)}</b><span>@${esc(p.handle)}</span></div><div class="profile-value"><strong>${fmtNum(p.token_count)}</strong><span>Tokens</span><b>${fmtMoney(p.received)}</b><small>Received</small></div></a>`).join('')||'<div class="empty">Profiles appear after tokens register.</div>'}</div></section><section class="wrap section">${sectionTitle('Recent payments')}<div class="payment-list">${(h.payments||[]).slice(0,6).map(paymentCard).join('')||'<div class="empty">No payouts recorded yet.</div>'}</div></section>${moneySections(h.money)}${footer()}</main>`;}
+function homeHeroCard(h,top){
+  const t=top[0]||null;
+  const p=(h.profiles||[])[0]||null;
+  const handle=t?.profile||t?.recipient_handle||p?.handle||'';
+  const display=p?.display_name||handle||'Waiting for first routed token';
+  const sent=Number(t?.sent||0);
+  return `<div class="home-hero-card">
+    <div class="home-hero-card-head"><span>Fees route to</span><b>${handle?`@${esc(handle)}`:'Treasury'}</b></div>
+    <div class="home-hero-token">
+      <div class="home-hero-art">${t?avatar(t.symbol||t.name,true,t.image_url):'<div class="home-hero-placeholder">P</div>'}</div>
+      <div class="home-hero-token-copy">
+        <small>${handle?`@${esc(handle)}`:'No routed token yet'}</small>
+        <strong>${t?esc(t.name):'Waiting for first token'}</strong>
+        <span>${t?`${esc(t.symbol||'')} · ${fmtMc(t.mc??t.market_cap_usd)} MC`:'Permanent 100% fee route required'}</span>
+      </div>
+    </div>
+    <div class="home-route-rail"><span></span><i></i><span></span></div>
+    <div class="home-payout-box">
+      <small>Paying out</small>
+      <strong>${fmtMoney(sent)}</strong>
+      <span>${handle?`${esc(display)} · @${esc(handle)}`:'No recipient registered yet'}</span>
+      <em>${sent>0?'Sent via configured payout rail':'Waiting for confirmed fees'}</em>
+    </div>
+  </div>`;
+}
+
+function homePreviewDeck(h,top){
+  const t=top[0]||null;
+  const pay=(h.payments||[])[0]||null;
+  const money=h.money||{};
+  const profile=(h.profiles||[])[0]||null;
+  return `<section class="home-preview-shell">
+    <div class="wrap home-preview-head"><span>Live protocol</span><small>Swipe to explore</small></div>
+    <div class="home-preview-track">
+      <a class="home-preview-card" href="#/explore">
+        <div class="home-preview-label"><b>Explore</b><span>Open →</span></div>
+        ${t?`<div class="home-preview-token">${avatar(t.symbol||t.name,true,t.image_url)}<div><small>@${esc(t.profile||t.recipient_handle||'')}</small><strong>${esc(t.name)} <i>${esc(t.symbol||'')}</i></strong><span>${fmtMc(t.mc??t.market_cap_usd)} MC · ${fmtMoney(t.sent)} Sent</span></div></div>`:'<div class="home-preview-empty">No routed tokens yet</div>'}
+      </a>
+      <a class="home-preview-card" href="#/money">
+        <div class="home-preview-label"><b>Payments</b><span>Open →</span></div>
+        ${pay?`<div class="home-preview-payment"><strong>${fmtMoney(pay.amount_usd??pay.amount??0)}</strong><span>sent to ${esc(pay.display_name||pay.recipient_handle||'recipient')}</span><small>${esc(ago(pay.sent_at||pay.created_at))}</small></div>`:'<div class="home-preview-empty">No payments yet</div>'}
+      </a>
+      <a class="home-preview-card" href="#/money">
+        <div class="home-preview-label"><b>Analytics</b><span>Open →</span></div>
+        <div class="home-preview-analytics"><small>Total paid</small><strong>${fmtMoney(money.totalPaid||0)}</strong><div class="home-mini-chart">${Array.from({length:18},(_,i)=>`<i style="height:${18+((i*17)%52)}%"></i>`).join('')}</div></div>
+      </a>
+      <a class="home-preview-card" href="#/launch">
+        <div class="home-preview-label"><b>Launch</b><span>Open →</span></div>
+        <div class="home-preview-route"><small>Fees route to</small><strong>${profile?`@${esc(profile.handle)}`:'Treasury'}</strong><span>100% permanent creator-fee route</span><div><i></i><b>${fmtMoney(0)}</b></div></div>
+      </a>
+      <a class="home-preview-card" href="#/docs">
+        <div class="home-preview-label"><b>Docs</b><span>Open →</span></div>
+        <div class="home-preview-doc"><small>Sharing config</small><strong>Attribution is per-mint</strong><code>mint → treasury → recipient ledger</code><span>Detection, claiming and payouts</span></div>
+      </a>
+    </div>
+  </section>`;
+}
+
+function homeMostPayments(h){
+  const top=h.money?.topPaid||[];
+  return `<section class="wrap section home-most-payments">${sectionTitle('Most Payments')}
+    <div class="rank-list">${top.length?top.slice(0,6).map(x=>`<a class="rank-card" href="#/profile/${encodeURIComponent(x.handle)}">${avatar(x.display_name||x.handle)}<div><b>${esc(x.display_name||x.handle)}</b><span>@${esc(x.handle)}</span></div><strong>${fmtMoney(x.received)}</strong></a>`).join(''):'<div class="empty">No completed payments yet.</div>'}</div>
+  </section>`;
+}
+
+function homeOffRamp(h){
+  const exchanges=h.money?.exchange||[];
+  return `<section class="wrap section">${sectionTitle('Off-ramp')}
+    <div class="tabs small-tabs"><button class="active">All</button><button disabled>Deposits</button><button disabled>Swaps</button><button disabled>ACH</button></div>
+    <div class="tx-list">${exchanges.length?exchanges.slice(0,6).map(txCard).join(''):'<div class="empty">No off-ramp activity yet.</div>'}</div>
+  </section>`;
+}
+
+function homeOnRamp(){
+  return `<section class="wrap section">${sectionTitle('On-ramp')}
+    <div class="tx-list"><div class="empty">No on-ramp activity yet.</div></div>
+  </section>`;
+}
+
+function homePage(){
+  const h=state.home||{tokens:[],profiles:[],payments:[],money:{}};
+  const top=h.tokens||[];
+  return `<main class="home-page">
+    <section class="hero wrap home-hero">
+      <div class="hero-copy">
+        <h1>Route token fees<br>through X Money</h1>
+        <p>Point a token's creator fees at any X handle and we pay them out in dollars through X Money. Launch on Pump and Pons.</p>
+        <div class="hero-buttons">
+          <button class="btn-light" data-action="open-launch">Launch a token</button>
+          <a class="text-link" href="#/docs">Read the docs <span>→</span></a>
+        </div>
+      </div>
+      ${homeHeroCard(h,top)}
+    </section>
+
+    ${top.length?`<section class="marquee home-marquee"><div class="marquee-track">${top.slice(0,16).concat(top.slice(0,16)).map(t=>`<a class="marquee-item" href="#/token/${encodeURIComponent(t.mint||t.contract)}">${avatar(t.symbol)}<div><small>@${esc(t.profile)} · ${esc(t.age)}</small><b>${esc(t.name)} <i>${esc(t.symbol)}</i></b><span>${fmtMc(t.mc)} MC · ${fmtMoney(t.sent)} Sent</span></div></a>`).join('')}</div></section>`:''}
+
+    ${homePreviewDeck(h,top)}
+
+    <section class="wrap section home-top-tokens">
+      ${sectionTitle('Top Tokens','#/explore')}
+      <div class="tabs"><button class="active">● Pump</button><button disabled>■ Pons</button><button>All</button></div>
+      <div class="token-grid">${top.slice(0,12).map(t=>tokenCard(t,true)).join('')||'<div class="empty">No registered tokens yet.</div>'}</div>
+      ${top.length?pager(1,Math.max(1,Math.ceil(top.length/12))):''}
+    </section>
+
+    <section class="wrap section profiles-section">
+      ${sectionTitle('Top X Profiles')}
+      <div class="profile-grid">${(h.profiles||[]).slice(0,6).map(p=>`<a class="profile-card" href="#/profile/${encodeURIComponent(p.handle)}">${avatar(p.display_name||p.handle)}<div><b>${esc(p.display_name||p.handle)}</b><span>@${esc(p.handle)}</span></div><div class="profile-value"><strong>${fmtNum(p.token_count)}</strong><span>Tokens</span><b>${fmtMoney(p.received)}</b><small>Received</small></div></a>`).join('')||'<div class="empty">Profiles appear after tokens register.</div>'}</div>
+    </section>
+
+    <section class="wrap section">
+      ${sectionTitle('Recent payments')}
+      <div class="payment-list">${(h.payments||[]).slice(0,6).map(paymentCard).join('')||'<div class="empty">No payouts recorded yet.</div>'}</div>
+    </section>
+
+    ${homeMostPayments(h)}
+    ${homeOffRamp(h)}
+    ${homeOnRamp()}
+    ${footer()}
+  </main>`;
+}
 function explorePage(){const tokens=state.tokens||[];return `<main class="explore-page"><section class="wrap explore-head"><div><h1>Explore tokens</h1><p>pump.fun launches the tokens. The backend verifies permanent 100% creator-fee routing to the configured treasury, records claims, and tracks what has been sent and what is still owed.</p></div><button class="btn-light" data-action="go-launch">Launch a token</button></section><section class="wrap section">${sectionTitle('Trending','#/explore')}<div class="trending-strip">${tokens.slice(0,10).map(t=>`<a class="trend" href="#/token/${encodeURIComponent(t.mint)}">${avatar(t.symbol)}<div><b>${esc(t.name)}</b><span>${esc(t.symbol)}</span><small>Sent ${fmtNum(t.sent)}</small></div></a>`).join('')}</div></section><section class="wrap section launches">${sectionTitle('All launches')}<div class="filter-row"><div class="tabs venue"><button class="${!state.explore.venue?'active':''}" data-venue="">All</button><button data-venue="pump">● Pump</button><button disabled>■ Pons Soon</button><button disabled>Four Soon</button></div><input id="tokenSearch" placeholder="Search by contract address" value="${esc(state.explore.query)}"></div><div class="sorts"><button class="${state.explore.sort==='sent'?'active':''}" data-sort="sent">Total X Payments</button><button class="${state.explore.sort==='mc'?'active':''}" data-sort="mc">Market Cap</button><button class="${state.explore.sort==='recent'?'active':''}" data-sort="recent">Recent</button></div><div class="launch-grid" id="launchGrid">${tokens.map(t=>tokenCard(t,false)).join('')||'<div class="empty">No launches match this search.</div>'}</div></section>${footer()}</main>`;}
 function moneyPage(){const m=state.money||{recent:[],topPaid:[],exchange:[]};return `<main><section class="wrap money-hero"><p class="back">↖ Money</p><strong class="money-total">${fmtMoney(m.totalPaid||0)}</strong><span>Total paid out</span><div class="money-tabs"><button class="active">Payout rail</button><button>Solana treasury</button></div><div class="money-stats"><div><span>Currently owed</span><b>${fmtMoney(m.totalOwed||0)}</b></div><div><span>Pending protocol cut</span><b>${fmtMoney(m.protocolPending||0)}</b></div></div></section><section class="wrap update-note">Live values are calculated from the local ledger database and confirmed payout records.</section><section class="wrap section first">${sectionTitle('Recent payments')}<div class="payment-list">${(m.recent||[]).map(paymentCard).join('')||'<div class="empty">No payouts recorded yet.</div>'}</div></section>${moneySections(m)}${footer()}</main>`;}
 function docsPage(){return `<main><article class="wrap doc"><p class="eyebrow">Docs</p><h1>How ${esc(state.brand.name)} works</h1><p class="lead">This full-stack build uses a persistent ledger, a pump.fun fee-sharing verifier, claim worker, payout scheduler, exchange adapter, launch transaction builder, profile views and opt-out flow.</p>${docSection('1','Registration',`<p>On pump.fun the service verifies a fee-sharing config for the token mint. It only registers a token as payable when the configured treasury is the sole shareholder at 10,000 bps and the sharing authority is permanent.</p><pre>mint → sharing_config → treasury 100% → permanent</pre>`)}${docSection('2','Recipient',`<p>The indexer reads the recipient from the fixed metadata line:</p><pre>Fees to @yourhandle via ${esc(state.brand.name)}</pre><p>If the fixed line is absent, the parser can fall back to the first handle or an explicitly supplied linked handle.</p>`)}${docSection('3','Claims','<p>The claim worker checks each registered mint for distributable creator fees. In live mode it builds the permissionless Pump distribution transaction, pays transaction fees from a dedicated crank key, confirms on-chain settlement and records the treasury balance increase as a claim.</p>')}${docSection('4','80 / 20 ledger',`<p>Each confirmed claim is split at ${state.brand.recipientShareBps||8000} / ${state.brand.protocolShareBps||2000} basis points. Recipient credits and protocol-cut buyback entries are persisted in SQLite.</p>`)}${docSection('5','Payout milestones','<p>The payout worker evaluates cumulative milestones at $5, $10, $20, $50, $100, $250, $500, $1,000 and then each additional $1,000. When a milestone is crossed, the full outstanding recipient balance is queued for the configured payout adapter.</p>')}${docSection('6','Exchange and payout providers','<p>Kraken market-sell support is included behind an explicit live-trading flag. Payouts support manual reconciliation or a generic HTTP provider adapter. X Money itself does not expose a public payout API in this project; if you have an authorized gateway, point the HTTP adapter at it.</p>')}${docSection('7','Opt out','<p>An X OAuth flow is included so the owner of a handle can authenticate and opt out. Opted-out tokens are hidden, future recipient credits are diverted to the protocol cut, and unpaid balance is queued for buyback accounting.</p>')}${docSection('8','Safety','<p>No private key is requested from site visitors. Creator-side fee-routing transactions are built server-side but must be signed by the creator wallet in the browser. Server secrets stay in environment variables.</p>')}</article>${footer()}</main>`;}
