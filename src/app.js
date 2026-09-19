@@ -265,10 +265,50 @@ function homeRecentPayments(h){
   </section>`;
 }
 
+function homeMostPaymentRow(x,index,tokens){
+  const handle=x.handle||'';
+  const name=x.display_name||handle||'Recipient';
+  const received=Number(x.received||0);
+  const related=(tokens||[]).filter(t=>String(t.recipient_handle||t.profile||'').toLowerCase()===String(handle).toLowerCase());
+  const lead=related.sort((a,b)=>Number(b.sent||0)-Number(a.sent||0))[0]||null;
+  const owed=related.reduce((sum,t)=>sum+Number(t.owed||0),0);
+  return `<a class="home-most-payment-row" href="#/profile/${encodeURIComponent(handle)}">
+    <div class="home-most-payment-route">
+      <div class="home-most-token">
+        ${lead?avatar(lead.symbol||lead.name,true,lead.image_url):avatar(name,true)}
+        <i class="home-most-token-mark">●</i>
+      </div>
+      <span class="home-most-dollar">$</span>
+      <div class="home-most-recipient">
+        ${avatar(name,true,x.avatar_url||'')}
+        <i class="home-most-x">X</i>
+      </div>
+    </div>
+    <div class="home-most-payment-copy">
+      <strong>${fmtMoney(received)}</strong>
+      <span>${owed>0?`${fmtMoney(owed)} owed`:`${related.length||0} token${related.length===1?'':'s'}`}</span>
+    </div>
+  </a>`;
+}
+
 function homeMostPayments(h){
-  const top=h.money?.topPaid||[];
-  return `<section class="wrap section home-most-payments">${sectionTitle('Most Payments')}
-    <div class="rank-list">${top.length?top.slice(0,6).map(x=>`<a class="rank-card" href="#/profile/${encodeURIComponent(x.handle)}">${avatar(x.display_name||x.handle)}<div><b>${esc(x.display_name||x.handle)}</b><span>@${esc(x.handle)}</span></div><strong>${fmtMoney(x.received)}</strong></a>`).join(''):'<div class="empty">No completed payments yet.</div>'}</div>
+  const rows=(h.money?.topPaid||[]).slice(0,6);
+  const tokens=h.tokens||[];
+  return `<section class="wrap section home-most-payments">
+    <p class="home-most-update">Ranked by all-time confirmed payments.</p>
+    <div class="home-most-payments-head">
+      <h2>Most Payments</h2>
+      <div class="home-most-payments-pager"><button disabled>‹</button><span>1 / 1</span><button disabled>›</button></div>
+    </div>
+    <div class="home-most-payments-list">
+      ${rows.length
+        ? rows.map((x,i)=>homeMostPaymentRow(x,i,tokens)).join('')
+        : `<div class="home-most-payments-empty">
+            <div class="home-most-empty-route"><i></i><b>$</b><i></i></div>
+            <strong>No completed payments yet.</strong>
+            <span>Recipients will be ranked here after confirmed payouts.</span>
+          </div>`}
+    </div>
   </section>`;
 }
 
