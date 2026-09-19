@@ -384,9 +384,70 @@ function homeOffRamp(h){
   </section>`;
 }
 
-function homeOnRamp(){
-  return `<section class="wrap section">${sectionTitle('On-ramp')}
-    <div class="tx-list"><div class="empty">No on-ramp activity yet.</div></div>
+function isOnRampOrder(x){
+  const side=String(x?.side||'').toLowerCase();
+  return ['buy','deposit','onramp','on-ramp','transfer_in','transfer-in','withdrawal','withdraw'].some(v=>side.includes(v));
+}
+
+function homeOnRampCard(x,i){
+  const provider=String(x.provider||'Kraken');
+  const usd=Number(x.received_usd||x.gross_usd||0);
+  const native=Number(x.volume_native||0);
+  const pair=String(x.pair||'SOLUSD').toUpperCase();
+  const status=String(x.status||'queued');
+  const amount=usd>0?fmtMoney(usd):(native>0?`${fmtNum(native)} SOL`:'$0.00');
+  return `<button class="home-on-card expandable" data-expand="home-on-${i}">
+    <div class="home-on-main">
+      <div class="home-on-copy">
+        <strong>${esc(amount)}</strong>
+        <span>from ${esc(provider)}</span>
+      </div>
+      <div class="home-on-route">
+        <span class="home-on-provider">${esc((provider[0]||'K').toUpperCase())}</span>
+        <span class="home-on-arrow">→</span>
+        <span class="home-on-sol">≋</span>
+      </div>
+      <div class="home-on-meta">
+        <span class="home-on-status">${esc(status)}</span>
+        <time>${esc(ago(x.filled_at||x.created_at))}</time>
+      </div>
+      <span class="chev">⌄</span>
+    </div>
+    <div class="tx-details hidden">
+      <div><span>Provider</span><b>${esc(provider)}</b></div>
+      <div><span>Pair</span><b>${esc(pair)}</b></div>
+      <div><span>Side</span><b>${esc(x.side||'')}</b></div>
+      <div><span>Reference</span><b>${esc(x.provider_ref||x.id||'')}</b></div>
+    </div>
+  </button>`;
+}
+
+function homeOnRamp(h){
+  const orders=(h.money?.exchange||[]).filter(isOnRampOrder).slice(0,6);
+  return `<section class="wrap section home-on-ramp">
+    <div class="home-on-head">
+      <h2>On-ramp</h2>
+      <div class="home-on-total">
+        <b>${fmtMoney(orders.reduce((sum,x)=>sum+Number(x.received_usd||x.gross_usd||0),0))}</b>
+        <span>received</span>
+      </div>
+      <div class="home-on-pager"><button disabled>‹</button><span>1</span><button disabled>›</button></div>
+    </div>
+    <div class="home-on-tabs">
+      <button class="active">All</button>
+      <button disabled>Kraken</button>
+      <button disabled>Bank</button>
+      <button disabled>Other</button>
+    </div>
+    <div class="home-on-list">
+      ${orders.length
+        ? orders.map(homeOnRampCard).join('')
+        : `<div class="home-on-empty">
+            <div class="home-on-empty-route"><i>K</i><span>→</span><b>≋</b></div>
+            <strong>No on-ramp activity yet.</strong>
+            <span>Confirmed funding events will appear here without demo data.</span>
+          </div>`}
+    </div>
   </section>`;
 }
 
@@ -418,7 +479,7 @@ function homePage(){
 
     ${homeMostPayments(h)}
     ${homeOffRamp(h)}
-    ${homeOnRamp()}
+    ${homeOnRamp(h)}
     ${footer()}
   </main>`;
 }

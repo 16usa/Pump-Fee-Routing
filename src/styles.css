@@ -1155,3 +1155,185 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   .home-off-meta{min-width:50px}
   .home-off-status{padding:4px 6px;font-size:6.5px}
 }
+
+
+/* home-on-ramp-v1 */
+.home-on-ramp{padding-top:42px!important}
+.home-on-head{
+  display:grid;
+  grid-template-columns:1fr auto auto;
+  align-items:end;
+  gap:12px;
+  margin-bottom:10px;
+}
+.home-on-head h2{
+  margin:0;
+  font-size:18px;
+  line-height:1;
+  letter-spacing:-.03em;
+  font-weight:650;
+}
+.home-on-total{
+  display:flex;
+  align-items:baseline;
+  gap:5px;
+  color:#666;
+}
+.home-on-total b{color:#8b8b8b;font-size:9px;font-weight:600}
+.home-on-total span{font-size:7px}
+.home-on-pager{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:#666;
+  font-size:8px;
+}
+.home-on-pager button{
+  border:0;
+  background:transparent;
+  color:#666;
+  padding:0;
+  font-size:15px;
+}
+.home-on-tabs{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:14px;
+}
+.home-on-tabs button{
+  border:0;
+  background:transparent;
+  color:#747474;
+  padding:7px 9px;
+  border-radius:999px;
+  font-size:9px;
+}
+.home-on-tabs button.active{color:#fff;background:#191919}
+.home-on-tabs button:disabled{opacity:.58}
+.home-on-list{display:grid;gap:8px}
+.home-on-card{
+  width:100%;
+  padding:12px;
+  color:#fff;
+  text-align:left;
+  background:#191919;
+  border:1px solid #303030;
+  border-radius:14px;
+}
+.home-on-main{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto 12px;
+  align-items:center;
+  gap:10px;
+}
+.home-on-copy{min-width:0;display:grid}
+.home-on-copy strong{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:20px;
+  line-height:1;
+  letter-spacing:-.035em;
+  font-weight:580;
+}
+.home-on-copy span{
+  margin-top:5px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#969696;
+  font-size:9px;
+}
+.home-on-route{display:flex;align-items:center;gap:6px}
+.home-on-provider,
+.home-on-sol{
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  border:1px solid #292929;
+  border-radius:50%;
+  background:#080808;
+}
+.home-on-provider{font-size:11px;font-weight:750}
+.home-on-sol{font-size:18px;font-weight:800}
+.home-on-arrow{color:#656565;font-size:12px}
+.home-on-meta{
+  min-width:58px;
+  display:grid;
+  justify-items:end;
+  gap:6px;
+}
+.home-on-status{
+  max-width:90px;
+  padding:4px 7px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  border-radius:999px;
+  color:#c8c8c8;
+  background:#303030;
+  font-size:7px;
+  text-transform:capitalize;
+}
+.home-on-meta time{color:#828282;font-size:8px}
+.home-on-main>.chev{color:#737373;font-size:11px}
+.home-on-card .tx-details{
+  margin-top:11px;
+  padding-top:10px;
+  border-top:1px solid #303030;
+}
+.home-on-empty{
+  min-height:145px;
+  display:grid;
+  place-items:center;
+  align-content:center;
+  gap:7px;
+  padding:20px;
+  border:1px dashed #272727;
+  border-radius:14px;
+  color:#646464;
+  text-align:center;
+}
+.home-on-empty-route{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin-bottom:5px;
+}
+.home-on-empty-route i,
+.home-on-empty-route b{
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:#111;
+  border:1px solid #242424;
+  color:#777;
+  font-style:normal;
+  font-size:11px;
+}
+.home-on-empty-route b{font-size:17px}
+.home-on-empty-route>span{color:#5c5c5c}
+.home-on-empty strong{font-size:9px;color:#777}
+.home-on-empty>span{font-size:7px;color:#555}
+
+@media(max-width:640px){
+  .home-on-ramp{padding-top:38px!important}
+  .home-on-head h2{font-size:16px}
+  .home-on-total{display:none}
+  .home-on-card{padding:11px;border-radius:13px}
+  .home-on-main{
+    grid-template-columns:minmax(0,1fr) auto auto 10px;
+    gap:7px;
+  }
+  .home-on-copy strong{font-size:18px}
+  .home-on-copy span{font-size:8px;max-width:118px}
+  .home-on-provider,.home-on-sol{width:31px;height:31px}
+  .home-on-route{gap:4px}
+  .home-on-meta{min-width:50px}
+  .home-on-status{padding:4px 6px;font-size:6.5px}
+}
