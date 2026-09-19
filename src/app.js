@@ -884,7 +884,86 @@ function capitalFlowPage(){
     ${moneyFooter()}
   </main>`;
 }
-function paidPage(){const m=state.money||{};return `<main><article class="wrap doc"><p class="eyebrow">Protocol</p><h1>Protocol cut</h1><p class="lead">The default accounting split is 80% recipient / 20% protocol. Pending protocol-cut balance: ${fmtMoney(m.protocolPending||0)}.</p>${docSection('1','Source','<p>Every confirmed claim records the protocol share separately from recipient balances, preserving a direct link back to the fee event.</p>')}${docSection('2','Buyback adapter','<p>The ledger and worker hooks are present. A production buy-and-burn transaction should only be enabled after the project token mint and execution policy are finalized.</p>')}</article>${footer()}</main>`;}
+function paidInfoCard(label,value){
+  return `<div class="paid-info-card"><span>${esc(label)}</span><b>${value}</b></div>`;
+}
+
+function paidStep(n,title,body){
+  return `<div class="paid-step">
+    <div class="paid-step-number">${esc(n)}</div>
+    <div><h3>${esc(title)}</h3><p>${body}</p></div>
+  </div>`;
+}
+
+function paidPage(){
+  const m=state.money||{};
+  const recipientPct=fmtNum((state.brand.recipientShareBps||8000)/100);
+  const protocolPct=fmtNum((state.brand.protocolShareBps||2000)/100);
+
+  return `<main class="paid-page">
+    <section class="wrap paid-hero">
+      <p class="eyebrow">Protocol</p>
+      <h1>$PAID</h1>
+      <p class="paid-lead">Each confirmed fee claim is split between the named recipient and the protocol. The recipient share is paid through the configured payout rail; the protocol share is reserved for open-market $PAID buybacks and burns.</p>
+
+      <div class="paid-not-live">
+        <span>Not launched yet</span>
+        <h2>$PAID has not been issued.</h2>
+        <p>Until a project token is launched and its execution policy is enabled, protocol-cut balances remain in the ledger as pending buybacks. No buy or burn is executed automatically by this page.</p>
+      </div>
+    </section>
+
+    <section class="wrap paid-section">
+      <h2>What it is for</h2>
+      <p class="paid-copy">$PAID is designed as the protocol's value-accrual token rather than a governance or access token. Its role is simple: the protocol allocation can be used to buy the token on the open market and remove the purchased supply.</p>
+
+      <div class="paid-info-grid">
+        ${paidInfoCard('Ticker','$PAID')}
+        ${paidInfoCard('Home chain','Solana')}
+        ${paidInfoCard('Recipient share',`${recipientPct}%`)}
+        ${paidInfoCard('Protocol share',`${protocolPct}%`)}
+        ${paidInfoCard('Pending buybacks',fmtMoney(m.protocolPending||0))}
+        ${paidInfoCard('Mechanism','Market buy → burn')}
+      </div>
+    </section>
+
+    <section class="wrap paid-section">
+      <h2>How the buy and burn works</h2>
+      <div class="paid-steps">
+        ${paidStep('1','A claim settles','Creator fees are claimed on chain and recorded as a fee event with a unique transaction reference.')}
+        ${paidStep('2','The protocol cut is set aside',`${protocolPct}% of the confirmed claim is tracked separately as protocol accounting instead of recipient money.`)}
+        ${paidStep('3','$PAID is bought on the open market','When live buyback execution is explicitly enabled, the protocol can acquire the token through the configured market adapter at prevailing market prices.')}
+        ${paidStep('4','Purchased supply is burned','The resulting token amount can be sent to the configured burn destination, with transaction references retained for reconciliation.')}
+      </div>
+    </section>
+
+    <section class="wrap paid-section paid-chain-section">
+      <h2>Fees from other chains</h2>
+      <p class="paid-copy">If additional launch rails are enabled later, their creator fees can still feed the same protocol accounting. Cross-chain movement belongs at the treasury layer; recipient payouts remain separate from that bridge path.</p>
+
+      <div class="paid-flow-card">
+        <div><span>Origin fees</span><b>Pump / future rails</b></div>
+        <i>→</i>
+        <div><span>Treasury</span><b>Reconciled balance</b></div>
+        <i>→</i>
+        <div><span>Buyback</span><b>$PAID on Solana</b></div>
+      </div>
+    </section>
+
+    <section class="wrap paid-section">
+      <h2>Unclaimed or returned payments</h2>
+      <p class="paid-copy">If a payout provider returns an unclaimed recipient payment, that event should be recorded separately from the normal protocol cut. This keeps recipient reversals distinguishable from the fixed protocol allocation in the ledger.</p>
+
+      <div class="paid-ledger-card">
+        <div><span>Protocol cut pending</span><b>${fmtMoney(m.protocolPending||0)}</b></div>
+        <div><span>Recipient currently owed</span><b>${fmtMoney(m.totalOwed||0)}</b></div>
+        <div><span>Total paid</span><b>${fmtMoney(m.totalPaid||0)}</b></div>
+      </div>
+    </section>
+
+    ${moneyFooter()}
+  </main>`;
+}
 function optOutPage(){return `<main><section class="wrap launch-page"><p class="eyebrow">Opt out</p><h1>Stop payments</h1><p class="lead">Authenticate the X account that owns the handle. Opting out stops payouts, hides tokens naming the handle, blocks it from launch selection and diverts future unpaid accounting to the protocol cut.</p><a class="btn-light full center-button" href="/api/auth/x/start">Sign in with X</a><div class="status-box">X OAuth requires X_CLIENT_ID and X_REDIRECT_URI in the server environment.</div></section>${footer()}</main>`;}
 async function tokenPage(mint){const t=await api(`/api/tokens/${encodeURIComponent(mint)}`);return `<main><section class="wrap money-hero token-hero"><p class="back"><a href="#/explore">↖ Explore</a></p><div class="profile-row">${avatar(t.symbol,true,t.image_url)}<div><b>${esc(t.name)} ${esc(t.symbol)}</b><span>@${esc(t.recipient_handle)}</span></div></div><div class="money-stats"><div><span>Market cap</span><b>${fmtMc(t.market_cap_usd)}</b></div><div><span>Sent</span><b>${fmtMoney(t.sent)}</b></div><div><span>Owed</span><b>${fmtMoney(t.owed)}</b></div><div><span>Fee route</span><b>${t.permanent?'Permanent':'Pending'} · ${fmtNum(t.fee_share_bps/100)}%</b></div></div><code class="token-mint">${esc(t.mint)}</code></section><section class="wrap section">${sectionTitle('Claims')}<div class="tx-list">${(t.claims||[]).map((c,i)=>`<div class="rank-card"><div><b>${fmtNum(c.gross_native)} SOL</b><span>${esc(c.tx_signature||c.id)}</span></div><strong>${fmtMoney(c.gross_usd)}</strong></div>`).join('')||'<div class="empty">No claims yet.</div>'}</div></section><section class="wrap section">${sectionTitle('Payments')}<div class="payment-list">${(t.payouts||[]).map((p,i)=>paymentCard({...p,amount_usd:p.item_amount_usd,mints:t.mint},i)).join('')||'<div class="empty">No payments yet.</div>'}</div></section>${footer()}</main>`;}
 async function profilePage(handle){const p=await api(`/api/profiles/${encodeURIComponent(handle)}`);return `<main><section class="wrap money-hero token-hero"><p class="back"><a href="#/">↖ Home</a></p><div class="profile-row">${avatar(p.recipient.display_name||p.recipient.handle,true,p.recipient.avatar_url)}<div><b>${esc(p.recipient.display_name||p.recipient.handle)}</b><span>@${esc(p.recipient.handle)}</span></div></div><strong class="money-total">${fmtMoney(p.received)}</strong><span>Received</span></section><section class="wrap section">${sectionTitle('Tokens')}<div class="token-grid">${p.tokens.map(t=>tokenCard(t,true)).join('')||'<div class="empty">No visible tokens.</div>'}</div></section><section class="wrap section">${sectionTitle('X Payments')}<div class="payment-list">${p.payments.map(paymentCard).join('')||'<div class="empty">No payouts.</div>'}</div></section>${footer()}</main>`;}
