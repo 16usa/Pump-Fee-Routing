@@ -965,7 +965,95 @@ function docsPage(){
   </main>`;
 }
 function docSection(n,title,body){return `<section class="doc-section"><h2><span>${n}</span>${esc(title)}</h2>${body}</section>`;}
-function legalPage(){return `<main><article class="wrap doc legal-doc"><p class="eyebrow">Legal</p><h1>Terms and disclosures</h1><p class="lead">Replace these placeholders with terms reviewed for your actual operator, jurisdictions, launch workflow, token mechanics and payout providers before production launch.</p>${docSection('1','Independent service','<p>This project is not affiliated with X, X Money, pump.fun, Kraken or any other third-party provider merely because it integrates with or references them.</p>')}${docSection('2','No endorsement','<p>A token naming an X handle must not be presented as an endorsement, partnership or approval by that account.</p>')}${docSection('3','Third-party rails','<p>Launchpads, wallets, exchanges, social networks and payout providers have their own terms and availability rules.</p>')}</article>${footer()}</main>`;}
+function legalPage(){
+  const name=esc(state.brand.name);
+  return `<main class="legal-page-v1">
+    <section class="wrap legal-hero">
+      <p class="eyebrow">Legal</p>
+      <h1>Terms, privacy and disclosures</h1>
+      <p>This page describes how ${name} is intended to operate. It is a product draft and should be reviewed for the actual operator, jurisdictions and production providers before public launch.</p>
+    </section>
+
+    <section class="wrap legal-tabs">
+      <a href="#legal-terms" class="active">Terms</a>
+      <a href="#legal-privacy">Privacy</a>
+      <a href="#legal-disclosures">Disclosures</a>
+    </section>
+
+    <article class="wrap legal-doc-v1">
+      <section id="legal-terms" class="legal-block">
+        <div class="legal-block-head"><span>01</span><h2>Terms of use</h2></div>
+
+        <h3>Independent service</h3>
+        <p>${name} is an independent creator-fee routing and payout product. References to pump.fun, X, X Money, Solana, exchanges, wallets or payout providers do not imply affiliation, sponsorship or endorsement by those companies or services.</p>
+
+        <h3>No endorsement by recipients</h3>
+        <p>A token may name an X account as the intended recipient of creator-fee distributions. That does not mean the named account created, approved, promoted or endorsed the token.</p>
+
+        <h3>Third-party launch venues</h3>
+        <p>Token creation, trading, wallets and creator-fee mechanics are provided by third parties. Those services have their own terms, restrictions, availability and technical risks. ${name} does not control their uptime, markets or execution.</p>
+
+        <h3>Fee-routing requirement</h3>
+        <p>A token is only eligible for project accounting when the configured treasury is verified as the permanent recipient of the required creator-fee share. Tokens that do not satisfy the current registration rules may be excluded.</p>
+
+        <h3>Payouts</h3>
+        <p>Amounts displayed as owed, pending or sent depend on confirmed ledger records and the configured payout rail. A displayed balance is not a bank deposit, custodial account or guaranteed payment time.</p>
+
+        <h3>Opt out</h3>
+        <p>An X account owner can use the opt-out flow to stop future recipient payouts and hide associated listings in this product. Opting out does not prevent third parties from creating or trading tokens elsewhere.</p>
+
+        <h3>Suspension and corrections</h3>
+        <p>Registration, indexing or payout records may be paused or corrected when chain data, recipient identity, provider status or reconciliation evidence is incomplete or contradictory.</p>
+      </section>
+
+      <section id="legal-privacy" class="legal-block">
+        <div class="legal-block-head"><span>02</span><h2>Privacy</h2></div>
+
+        <h3>Public blockchain data</h3>
+        <p>The product reads public blockchain information such as token mints, creator-fee configurations, transaction references and treasury activity. Public chain data is not private account data.</p>
+
+        <h3>X account data</h3>
+        <p>When X sign-in is used for an opt-out action, the application uses the authenticated identity returned by the configured OAuth flow to verify that the request belongs to that X account.</p>
+
+        <h3>Operational records</h3>
+        <p>The backend may retain recipient handles, token relationships, claim records, payout statuses, provider references and reconciliation metadata needed to operate and audit the service.</p>
+
+        <h3>Secrets and signing material</h3>
+        <p>Private keys, provider secrets and administrative credentials are server-side configuration and are not intended to be exposed through the public interface.</p>
+
+        <h3>Third-party providers</h3>
+        <p>When external identity, exchange, wallet or payout providers are enabled, those providers process data under their own policies and technical systems.</p>
+      </section>
+
+      <section id="legal-disclosures" class="legal-block">
+        <div class="legal-block-head"><span>03</span><h2>Disclosures</h2></div>
+
+        <h3>Cryptoasset risk</h3>
+        <p>Memecoins and other cryptoassets can be extremely volatile, illiquid or lose all market value. Nothing in this product is a representation that a token has fundamental value or that any market price will persist.</p>
+
+        <h3>No investment advice</h3>
+        <p>Listings, rankings, payment totals, market information and protocol explanations are informational product features. They are not investment, legal, tax or financial advice.</p>
+
+        <h3>No custody representation</h3>
+        <p>The public interface should not be interpreted as a bank account, securities account or insured deposit product. On-chain assets and external payout rails have different settlement and custody models.</p>
+
+        <h3>$PAID</h3>
+        <p>$PAID is currently described as a planned protocol token and buyback / burn mechanism. Until the token and live execution policy are actually enabled, protocol-cut values shown in the product represent accounting state rather than completed market purchases or burns.</p>
+
+        <h3>Future integrations</h3>
+        <p>Pons, additional chains, walletless launch modes and other future rails should be treated as unavailable until the corresponding production integration is explicitly enabled.</p>
+
+        <div class="legal-review-note">
+          <strong>Production review required</strong>
+          <span>Before a public launch, replace operator placeholders and have the final terms, privacy language and disclosures reviewed for the actual business, jurisdictions and providers.</span>
+        </div>
+      </section>
+    </article>
+
+    ${moneyFooter()}
+  </main>`;
+}
+
 function updateLaunchPreview(){
   const name=document.querySelector('#launchName')?.value.trim()||'Token name';
   const ticker=document.querySelector('#launchTicker')?.value.trim().toUpperCase()||'TICKER';

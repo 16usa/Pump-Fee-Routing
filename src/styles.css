@@ -2956,3 +2956,41 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   .optout-progress>div{border-top:0;padding-top:0}
   .optout-page-v1 .money-footer{margin-top:54px}
 }
+
+/* legal-page-v1-reference */
+.legal-page-v1{padding-top:54px;background:#000;color:#fff}
+.legal-page-v1 .wrap{width:min(100% - 32px,720px)}
+.legal-hero{padding:8px 0 34px}
+.legal-hero .eyebrow{margin:0 0 17px;color:#666;font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+.legal-hero h1{max-width:650px;margin:0;font-size:50px;line-height:.98;letter-spacing:-.05em;font-weight:560}
+.legal-hero>p:last-child{max-width:650px;margin:20px 0 0;color:#858585;font-size:14px;line-height:1.55}
+.legal-tabs{position:sticky;top:64px;z-index:5;display:flex;gap:8px;padding-top:12px;padding-bottom:12px;background:#000}
+.legal-tabs a{padding:9px 13px;border-radius:999px;background:#111;color:#707070;font-size:10px;font-weight:650}
+.legal-tabs a.active{background:#fff;color:#000}
+.legal-doc-v1{padding-top:10px}
+.legal-block{padding:42px 0;border-top:1px solid #202020}
+.legal-block-head{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:center;margin-bottom:27px}
+.legal-block-head>span{width:30px;height:30px;display:grid;place-items:center;border:1px solid #303030;border-radius:50%;color:#707070;font-size:8px}
+.legal-block-head h2{margin:0;font-size:30px;letter-spacing:-.035em;font-weight:550}
+.legal-block h3{margin:26px 0 9px;font-size:16px;font-weight:560}
+.legal-block p{margin:0;color:#838383;font-size:12px;line-height:1.6}
+.legal-review-note{margin-top:31px;padding:18px;border:1px solid #292929;border-radius:13px;background:#101010}
+.legal-review-note strong{display:block;margin-bottom:8px;font-size:12px}
+.legal-review-note span{color:#777;font-size:10px;line-height:1.5}
+.legal-page-v1 .money-footer{margin-top:34px}
+@media(max-width:640px){
+  .legal-page-v1{padding-top:42px}
+  .legal-page-v1 .wrap{width:calc(100% - 32px)}
+  .legal-hero{padding:5px 0 27px}
+  .legal-hero h1{font-size:39px}
+  .legal-hero>p:last-child{margin-top:17px;font-size:11px}
+  .legal-tabs{top:54px;overflow:auto;scrollbar-width:none}
+  .legal-tabs::-webkit-scrollbar{display:none}
+  .legal-tabs a{flex:0 0 auto;font-size:9px}
+  .legal-block{padding:33px 0}
+  .legal-block-head{grid-template-columns:30px 1fr;gap:10px;margin-bottom:22px}
+  .legal-block-head>span{width:27px;height:27px}
+  .legal-block-head h2{font-size:23px}
+  .legal-block h3{margin-top:22px;font-size:14px}
+  .legal-block p{font-size:10px}
+}
