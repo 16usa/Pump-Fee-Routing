@@ -208,6 +208,63 @@ function homeTopProfiles(profiles){
   </section>`;
 }
 
+function homeRecentPaymentCard(p,i,tokens){
+  const amount=p.amount_usd??p.amount??0;
+  const to=p.display_name||p.recipient_handle||p.to||'recipient';
+  const mints=String(p.mints||'').split(',').filter(Boolean);
+  const firstMint=mints[0]||'';
+  const token=(tokens||[]).find(t=>(t.mint||t.contract)===firstMint)||null;
+  const confirmed=['sent','claimed'].includes(p.status);
+  return `<button class="home-payment-card expandable" data-expand="home-payment-${i}">
+    <div class="home-payment-top">
+      <div>
+        <strong>${fmtMoney(amount)}</strong>
+        <span>${confirmed?'sent':'scheduled'} to <b>${esc(to)}</b>${confirmed?' <em>✓</em>':''}</span>
+      </div>
+      <span class="chev">⌄</span>
+    </div>
+    <div class="home-payment-route">
+      <div class="home-payment-party home-payment-token">
+        ${token?avatar(token.symbol||token.name,true,token.image_url):`<span class="home-payment-placeholder">${esc(initials(token?.symbol||firstMint||'T'))}</span>`}
+        <i class="home-payment-badge">●</i>
+      </div>
+      <span class="home-payment-dollar">$</span>
+      <div class="home-payment-party home-payment-recipient">
+        ${avatar(to,true,p.avatar_url||'')}
+        <i class="home-payment-x">X</i>
+      </div>
+      <time>${esc(ago(p.sent_at||p.created_at))}</time>
+    </div>
+    <div class="details hidden">
+      <div><span>Status</span><b>${esc(p.status||'queued')}</b></div>
+      <div><span>Provider</span><b>${esc(p.provider||'')}</b></div>
+      <div><span>Reference</span><b>${esc(p.provider_ref||p.id||'')}</b></div>
+      ${p.public_confirmation_url?`<div><span>Confirmation</span><b>${esc(p.public_confirmation_url)}</b></div>`:''}
+    </div>
+  </button>`;
+}
+
+function homeRecentPayments(h){
+  const payments=(h.payments||[]).slice(0,6);
+  const tokens=h.tokens||[];
+  return `<section class="wrap section home-recent-payments">
+    <p class="home-payment-update">Updates are delayed. Showing recent payments from the confirmed ledger.</p>
+    <div class="home-recent-payments-head">
+      <h2>Recent payments</h2>
+      <div class="home-recent-payments-pager"><button disabled>‹</button><span>1</span><button disabled>›</button></div>
+    </div>
+    <div class="home-payment-list">
+      ${payments.length
+        ? payments.map((p,i)=>homeRecentPaymentCard(p,i,tokens)).join('')
+        : `<div class="home-payment-empty">
+            <div class="home-payment-empty-route"><i></i><b>$</b><i></i></div>
+            <strong>No payouts recorded yet.</strong>
+            <span>Confirmed payments will appear here automatically.</span>
+          </div>`}
+    </div>
+  </section>`;
+}
+
 function homeMostPayments(h){
   const top=h.money?.topPaid||[];
   return `<section class="wrap section home-most-payments">${sectionTitle('Most Payments')}
@@ -253,10 +310,7 @@ function homePage(){
 
     ${homeTopProfiles(h.profiles||[])}
 
-    <section class="wrap section">
-      ${sectionTitle('Recent payments')}
-      <div class="payment-list">${(h.payments||[]).slice(0,6).map(paymentCard).join('')||'<div class="empty">No payouts recorded yet.</div>'}</div>
-    </section>
+    ${homeRecentPayments(h)}
 
     ${homeMostPayments(h)}
     ${homeOffRamp(h)}
