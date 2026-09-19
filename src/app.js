@@ -789,7 +789,181 @@ function moneyPage(){
     ${moneyFooter()}
   </main>`;
 }
-function docsPage(){return `<main><article class="wrap doc"><p class="eyebrow">Docs</p><h1>How ${esc(state.brand.name)} works</h1><p class="lead">This full-stack build uses a persistent ledger, a pump.fun fee-sharing verifier, claim worker, payout scheduler, exchange adapter, launch transaction builder, profile views and opt-out flow.</p>${docSection('1','Registration',`<p>On pump.fun the service verifies a fee-sharing config for the token mint. It only registers a token as payable when the configured treasury is the sole shareholder at 10,000 bps and the sharing authority is permanent.</p><pre>mint → sharing_config → treasury 100% → permanent</pre>`)}${docSection('2','Recipient',`<p>The indexer reads the recipient from the fixed metadata line:</p><pre>Fees to @yourhandle via ${esc(state.brand.name)}</pre><p>If the fixed line is absent, the parser can fall back to the first handle or an explicitly supplied linked handle.</p>`)}${docSection('3','Claims','<p>The claim worker checks each registered mint for distributable creator fees. In live mode it builds the permissionless Pump distribution transaction, pays transaction fees from a dedicated crank key, confirms on-chain settlement and records the treasury balance increase as a claim.</p>')}${docSection('4','80 / 20 ledger',`<p>Each confirmed claim is split at ${state.brand.recipientShareBps||8000} / ${state.brand.protocolShareBps||2000} basis points. Recipient credits and protocol-cut buyback entries are persisted in SQLite.</p>`)}${docSection('5','Payout milestones','<p>The payout worker evaluates cumulative milestones at $5, $10, $20, $50, $100, $250, $500, $1,000 and then each additional $1,000. When a milestone is crossed, the full outstanding recipient balance is queued for the configured payout adapter.</p>')}${docSection('6','Exchange and payout providers','<p>Kraken market-sell support is included behind an explicit live-trading flag. Payouts support manual reconciliation or a generic HTTP provider adapter. X Money itself does not expose a public payout API in this project; if you have an authorized gateway, point the HTTP adapter at it.</p>')}${docSection('7','Opt out','<p>An X OAuth flow is included so the owner of a handle can authenticate and opt out. Opted-out tokens are hidden, future recipient credits are diverted to the protocol cut, and unpaid balance is queued for buyback accounting.</p>')}${docSection('8','Safety','<p>No private key is requested from site visitors. Creator-side fee-routing transactions are built server-side but must be signed by the creator wallet in the browser. Server secrets stay in environment variables.</p>')}</article>${footer()}</main>`;}
+function docsVenueCard(name,status,chain,copy,kind=''){
+  return `<div class="docs-venue ${kind}">
+    <div><b>${esc(name)}</b><span>${esc(status)}</span></div>
+    <small>${esc(chain)}</small>
+    <p>${esc(copy)}</p>
+  </div>`;
+}
+
+function docsFact(label,value){
+  return `<div class="docs-fact"><span>${esc(label)}</span><b>${value}</b></div>`;
+}
+
+function docsPage(){
+  const name=esc(state.brand.name);
+  const recipientPct=fmtNum((state.brand.recipientShareBps||8000)/100);
+  const protocolPct=fmtNum((state.brand.protocolShareBps||2000)/100);
+
+  return `<main class="docs-page-v1">
+    <article class="wrap docs-v1">
+      <header class="docs-v1-hero">
+        <p class="eyebrow">Docs</p>
+        <h1>How ${name} works</h1>
+        <p class="lead">${name} is a creator-fee routing service. A token points its creator fees at the configured treasury, the system verifies and claims eligible fees on chain, and the recipient allocation is tracked for payout.</p>
+      </header>
+
+      <nav class="docs-toc">
+        <a href="#docs-1"><b>1</b>Overview</a>
+        <a href="#docs-2"><b>2</b>Supported venues</a>
+        <a href="#docs-3"><b>3</b>Directing fees</a>
+        <a href="#docs-4"><b>4</b>Naming the recipient</a>
+        <a href="#docs-5"><b>5</b>The ${recipientPct}/${protocolPct} split</a>
+        <a href="#docs-6"><b>6</b>How claims work</a>
+        <a href="#docs-7"><b>7</b>Getting your fees</a>
+        <a href="#docs-8"><b>8</b>Payout setup</a>
+        <a href="#docs-9"><b>9</b>Unclaimed payments</a>
+        <a href="#docs-10"><b>10</b>Public confirmation</a>
+        <a href="#docs-11"><b>11</b>Treasury and cross-chain</a>
+        <a href="#docs-12"><b>12</b>$PAID and buyback</a>
+        <a href="#docs-13"><b>13</b>Stopping payments</a>
+        <a href="#docs-14"><b>14</b>If a token is not registering</a>
+        <a href="#docs-15"><b>15</b>Glossary</a>
+      </nav>
+
+      <section class="docs-v1-section" id="docs-1">
+        <h2><span>1</span>Overview</h2>
+        <p>A deployer launches a token on a supported venue and permanently routes the creator-fee share to the project treasury. The token metadata identifies the X handle that should receive the recipient allocation.</p>
+        <p>From there the system is mechanical: registration is discovered from public chain state, fees accrue, claims are recorded against transaction references, the recipient and protocol allocations are separated in the ledger, and completed payouts are published in the product.</p>
+        <div class="docs-steps">
+          <div><b>1</b><span>Token directs creator fees</span></div>
+          <div><b>2</b><span>Description names a recipient</span></div>
+          <div><b>3</b><span>Indexer verifies registration</span></div>
+          <div><b>4</b><span>Fees are claimed and ledgered</span></div>
+          <div><b>5</b><span>Recipient payout is confirmed</span></div>
+        </div>
+      </section>
+
+      <section class="docs-v1-section" id="docs-2">
+        <h2><span>2</span>Supported venues</h2>
+        <p>The venue changes how the creator-fee destination is configured, but it does not change the accounting model after a token is registered.</p>
+        <div class="docs-venue-grid">
+          ${docsVenueCard('pump.fun','Live','Solana','Fee sharing is configured after token creation. The route must point entirely to the configured treasury and be made permanent.','live')}
+          ${docsVenueCard('pons.family','Not live yet','Robinhood Chain','Reserved for a future launch rail. No Pons token is treated as payable until that integration is explicitly enabled.','soon')}
+          ${docsVenueCard('four.meme','Exploratory','BNB Chain','Shown only as a possible future venue. It is not currently supported by this project.','future')}
+        </div>
+      </section>
+
+      <section class="docs-v1-section" id="docs-3">
+        <h2><span>3</span>Directing fees</h2>
+        <p>For a token to become payable, the configured treasury must be the sole creator-fee shareholder at 10,000 basis points and the sharing authority must be permanent. A partial or still-editable route remains ineligible.</p>
+        <div class="docs-facts">
+          ${docsFact('When','After the token exists')}
+          ${docsFact('What is verified','Fee-sharing config per mint')}
+          ${docsFact('Required share','100%')}
+          ${docsFact('Permanent','Authority revoked / locked')}
+        </div>
+      </section>
+
+      <section class="docs-v1-section" id="docs-4">
+        <h2><span>4</span>Naming the recipient</h2>
+        <p>The most reliable way to name the beneficiary is a fixed line in the token description. It keeps the payout handle unambiguous even when the rest of the description mentions other accounts.</p>
+        <pre class="docs-code">Fees to @yourhandle via ${name}</pre>
+        <p>The parser may fall back to a linked or first detected handle when required, but the explicit recipient line is the preferred format.</p>
+      </section>
+
+      <section class="docs-v1-section" id="docs-5">
+        <h2><span>5</span>The ${recipientPct}/${protocolPct} split</h2>
+        <p>Each confirmed claim is divided at claim time. The recipient allocation and the protocol allocation become separate ledger entries tied to the same fee event.</p>
+        <div class="docs-facts">
+          ${docsFact('To the recipient',`${recipientPct}%`)}
+          ${docsFact('Protocol cut',`${protocolPct}%`)}
+          ${docsFact('Applied','Per confirmed claim')}
+          ${docsFact('Extra project fee','None')}
+        </div>
+      </section>
+
+      <section class="docs-v1-section" id="docs-6">
+        <h2><span>6</span>How claims work</h2>
+        <p>Creator fees accrue on chain and are claimed on a schedule rather than on every trade. A successful claim is keyed to its transaction reference so the same event cannot be accounted for twice.</p>
+        <p>A failed chain transaction creates no recipient obligation. The fees remain on chain until a later successful claim can be verified.</p>
+        <h3>Payout milestones</h3>
+        <p>The current backend can evaluate cumulative payout milestones and queue the outstanding recipient balance when a threshold is crossed. Provider execution remains subject to the configured payout adapter and live-mode safeguards.</p>
+      </section>
+
+      <section class="docs-v1-section" id="docs-7">
+        <h2><span>7</span>Getting your fees</h2>
+        <div class="docs-steps compact">
+          <div><b>1</b><span>A token names your handle</span></div>
+          <div><b>2</b><span>Trading generates creator fees</span></div>
+          <div><b>3</b><span>Eligible fees are claimed and credited</span></div>
+          <div><b>4</b><span>A confirmed payout is recorded</span></div>
+        </div>
+        <p>The recipient does not need to connect a Solana wallet to be represented in the payout ledger. Receiving a payout also does not imply endorsement of the token that named the handle.</p>
+      </section>
+
+      <section class="docs-v1-section" id="docs-8">
+        <h2><span>8</span>Payout setup</h2>
+        <p>The product is designed around an X Money-style payout experience, while the backend uses an explicit payout adapter. Production sending requires an authorized provider configuration; the site does not manufacture or expose payment credentials.</p>
+        <div class="docs-note">Current safe configuration can keep payouts in manual or read-only mode until the production rail is connected.</div>
+      </section>
+
+      <section class="docs-v1-section" id="docs-9">
+        <h2><span>9</span>Unclaimed payments</h2>
+        <p>Provider-returned or expired recipient payments should be recorded separately from the fixed protocol cut. That keeps reversals traceable and prevents returned recipient money from being silently blended into ordinary protocol revenue.</p>
+      </section>
+
+      <section class="docs-v1-section" id="docs-10">
+        <h2><span>10</span>Public confirmation</h2>
+        <p>Confirmed payouts can be displayed publicly with the amount, recipient, contributing token or tokens, status and provider reference. The public view never needs server secrets or signing material.</p>
+      </section>
+
+      <section class="docs-v1-section" id="docs-11">
+        <h2><span>11</span>The treasury and cross-chain</h2>
+        <p>Fees are earned on the chain where a token launched. If future venues live on other chains, any bridge belongs at the treasury layer. Recipient payouts and protocol accounting remain separate from that crossing.</p>
+      </section>
+
+      <section class="docs-v1-section" id="docs-12">
+        <h2><span>12</span>$PAID and the buyback</h2>
+        <p>The protocol allocation is intended to fund open-market $PAID purchases and burns after the token and production execution policy are live. Until then, the ledger records that allocation as pending buyback accounting.</p>
+        <a class="docs-inline-link" href="#/paid">Read the $PAID mechanism →</a>
+      </section>
+
+      <section class="docs-v1-section" id="docs-13">
+        <h2><span>13</span>Stopping payments</h2>
+        <p>The project includes an X OAuth opt-out flow. Once a handle is verified and opted out, future payout eligibility can be blocked and the related token visibility/accounting rules can be applied consistently by the backend.</p>
+        <a class="docs-inline-link" href="#/opt-out">Open opt-out →</a>
+      </section>
+
+      <section class="docs-v1-section" id="docs-14">
+        <h2><span>14</span>If a token is not registering</h2>
+        <div class="docs-checks">
+          <div><b>Not the whole fee</b><span>The treasury must receive the complete creator-fee share.</span></div>
+          <div><b>Not permanent yet</b><span>An editable sharing authority is not considered payable.</span></div>
+          <div><b>Wrong treasury</b><span>The on-chain destination must match the configured treasury address.</span></div>
+          <div><b>No recipient handle</b><span>Add the explicit recipient line or a supported linked handle.</span></div>
+          <div><b>Too recent</b><span>The discovery worker may not have reached a brand-new token yet.</span></div>
+        </div>
+      </section>
+
+      <section class="docs-v1-section" id="docs-15">
+        <h2><span>15</span>Glossary</h2>
+        <dl class="docs-glossary">
+          <dt>Creator fees</dt><dd>Trading fees assigned by the launch venue to the token creator.</dd>
+          <dt>Fee sharing</dt><dd>The pump.fun configuration used to direct creator fees to one or more wallets.</dd>
+          <dt>Claim</dt><dd>A confirmed on-chain collection of accrued creator fees for a registered token.</dd>
+          <dt>Recipient share</dt><dd>The portion of a confirmed claim credited to the named recipient.</dd>
+          <dt>Protocol cut</dt><dd>The portion tracked for project execution and $PAID buyback accounting.</dd>
+          <dt>Held balance</dt><dd>A recipient amount that remains in the ledger until the relevant payout condition is resolved.</dd>
+          <dt>Treasury</dt><dd>The configured address to which eligible creator fees are permanently routed.</dd>
+        </dl>
+      </section>
+    </article>
+
+    ${moneyFooter()}
+  </main>`;
+}
 function docSection(n,title,body){return `<section class="doc-section"><h2><span>${n}</span>${esc(title)}</h2>${body}</section>`;}
 function legalPage(){return `<main><article class="wrap doc legal-doc"><p class="eyebrow">Legal</p><h1>Terms and disclosures</h1><p class="lead">Replace these placeholders with terms reviewed for your actual operator, jurisdictions, launch workflow, token mechanics and payout providers before production launch.</p>${docSection('1','Independent service','<p>This project is not affiliated with X, X Money, pump.fun, Kraken or any other third-party provider merely because it integrates with or references them.</p>')}${docSection('2','No endorsement','<p>A token naming an X handle must not be presented as an endorsement, partnership or approval by that account.</p>')}${docSection('3','Third-party rails','<p>Launchpads, wallets, exchanges, social networks and payout providers have their own terms and availability rules.</p>')}</article>${footer()}</main>`;}
 function launchPage(){const treasury=state.brand.treasuryAddress||'';return `<main><section class="wrap launch-page"><p class="eyebrow">Launch</p><h1>Route a token</h1><p class="lead">Create the recipient line, launch the token on pump.fun, then make the creator-fee share permanent at 100% to this treasury.</p><form class="launch-form" id="launchForm"><label>X handle<input id="launchHandle" placeholder="@recipient" required></label><label>Creator wallet<input id="creatorPubkey" placeholder="Connect wallet or paste public key"></label><label>Token mint<input id="launchMint" placeholder="Paste mint after the token exists"></label><div class="config-box"><span>Treasury</span><b class="mono-small">${esc(treasury||'Configure TREASURY_ADDRESS')}</b><span>Fee share</span><b>100%</b><span>Recipient / protocol accounting</span><b>80% / 20%</b></div><button class="btn-light full" type="submit">Create launch intent</button></form><div class="success-card hidden" id="launchSuccess"><div class="success-icon">✓</div><h2>Launch intent ready</h2><p>Put this exact line in the token description:</p><code id="descriptionLine"></code><p class="muted">After the mint exists, connect the creator wallet and route the fee-sharing config.</p><div class="launch-actions"><button class="btn-light" data-action="connect-wallet">Connect Solana wallet</button><button class="btn-light" data-action="route-fees">Route fees 100%</button><button class="text-button" data-action="verify-mint">Verify registration</button></div><div id="launchStatus" class="status-box"></div></div></section>${footer()}</main>`;}
