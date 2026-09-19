@@ -24,26 +24,32 @@ function homeHeroCard(h,top){
   const t=top[0]||null;
   const p=(h.profiles||[])[0]||null;
   const handle=t?.profile||t?.recipient_handle||p?.handle||'';
-  const display=p?.display_name||handle||'Waiting for first routed token';
+  const display=p?.display_name||handle||'';
   const sent=Number(t?.sent||0);
-  return `<div class="home-hero-card">
-    <div class="home-hero-card-head"><span>Fees route to</span><b>${handle?`@${esc(handle)}`:'Treasury'}</b></div>
-    <div class="home-hero-token">
-      <div class="home-hero-art">${t?avatar(t.symbol||t.name,true,t.image_url):'<div class="home-hero-placeholder">P</div>'}</div>
-      <div class="home-hero-token-copy">
-        <small>${handle?`@${esc(handle)}`:'No routed token yet'}</small>
-        <strong>${t?esc(t.name):'Waiting for first token'}</strong>
-        <span>${t?`${esc(t.symbol||'')} · ${fmtMc(t.mc??t.market_cap_usd)} MC`:'Permanent 100% fee route required'}</span>
+  const owed=Number(t?.owed||0);
+  return `<a class="home-hero-card" href="${t?`#/token/${encodeURIComponent(t.mint||t.contract)}`:'#/explore'}">
+    <div class="home-hero-media">
+      ${t?.image_url?`<img src="${esc(t.image_url)}" alt="">`:`<div class="home-hero-media-empty"><span>${esc(initials(t?.symbol||t?.name||'P'))}</span><small>${t?'Image unavailable':'No routed token yet'}</small></div>`}
+      <div class="home-hero-media-badge">${platformBadge(t?.platform||'Pump')}</div>
+      <div class="home-hero-media-route">${handle?`@${esc(handle)}`:'Treasury'}</div>
+    </div>
+    <div class="home-hero-card-body">
+      <div class="home-hero-token-row">
+        <div>
+          <small>${handle?`@${esc(handle)}`:'Waiting for first route'}</small>
+          <strong>${t?esc(t.name):'No routed token yet'}</strong>
+          <span>${t?`${esc(t.symbol||'')} · ${fmtMc(t.mc??t.market_cap_usd)} MC`:'Permanent 100% creator-fee route required'}</span>
+        </div>
+        <b>${t?fmtMoney(sent):'$0.00'}</b>
       </div>
+      <div class="home-hero-stats">
+        <div><span>Sent</span><b>${fmtMoney(sent)}</b></div>
+        <div><span>Owed</span><b>${fmtMoney(owed)}</b></div>
+        <div><span>Recipient</span><b>${handle?`@${esc(handle)}`:'—'}</b></div>
+      </div>
+      <div class="home-hero-card-foot"><span>${display?esc(display):'Verified on-chain routing'}</span><em>${t?'View token →':'Explore →'}</em></div>
     </div>
-    <div class="home-route-rail"><span></span><i></i><span></span></div>
-    <div class="home-payout-box">
-      <small>Paying out</small>
-      <strong>${fmtMoney(sent)}</strong>
-      <span>${handle?`${esc(display)} · @${esc(handle)}`:'No recipient registered yet'}</span>
-      <em>${sent>0?'Sent via configured payout rail':'Waiting for confirmed fees'}</em>
-    </div>
-  </div>`;
+  </a>`;
 }
 
 function homePreviewDeck(h,top){
@@ -51,28 +57,61 @@ function homePreviewDeck(h,top){
   const pay=(h.payments||[])[0]||null;
   const money=h.money||{};
   const profile=(h.profiles||[])[0]||null;
+  const total=Number(money.totalPaid||0);
   return `<section class="home-preview-shell">
-    <div class="wrap home-preview-head"><span>Live protocol</span><small>Swipe to explore</small></div>
-    <div class="home-preview-track">
-      <a class="home-preview-card" href="#/explore">
-        <div class="home-preview-label"><b>Explore</b><span>Open →</span></div>
-        ${t?`<div class="home-preview-token">${avatar(t.symbol||t.name,true,t.image_url)}<div><small>@${esc(t.profile||t.recipient_handle||'')}</small><strong>${esc(t.name)} <i>${esc(t.symbol||'')}</i></strong><span>${fmtMc(t.mc??t.market_cap_usd)} MC · ${fmtMoney(t.sent)} Sent</span></div></div>`:'<div class="home-preview-empty">No routed tokens yet</div>'}
+    <div class="wrap home-preview-stack">
+      <a class="home-preview-card home-preview-token-card" href="#/explore">
+        <div class="home-preview-label"><b>Explore</b><span>View all →</span></div>
+        <div class="home-preview-token-row">
+          ${t?avatar(t.symbol||t.name,true,t.image_url):'<div class="home-preview-placeholder">P</div>'}
+          <div>
+            <small>${t?`@${esc(t.profile||t.recipient_handle||'')}`:'Token routing'}</small>
+            <strong>${t?esc(t.name):'No routed token yet'}</strong>
+            <span>${t?`${fmtMc(t.mc??t.market_cap_usd)} MC · ${fmtMoney(t.sent)} Sent`:'Tokens appear here after on-chain verification'}</span>
+          </div>
+          <em>→</em>
+        </div>
       </a>
-      <a class="home-preview-card" href="#/money">
-        <div class="home-preview-label"><b>Payments</b><span>Open →</span></div>
-        ${pay?`<div class="home-preview-payment"><strong>${fmtMoney(pay.amount_usd??pay.amount??0)}</strong><span>sent to ${esc(pay.display_name||pay.recipient_handle||'recipient')}</span><small>${esc(ago(pay.sent_at||pay.created_at))}</small></div>`:'<div class="home-preview-empty">No payments yet</div>'}
+
+      <a class="home-preview-card home-preview-payment-card" href="#/money">
+        <div class="home-preview-label"><b>Payments</b><span>View all →</span></div>
+        <div class="home-preview-payment">
+          <small>${pay?'Latest confirmed payment':'Confirmed payouts'}</small>
+          <strong>${pay?fmtMoney(pay.amount_usd??pay.amount??0):'$0.00'}</strong>
+          <span>${pay?`sent to ${esc(pay.display_name||pay.recipient_handle||'recipient')}`:'No confirmed payments yet'}</span>
+          <time>${pay?esc(ago(pay.sent_at||pay.created_at)):'—'}</time>
+        </div>
       </a>
-      <a class="home-preview-card" href="#/money">
-        <div class="home-preview-label"><b>Analytics</b><span>Open →</span></div>
-        <div class="home-preview-analytics"><small>Total paid</small><strong>${fmtMoney(money.totalPaid||0)}</strong><div class="home-mini-chart">${Array.from({length:18},(_,i)=>`<i style="height:${18+((i*17)%52)}%"></i>`).join('')}</div></div>
+
+      <a class="home-preview-card home-preview-analytics-card" href="#/money">
+        <div class="home-preview-label"><b>Analytics</b><span>View all →</span></div>
+        <div class="home-preview-analytics">
+          <small>Total paid</small>
+          <strong>${fmtMoney(total)}</strong>
+          <div class="home-mini-chart">${Array.from({length:22},(_,i)=>`<i style="height:${12+((i*23)%68)}%"></i>`).join('')}</div>
+          <span>Confirmed ledger activity</span>
+        </div>
       </a>
-      <a class="home-preview-card" href="#/launch">
+
+      <a class="home-preview-card home-preview-launch-card" href="#/launch">
         <div class="home-preview-label"><b>Launch</b><span>Open →</span></div>
-        <div class="home-preview-route"><small>Fees route to</small><strong>${profile?`@${esc(profile.handle)}`:'Treasury'}</strong><span>100% permanent creator-fee route</span><div><i></i><b>${fmtMoney(0)}</b></div></div>
+        <div class="home-preview-launch">
+          <small>Recipient X handle</small>
+          <div class="home-preview-input">@${profile?esc(profile.handle):'recipient'}</div>
+          <div class="home-preview-launch-meta">
+            <span>Creator fees</span><b>100%</b>
+            <span>Treasury route</span><b>Permanent</b>
+          </div>
+        </div>
       </a>
-      <a class="home-preview-card" href="#/docs">
-        <div class="home-preview-label"><b>Docs</b><span>Open →</span></div>
-        <div class="home-preview-doc"><small>Sharing config</small><strong>Attribution is per-mint</strong><code>mint → treasury → recipient ledger</code><span>Detection, claiming and payouts</span></div>
+
+      <a class="home-preview-card home-preview-doc-card" href="#/docs">
+        <div class="home-preview-label"><b>How it works</b><span>Read →</span></div>
+        <div class="home-preview-doc-lines">
+          <span><i>1</i><b>Launch token</b><small>pump.fun / supported venue</small></span>
+          <span><i>2</i><b>Route creator fees</b><small>100% to treasury</small></span>
+          <span><i>3</i><b>Pay recipient</b><small>public ledger confirmation</small></span>
+        </div>
       </a>
     </div>
   </section>`;
