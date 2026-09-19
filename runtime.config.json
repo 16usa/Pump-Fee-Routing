@@ -1,0 +1,11 @@
+{
+  "SEED_DEMO": false,
+  "READ_ONLY_MODE": true,
+  "ONCHAIN_DISCOVERY_ENABLED": true,
+  "CLAIM_WORKER_ENABLED": false,
+  "PAYOUT_WORKER_ENABLED": false,
+  "LIVE_CHAIN_TRANSACTIONS": false,
+  "KRAKEN_LIVE_TRADING": false,
+  "PAYOUT_PROVIDER": "manual",
+  "EXCHANGE_PROVIDER": "disabled"
+}
