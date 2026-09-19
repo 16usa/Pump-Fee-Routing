@@ -499,7 +499,94 @@ function homePage(){
     ${footer()}
   </main>`;
 }
-function explorePage(){const tokens=state.tokens||[];return `<main class="explore-page"><section class="wrap explore-head"><div><h1>Explore tokens</h1><p>pump.fun launches the tokens. ${esc(state.brand.name)} claims the creator fees on chain and pays them to an X account in dollars through X Money, with a public confirmation for every payout.</p></div><button class="btn-light" data-action="go-launch">Launch a token</button></section><section class="wrap section">${sectionTitle('Trending','#/explore')}<div class="trending-strip">${tokens.slice(0,10).map(t=>`<a class="trend" href="#/token/${encodeURIComponent(t.mint)}">${avatar(t.symbol)}<div><b>${esc(t.name)}</b><span>${esc(t.symbol)}</span><small>Sent ${fmtNum(t.sent)}</small></div></a>`).join('')}</div></section><section class="wrap section launches">${sectionTitle('All launches')}<div class="filter-row"><div class="tabs venue"><button class="${!state.explore.venue?'active':''}" data-venue="">All</button><button data-venue="pump">● Pump</button><button disabled>■ Pons Soon</button><button disabled>Four Soon</button></div><input id="tokenSearch" placeholder="Search by contract address" value="${esc(state.explore.query)}"></div><div class="sorts"><button class="${state.explore.sort==='sent'?'active':''}" data-sort="sent">Total X Payments</button><button class="${state.explore.sort==='mc'?'active':''}" data-sort="mc">Market Cap</button><button class="${state.explore.sort==='recent'?'active':''}" data-sort="recent">Recent</button></div><div class="launch-grid" id="launchGrid">${tokens.map(t=>tokenCard(t,false)).join('')||'<div class="empty">No launches match this search.</div>'}</div></section>${footer()}</main>`;}
+function exploreTrendingCard(t){
+  return `<a class="explore-trend-card" href="#/token/${encodeURIComponent(t.mint||t.contract||'')}">
+    ${avatar(t.symbol||t.name,true,t.image_url)}
+    <div>
+      <strong>${esc(t.name)}</strong>
+      <span>${esc(t.symbol||'')}</span>
+      <small>Sent ${fmtNum(t.sent||0)}</small>
+    </div>
+  </a>`;
+}
+
+function exploreTokenCard(t){
+  const mint=t.mint||t.contract||'';
+  const handle=t.profile||t.recipient_handle||'';
+  return `<a class="explore-token-card" href="#/token/${encodeURIComponent(mint)}">
+    <div class="explore-token-image">
+      ${t.image_url?`<img src="${esc(t.image_url)}" alt="">`:`<div class="explore-token-fallback">${esc(initials(t.symbol||t.name||'T'))}</div>`}
+    </div>
+    <div class="explore-token-info">
+      <div class="explore-token-meta">
+        ${platformBadge(t.platform||'Pump')}
+        <span class="explore-token-profile">${handle?`@${esc(handle)}`:'Recipient'}</span>
+        <span class="explore-token-age">${esc(t.age||ago(t.created_at))}</span>
+      </div>
+      <div class="explore-token-name">
+        <strong>${esc(t.name)}</strong>
+        <span>${esc(t.symbol||'')}</span>
+      </div>
+      <div class="explore-token-stats">
+        <div><b>${fmtMc(t.mc??t.market_cap_usd)}</b><small>MC</small></div>
+        <div><b>${fmtNum(t.sent||0)}</b><small>Sent</small></div>
+        <div><b>${fmtNum(t.owed||0)}</b><small>Owed</small></div>
+      </div>
+      <div class="explore-token-contract">${mint?`${esc(mint.slice(0,6))}...${esc(mint.slice(-6))}`:'-'}</div>
+    </div>
+  </a>`;
+}
+
+function exploreTrending(tokens){
+  const trending=(tokens||[]).slice(0,10);
+  return `<section class="wrap section explore-trending">
+    <div class="explore-section-head"><h2>Trending</h2><a href="#/explore">View all</a></div>
+    ${trending.length
+      ? `<div class="explore-trending-strip">${trending.map(exploreTrendingCard).join('')}</div>`
+      : `<div class="explore-trending-strip explore-trending-empty">
+          ${Array.from({length:3},()=>`<div class="explore-trend-skeleton"><i></i><span></span></div>`).join('')}
+        </div>`}
+  </section>`;
+}
+
+function explorePage(){
+  const tokens=state.tokens||[];
+  return `<main class="explore-page">
+    <section class="wrap explore-head explore-hero">
+      <div>
+        <h1>Explore tokens</h1>
+        <p>pump.fun launches the tokens. ${esc(state.brand.name)} claims the creator fees on chain and pays them to an X account in dollars through X Money, with a public confirmation for every payout.</p>
+        <button class="btn-light" data-action="go-launch">Launch a token</button>
+      </div>
+    </section>
+
+    ${exploreTrending(tokens)}
+
+    <section class="wrap section launches explore-launches">
+      <div class="explore-section-head explore-launches-head"><h2>All launches</h2></div>
+
+      <div class="explore-venue-tabs">
+        <button class="${state.explore.venue==='pump'?'active':''}" data-venue="pump">● Pump</button>
+        <button class="${state.explore.venue==='pons'?'active':''}" data-venue="pons">■ Pons</button>
+      </div>
+
+      <input class="explore-search" id="tokenSearch" placeholder="Search by contract address" value="${esc(state.explore.query)}">
+
+      <div class="sorts explore-sorts">
+        <button class="${state.explore.sort==='sent'?'active':''}" data-sort="sent">Total X Payments</button>
+        <button class="${state.explore.sort==='mc'?'active':''}" data-sort="mc">Market Cap</button>
+        <button class="${state.explore.sort==='recent'?'active':''}" data-sort="recent">Recent</button>
+      </div>
+
+      <div class="explore-launch-grid" id="launchGrid">
+        ${tokens.length?tokens.map(exploreTokenCard).join(''):`<div class="explore-empty"><span>No launches match this search.</span></div>`}
+      </div>
+    </section>
+
+    ${footer()}
+  </main>`;
+}
+
 function moneyPage(){const m=state.money||{recent:[],topPaid:[],exchange:[]};return `<main><section class="wrap money-hero"><p class="back">↖ Money</p><strong class="money-total">${fmtMoney(m.totalPaid||0)}</strong><span>Total paid out</span><div class="money-tabs"><button class="active">Payout rail</button><button>Solana treasury</button></div><div class="money-stats"><div><span>Currently owed</span><b>${fmtMoney(m.totalOwed||0)}</b></div><div><span>Pending protocol cut</span><b>${fmtMoney(m.protocolPending||0)}</b></div></div></section><section class="wrap update-note">Live values are calculated from the local ledger database and confirmed payout records.</section><section class="wrap section first">${sectionTitle('Recent payments')}<div class="payment-list">${(m.recent||[]).map(paymentCard).join('')||'<div class="empty">No payouts recorded yet.</div>'}</div></section>${moneySections(m)}${footer()}</main>`;}
 function docsPage(){return `<main><article class="wrap doc"><p class="eyebrow">Docs</p><h1>How ${esc(state.brand.name)} works</h1><p class="lead">This full-stack build uses a persistent ledger, a pump.fun fee-sharing verifier, claim worker, payout scheduler, exchange adapter, launch transaction builder, profile views and opt-out flow.</p>${docSection('1','Registration',`<p>On pump.fun the service verifies a fee-sharing config for the token mint. It only registers a token as payable when the configured treasury is the sole shareholder at 10,000 bps and the sharing authority is permanent.</p><pre>mint → sharing_config → treasury 100% → permanent</pre>`)}${docSection('2','Recipient',`<p>The indexer reads the recipient from the fixed metadata line:</p><pre>Fees to @yourhandle via ${esc(state.brand.name)}</pre><p>If the fixed line is absent, the parser can fall back to the first handle or an explicitly supplied linked handle.</p>`)}${docSection('3','Claims','<p>The claim worker checks each registered mint for distributable creator fees. In live mode it builds the permissionless Pump distribution transaction, pays transaction fees from a dedicated crank key, confirms on-chain settlement and records the treasury balance increase as a claim.</p>')}${docSection('4','80 / 20 ledger',`<p>Each confirmed claim is split at ${state.brand.recipientShareBps||8000} / ${state.brand.protocolShareBps||2000} basis points. Recipient credits and protocol-cut buyback entries are persisted in SQLite.</p>`)}${docSection('5','Payout milestones','<p>The payout worker evaluates cumulative milestones at $5, $10, $20, $50, $100, $250, $500, $1,000 and then each additional $1,000. When a milestone is crossed, the full outstanding recipient balance is queued for the configured payout adapter.</p>')}${docSection('6','Exchange and payout providers','<p>Kraken market-sell support is included behind an explicit live-trading flag. Payouts support manual reconciliation or a generic HTTP provider adapter. X Money itself does not expose a public payout API in this project; if you have an authorized gateway, point the HTTP adapter at it.</p>')}${docSection('7','Opt out','<p>An X OAuth flow is included so the owner of a handle can authenticate and opt out. Opted-out tokens are hidden, future recipient credits are diverted to the protocol cut, and unpaid balance is queued for buyback accounting.</p>')}${docSection('8','Safety','<p>No private key is requested from site visitors. Creator-side fee-routing transactions are built server-side but must be signed by the creator wallet in the browser. Server secrets stay in environment variables.</p>')}</article>${footer()}</main>`;}
 function docSection(n,title,body){return `<section class="doc-section"><h2><span>${n}</span>${esc(title)}</h2>${body}</section>`;}
@@ -526,13 +613,13 @@ app.addEventListener('click',async e=>{
   try{
     const a=e.target.closest('[data-action]');if(a){const action=a.dataset.action;if(action==='open-launch')document.querySelector('#launchModal')?.classList.remove('hidden');if(action==='close-launch')document.querySelector('#launchModal')?.classList.add('hidden');if(action==='menu')document.querySelector('#mobileMenu')?.classList.toggle('hidden');if(action==='go-launch')location.hash='#/launch';if(action==='reload'){state.home=null;render();}if(action==='connect-wallet'){const pub=await connectWallet();setLaunchStatus(`Wallet connected: ${pub}`,true);}if(action==='route-fees')await routeFees();if(action==='verify-mint'){const mint=document.querySelector('#launchMint')?.value.trim();if(!mint)throw new Error('Paste the mint first');const out=await api('/api/tokens/register',{method:'POST',body:JSON.stringify({mint,recipient_handle:currentLaunch?.handle||''})});setLaunchStatus(out.ok?`Registered for @${out.recipient}`:`Not ready: ${out.reason}`,out.ok);}}
     const exp=e.target.closest('.expandable');if(exp){exp.classList.toggle('open');exp.querySelector('.details,.tx-details')?.classList.toggle('hidden');}
-    const sort=e.target.closest('[data-sort]');if(sort){state.explore.sort=sort.dataset.sort;await refreshTokens();document.querySelector('#launchGrid').innerHTML=state.tokens.map(t=>tokenCard(t,false)).join('')||'<div class="empty">No launches.</div>';document.querySelectorAll('[data-sort]').forEach(b=>b.classList.toggle('active',b.dataset.sort===state.explore.sort));}
-    const venue=e.target.closest('[data-venue]');if(venue){state.explore.venue=venue.dataset.venue;await refreshTokens();document.querySelector('#launchGrid').innerHTML=state.tokens.map(t=>tokenCard(t,false)).join('')||'<div class="empty">No launches.</div>';document.querySelectorAll('[data-venue]').forEach(b=>b.classList.toggle('active',b.dataset.venue===state.explore.venue));}
+    const sort=e.target.closest('[data-sort]');if(sort){state.explore.sort=sort.dataset.sort;await refreshTokens();document.querySelector('#launchGrid').innerHTML=state.tokens.map(exploreTokenCard).join('')||'<div class="explore-empty"><span>No launches.</span></div>';document.querySelectorAll('[data-sort]').forEach(b=>b.classList.toggle('active',b.dataset.sort===state.explore.sort));}
+    const venue=e.target.closest('[data-venue]');if(venue){state.explore.venue=state.explore.venue===venue.dataset.venue?'':venue.dataset.venue;await refreshTokens();document.querySelector('#launchGrid').innerHTML=state.tokens.map(exploreTokenCard).join('')||'<div class="explore-empty"><span>No launches.</span></div>';document.querySelectorAll('[data-venue]').forEach(b=>b.classList.toggle('active',b.dataset.venue===state.explore.venue));}
     const run=e.target.closest('[data-admin-run]');if(run){const token=document.querySelector('#adminToken')?.value||'';const out=document.querySelector('#adminOutput');out.textContent='Running…';const result=await api(`/api/admin/run/${run.dataset.adminRun}`,{method:'POST',headers:{authorization:`Bearer ${token}`},body:'{}'});out.textContent=JSON.stringify(result,null,2);}
     if(e.target.id==='launchModal')e.target.classList.add('hidden');
   }catch(err){setLaunchStatus(err.message);const out=document.querySelector('#adminOutput');if(out)out.textContent=err.message;}
 });
 let searchTimer;
-app.addEventListener('input',e=>{if(e.target.id==='tokenSearch'){clearTimeout(searchTimer);state.explore.query=e.target.value;searchTimer=setTimeout(async()=>{try{await refreshTokens();const grid=document.querySelector('#launchGrid');if(grid)grid.innerHTML=state.tokens.map(t=>tokenCard(t,false)).join('')||'<div class="empty">No launches match this search.</div>';}catch{}},180);}});
+app.addEventListener('input',e=>{if(e.target.id==='tokenSearch'){clearTimeout(searchTimer);state.explore.query=e.target.value;searchTimer=setTimeout(async()=>{try{await refreshTokens();const grid=document.querySelector('#launchGrid');if(grid)grid.innerHTML=state.tokens.map(exploreTokenCard).join('')||'<div class="explore-empty"><span>No launches match this search.</span></div>';}catch{}},180);}});
 app.addEventListener('submit',async e=>{if(e.target.id==='launchForm'){e.preventDefault();try{const handle=document.querySelector('#launchHandle').value.trim();const creator=document.querySelector('#creatorPubkey').value.trim();const mint=document.querySelector('#launchMint').value.trim();const out=await api('/api/launch/intents',{method:'POST',body:JSON.stringify({recipient_handle:handle,creator_pubkey:creator,mint})});currentLaunch={...out,handle:handle.replace(/^@/,'')};e.target.classList.add('hidden');document.querySelector('#launchSuccess').classList.remove('hidden');document.querySelector('#descriptionLine').textContent=out.descriptionLine;setLaunchStatus(out.treasuryAddress?'Intent created. Launch token, then route fee sharing.':'Set TREASURY_ADDRESS on the server before routing.');}catch(err){alert(err.message);}}});
 window.addEventListener('hashchange',render);render();
