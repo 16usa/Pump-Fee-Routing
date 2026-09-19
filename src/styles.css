@@ -3113,3 +3113,72 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   .profile-token-stats{grid-column:1/-1;padding-top:9px}.profile-token-stats>span{font-size:8px}
   .profile-payment-main strong{font-size:18px}.profile-page-v1 .money-footer{margin-top:52px}
 }
+
+
+/* final-ui-audit-v1 */
+.explore-venue-tabs button:disabled{
+  opacity:.38;
+  cursor:default;
+}
+.explore-venue-tabs button small{
+  margin-left:3px;
+  color:#555;
+  font-size:.72em;
+  font-weight:600;
+}
+
+.docs-toc button{
+  appearance:none;
+  width:100%;
+  display:grid;
+  grid-template-columns:28px 1fr;
+  gap:10px;
+  padding:12px 10px 12px 0;
+  border:0;
+  border-bottom:1px solid #171717;
+  background:transparent;
+  color:#7b7b7b;
+  font:inherit;
+  font-size:11px;
+  text-align:left;
+  cursor:pointer;
+}
+.docs-toc button:nth-last-child(-n+2){border-bottom:0}
+.docs-toc button b{
+  color:#4f4f4f;
+  font-size:9px;
+}
+.docs-v1-section{scroll-margin-top:92px}
+
+.legal-tabs button{
+  appearance:none;
+  border:0;
+  padding:9px 13px;
+  border-radius:999px;
+  background:#111;
+  color:#707070;
+  font:inherit;
+  font-size:10px;
+  font-weight:650;
+  cursor:pointer;
+}
+.legal-tabs button.active{
+  background:#fff;
+  color:#000;
+}
+.legal-block{scroll-margin-top:118px}
+
+@media(max-width:640px){
+  .docs-toc button{
+    padding:10px 0;
+    font-size:10px;
+  }
+  .docs-toc button:nth-last-child(-n+2){border-bottom:1px solid #171717}
+  .docs-toc button:last-child{border-bottom:0}
+  .legal-tabs button{
+    flex:0 0 auto;
+    font-size:9px;
+  }
+  .docs-v1-section{scroll-margin-top:78px}
+  .legal-block{scroll-margin-top:104px}
+}

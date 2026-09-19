@@ -737,8 +737,10 @@ function explorePage(){
       <div class="explore-section-head explore-launches-head"><h2>All launches</h2></div>
 
       <div class="explore-venue-tabs">
+        <button class="${!state.explore.venue?'active':''}" data-venue="">All</button>
         <button class="${state.explore.venue==='pump'?'active':''}" data-venue="pump">● Pump</button>
-        <button class="${state.explore.venue==='pons'?'active':''}" data-venue="pons">■ Pons</button>
+        <button disabled>■ Pons <small>Soon</small></button>
+        <button disabled>Four <small>Soon</small></button>
       </div>
 
       <input class="explore-search" id="tokenSearch" placeholder="Search by contract address" value="${esc(state.explore.query)}">
@@ -815,21 +817,21 @@ function docsPage(){
       </header>
 
       <nav class="docs-toc">
-        <a href="#docs-1"><b>1</b>Overview</a>
-        <a href="#docs-2"><b>2</b>Supported venues</a>
-        <a href="#docs-3"><b>3</b>Directing fees</a>
-        <a href="#docs-4"><b>4</b>Naming the recipient</a>
-        <a href="#docs-5"><b>5</b>The ${recipientPct}/${protocolPct} split</a>
-        <a href="#docs-6"><b>6</b>How claims work</a>
-        <a href="#docs-7"><b>7</b>Getting your fees</a>
-        <a href="#docs-8"><b>8</b>Payout setup</a>
-        <a href="#docs-9"><b>9</b>Unclaimed payments</a>
-        <a href="#docs-10"><b>10</b>Public confirmation</a>
-        <a href="#docs-11"><b>11</b>Treasury and cross-chain</a>
-        <a href="#docs-12"><b>12</b>$PAID and buyback</a>
-        <a href="#docs-13"><b>13</b>Stopping payments</a>
-        <a href="#docs-14"><b>14</b>If a token is not registering</a>
-        <a href="#docs-15"><b>15</b>Glossary</a>
+        <button type="button" data-scroll-to="docs-1"><b>1</b>Overview</button>
+        <button type="button" data-scroll-to="docs-2"><b>2</b>Supported venues</button>
+        <button type="button" data-scroll-to="docs-3"><b>3</b>Directing fees</button>
+        <button type="button" data-scroll-to="docs-4"><b>4</b>Naming the recipient</button>
+        <button type="button" data-scroll-to="docs-5"><b>5</b>The ${recipientPct}/${protocolPct} split</button>
+        <button type="button" data-scroll-to="docs-6"><b>6</b>How claims work</button>
+        <button type="button" data-scroll-to="docs-7"><b>7</b>Getting your fees</button>
+        <button type="button" data-scroll-to="docs-8"><b>8</b>Payout setup</button>
+        <button type="button" data-scroll-to="docs-9"><b>9</b>Unclaimed payments</button>
+        <button type="button" data-scroll-to="docs-10"><b>10</b>Public confirmation</button>
+        <button type="button" data-scroll-to="docs-11"><b>11</b>Treasury and cross-chain</button>
+        <button type="button" data-scroll-to="docs-12"><b>12</b>$PAID and buyback</button>
+        <button type="button" data-scroll-to="docs-13"><b>13</b>Stopping payments</button>
+        <button type="button" data-scroll-to="docs-14"><b>14</b>If a token is not registering</button>
+        <button type="button" data-scroll-to="docs-15"><b>15</b>Glossary</button>
       </nav>
 
       <section class="docs-v1-section" id="docs-1">
@@ -975,9 +977,9 @@ function legalPage(){
     </section>
 
     <section class="wrap legal-tabs">
-      <a href="#legal-terms" class="active">Terms</a>
-      <a href="#legal-privacy">Privacy</a>
-      <a href="#legal-disclosures">Disclosures</a>
+      <button type="button" class="active" data-scroll-to="legal-terms">Terms</button>
+      <button type="button" data-scroll-to="legal-privacy">Privacy</button>
+      <button type="button" data-scroll-to="legal-disclosures">Disclosures</button>
     </section>
 
     <article class="wrap legal-doc-v1">
@@ -1758,6 +1760,16 @@ async function routeFees(){if(!currentLaunch)throw new Error('Create the launch 
 
 app.addEventListener('click',async e=>{
   try{
+    const scrollControl=e.target.closest('[data-scroll-to]');
+    if(scrollControl){
+      e.preventDefault();
+      const target=document.getElementById(scrollControl.dataset.scrollTo);
+      if(target)target.scrollIntoView({behavior:'smooth',block:'start'});
+      if(scrollControl.closest('.legal-tabs')){
+        scrollControl.closest('.legal-tabs').querySelectorAll('[data-scroll-to]').forEach(x=>x.classList.toggle('active',x===scrollControl));
+      }
+      return;
+    }
     const a=e.target.closest('[data-action]');if(a){const action=a.dataset.action;if(action==='open-launch')document.querySelector('#launchModal')?.classList.remove('hidden');if(action==='close-launch')document.querySelector('#launchModal')?.classList.add('hidden');if(action==='menu')document.querySelector('#mobileMenu')?.classList.toggle('hidden');if(action==='go-launch')location.hash='#/launch';if(action==='reload'){state.home=null;render();}if(action==='connect-wallet'){const pub=await connectWallet();setLaunchStatus(`Wallet connected: ${pub}`,true);}if(action==='route-fees')await routeFees();if(action==='verify-mint'){const mint=(document.querySelector('#launchMintSuccess')?.value||document.querySelector('#launchMint')?.value||'').trim();if(!mint)throw new Error('Paste the mint first');const out=await api('/api/tokens/register',{method:'POST',body:JSON.stringify({mint,recipient_handle:currentLaunch?.handle||''})});setLaunchStatus(out.ok?`Registered for @${out.recipient}`:`Not ready: ${out.reason}`,out.ok);}}
     const exp=e.target.closest('.expandable');if(exp){exp.classList.toggle('open');exp.querySelector('.details,.tx-details')?.classList.toggle('hidden');}
     const sort=e.target.closest('[data-sort]');if(sort){state.explore.sort=sort.dataset.sort;await refreshTokens();document.querySelector('#launchGrid').innerHTML=state.tokens.map(exploreTokenCard).join('')||'<div class="explore-empty"><span>No launches.</span></div>';document.querySelectorAll('[data-sort]').forEach(b=>b.classList.toggle('active',b.dataset.sort===state.explore.sort));}
