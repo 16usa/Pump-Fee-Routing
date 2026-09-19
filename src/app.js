@@ -15,7 +15,39 @@ const platformBadge=(name='Pump')=>`<span class="platform-badge">${String(name).
 const sectionTitle=(title,link='')=>`<div class="section-title"><h2>${esc(title)}</h2>${link?`<a href="${link}">View all</a>`:''}</div>`;
 const pager=(i=1,total=1)=>`<div class="pager"><button disabled>‹</button><span>${i} / ${total}</span><button disabled>›</button></div>`;
 function header(){return `<header class="topbar"><div class="topbar-inner">${logo()}<nav class="desktop-nav"><a href="#/explore">Explore</a><a href="#/money">Money</a><a href="#/capital-flow">Capital flow</a><a href="#/docs">Docs</a></nav><div class="top-actions"><button class="launch-pill" data-action="open-launch">Launch</button><button class="menu-btn" data-action="menu" aria-label="Menu"><i></i><i></i></button></div></div><div class="mobile-menu hidden" id="mobileMenu"><a href="#/explore">Explore</a><a href="#/money">Money</a><a href="#/capital-flow">Capital flow</a><a href="#/paid">Protocol</a><a href="#/docs">Docs</a><a href="#/opt-out">Opt out</a><a href="#/legal">Legal</a></div></header>`;}
-function footer(){return `<footer><div class="footer-inner"><div class="footer-brand">${logo()}<p>Independent creator-fee routing protocol.</p><span>© 2026 ${esc(state.brand.name)}</span></div><div><b>Product</b><a href="#/explore">Explore</a><a href="#/money">Money</a><a href="#/launch">Launch</a></div><div><b>Protocol</b><a href="#/capital-flow">Capital flow</a><a href="#/paid">Protocol cut</a><a href="#/docs">How it works</a></div><div><b>Legal</b><a href="#/legal">Terms</a><a href="#/opt-out">Opt out</a></div></div></footer>`;}
+function footer(){return `<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      ${logo()}
+      <p>Independent creator-fee routing protocol.</p>
+      <span>© 2026 ${esc(state.brand.name)}</span>
+    </div>
+
+    <div class="footer-links">
+      <b>Product</b>
+      <a href="#/explore">Explore</a>
+      <a href="#/money">Money</a>
+      <a href="#/launch">Launch</a>
+    </div>
+
+    <div class="footer-links">
+      <b>Protocol</b>
+      <a href="#/capital-flow">Capital flow</a>
+      <a href="#/paid">Protocol cut</a>
+      <a href="#/docs">How it works</a>
+    </div>
+
+    <div class="footer-links">
+      <b>Legal</b>
+      <a href="#/legal">Terms</a>
+      <a href="#/opt-out">Opt out</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>Built on Solana</span>
+    <span>Creator fees → treasury → recipient</span>
+  </div>
+</footer>`;}
 function tokenCard(t,compact=false){return `<a class="token-card ${compact?'compact':''}" href="#/token/${encodeURIComponent(t.mint||t.contract)}"><div class="token-img">${avatar(t.symbol||t.name,true,t.image_url)}</div><div class="token-meta"><div class="meta-line">${platformBadge(t.platform||'Pump')}<span class="muted">@${esc(t.profile||t.recipient_handle||'')}</span><span class="muted">${esc(t.age||ago(t.created_at))}</span></div><div class="token-name"><strong>${esc(t.name)}</strong><span>${esc(t.symbol)}</span></div><div class="token-numbers"><span>${fmtMc(t.mc??t.market_cap_usd)} <small>MC</small></span><span>${fmtNum(t.sent)} <small>Sent</small></span>${compact?'':`<span>${fmtNum(t.owed)} <small>Owed</small></span>`}</div>${compact?'':`<div class="contract">${esc((t.mint||'').slice(0,6))}…${esc((t.mint||'').slice(-6))}</div>`}</div></a>`;}
 function paymentCard(p,i){const amount=p.amount_usd??p.amount??0;const to=p.display_name||p.recipient_handle||p.to||'recipient';const mints=String(p.mints||'').split(',').filter(Boolean);return `<button class="payment-card expandable" data-expand="payment-${i}"><div class="row"><div><strong>${fmtMoney(amount)}</strong><span>${['sent','claimed'].includes(p.status)?'sent':'scheduled'} to <b>${esc(to)}</b> ${['sent','claimed'].includes(p.status)?'<em>✓</em>':''}</span></div><span class="chev">⌄</span></div><div class="mini-tokens">${mints.slice(0,5).map((x,j)=>`${j?'<span class="arrow">→</span>':''}<span class="mini-icon">${esc(x[0]||'T')}</span>`).join('')}<time>${esc(ago(p.sent_at||p.created_at))}</time></div><div class="details hidden"><div><span>Status</span><b>${esc(p.status||'queued')}</b></div><div><span>Provider</span><b>${esc(p.provider||'')}</b></div><div><span>Reference</span><b>${esc(p.provider_ref||p.id||'')}</b></div>${p.public_confirmation_url?`<div><span>Confirmation</span><b>${esc(p.public_confirmation_url)}</b></div>`:''}</div></button>`;}
 function txCard(x,i){return `<button class="transfer-card expandable" data-expand="tx-${i}"><div class="tx-icon">≋</div><div class="tx-main"><strong>${x.received_usd?fmtMoney(x.received_usd):`${fmtNum(x.volume_native)} SOL`}</strong><span>${esc(x.pair||'SOLUSD')} · ${esc(x.side||'sell')}</span></div><div class="tx-side"><span class="tx-status">${esc(x.status||'queued')}</span><small>${esc(ago(x.filled_at||x.created_at))}</small></div><span class="chev">⌄</span><div class="tx-details hidden"><div><span>Provider</span><b>${esc(x.provider||'')}</b></div><div><span>Reference</span><b>${esc(x.provider_ref||x.id||'')}</b></div></div></button>`;}

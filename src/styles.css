@@ -1337,3 +1337,106 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   .home-on-meta{min-width:50px}
   .home-on-status{padding:4px 6px;font-size:6.5px}
 }
+
+
+/* home-footer-v1 */
+.site-footer{
+  margin-top:34px;
+  padding:0;
+  border-top:1px solid #171717;
+  background:#000;
+}
+.site-footer .footer-inner{
+  width:min(100% - 32px,1080px);
+  margin:0 auto;
+  padding:48px 0 42px;
+  display:grid;
+  grid-template-columns:2fr repeat(3,minmax(0,1fr));
+  gap:34px;
+}
+.site-footer .footer-brand{
+  display:grid;
+  align-content:start;
+  justify-items:start;
+}
+.site-footer .footer-brand .brand{
+  margin-bottom:20px;
+}
+.site-footer .footer-brand p{
+  max-width:250px;
+  margin:0 0 14px;
+  color:#555;
+  font-size:9px;
+  line-height:1.5;
+}
+.site-footer .footer-brand span{
+  color:#4e4e4e;
+  font-size:8px;
+}
+.site-footer .footer-links{
+  display:grid;
+  align-content:start;
+  gap:10px;
+}
+.site-footer .footer-links b{
+  margin-bottom:3px;
+  color:#e5e5e5;
+  font-size:9px;
+  font-weight:650;
+}
+.site-footer .footer-links a{
+  width:max-content;
+  color:#626262;
+  font-size:9px;
+  transition:color .15s ease;
+}
+.site-footer .footer-links a:hover{color:#fff}
+.site-footer .footer-bottom{
+  width:min(100% - 32px,1080px);
+  min-height:42px;
+  margin:0 auto;
+  padding:12px 0 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  border-top:1px solid #111;
+  color:#393939;
+  font-size:7px;
+}
+@media(max-width:640px){
+  .site-footer{margin-top:28px}
+  .site-footer .footer-inner{
+    width:calc(100% - 32px);
+    padding:40px 0 34px;
+    grid-template-columns:1fr 1fr;
+    gap:30px 34px;
+  }
+  .site-footer .footer-brand{
+    grid-column:1 / -1;
+    padding-bottom:4px;
+  }
+  .site-footer .footer-brand .brand{margin-bottom:17px}
+  .site-footer .footer-brand p{
+    max-width:260px;
+    margin-bottom:12px;
+    font-size:8px;
+  }
+  .site-footer .footer-brand span{font-size:7px}
+  .site-footer .footer-links{
+    gap:9px;
+  }
+  .site-footer .footer-links b{font-size:8px}
+  .site-footer .footer-links a{font-size:8px}
+  .site-footer .footer-links:last-child{
+    grid-column:1 / 2;
+  }
+  .site-footer .footer-bottom{
+    width:calc(100% - 32px);
+    min-height:0;
+    padding:12px 0 18px;
+    display:grid;
+    gap:5px;
+    font-size:6.5px;
+  }
+}
