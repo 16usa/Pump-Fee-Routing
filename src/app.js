@@ -1596,7 +1596,154 @@ async function tokenPage(mint){
   </main>`;
 }
 
-async function profilePage(handle){const p=await api(`/api/profiles/${encodeURIComponent(handle)}`);return `<main><section class="wrap money-hero token-hero"><p class="back"><a href="#/">↖ Home</a></p><div class="profile-row">${avatar(p.recipient.display_name||p.recipient.handle,true,p.recipient.avatar_url)}<div><b>${esc(p.recipient.display_name||p.recipient.handle)}</b><span>@${esc(p.recipient.handle)}</span></div></div><strong class="money-total">${fmtMoney(p.received)}</strong><span>Received</span></section><section class="wrap section">${sectionTitle('Tokens')}<div class="token-grid">${p.tokens.map(t=>tokenCard(t,true)).join('')||'<div class="empty">No visible tokens.</div>'}</div></section><section class="wrap section">${sectionTitle('X Payments')}<div class="payment-list">${p.payments.map(paymentCard).join('')||'<div class="empty">No payouts.</div>'}</div></section>${footer()}</main>`;}
+function profileTokenCard(t){
+  return `<a class="profile-token-card" href="#/token/${encodeURIComponent(t.mint||t.contract)}">
+    <div class="profile-token-image">${avatar(t.symbol||t.name,true,t.image_url)}</div>
+    <div class="profile-token-copy">
+      <span>${esc(t.platform||t.venue||'Token')} · ${esc(t.age||ago(t.created_at))}</span>
+      <strong>${esc(t.name||t.symbol||'Token')}</strong>
+      <small>${esc(t.symbol||'')}</small>
+    </div>
+    <div class="profile-token-sent">
+      <span>Sent</span>
+      <b>${fmtMoney(t.sent||0)}</b>
+    </div>
+    <div class="profile-token-stats">
+      <span>${fmtMc(t.market_cap_usd||t.mc||0)} <small>MC</small></span>
+      <span>${fmtMoney(t.owed||0)} <small>Owed</small></span>
+      <span>${t.permanent?'Permanent':'Pending'} <small>Route</small></span>
+    </div>
+  </a>`;
+}
+
+function profilePaymentCard(p,i){
+  const confirmed=['sent','claimed'].includes(p.status);
+  return `<button class="profile-payment-card expandable" data-expand="profile-payment-${i}">
+    <div class="profile-payment-main">
+      <div>
+        <span>${confirmed?'Paid':'Scheduled'}</span>
+        <strong>${fmtMoney(p.amount_usd||0)}</strong>
+      </div>
+      <div class="profile-payment-side">
+        <b class="token-status-pill">${esc(p.status||'queued')}</b>
+        <time>${esc(ago(p.sent_at||p.created_at))}</time>
+      </div>
+    </div>
+    <div class="profile-payment-meta">
+      <span>${esc(p.provider||'payout rail')}</span>
+      <span>${p.public_confirmation_url?'Public confirmation':'Ledger record'}</span>
+    </div>
+    <div class="details hidden">
+      <div><span>Provider reference</span><b class="token-detail-truncate">${esc(p.provider_ref||p.id||'—')}</b></div>
+      <div><span>Created</span><b>${esc(p.created_at||'—')}</b></div>
+      ${p.public_confirmation_url?`<div><span>Confirmation</span><b class="token-detail-truncate">${esc(p.public_confirmation_url)}</b></div>`:''}
+    </div>
+  </button>`;
+}
+
+async function profilePage(handle){
+  const p=await api(`/api/profiles/${encodeURIComponent(handle)}`);
+  const r=p.recipient||{};
+  const tokens=p.tokens||[];
+  const payments=p.payments||[];
+  const owed=tokens.reduce((n,t)=>n+Number(t.owed||0),0);
+  const earned=tokens.reduce((n,t)=>n+Number(t.earned||0),0);
+  const sent=tokens.reduce((n,t)=>n+Number(t.sent||0),0);
+  const top=tokens.slice().sort((a,b)=>Number(b.sent||0)-Number(a.sent||0))[0]||null;
+  const display=r.display_name||r.handle||handle;
+  const cleanHandle=String(r.handle||handle||'').replace(/^@/,'');
+  const xUrl=cleanHandle?`https://x.com/${encodeURIComponent(cleanHandle)}`:'';
+
+  if(r.opted_out){
+    return `<main class="profile-page-v1">
+      <section class="wrap profile-hidden-card">
+        <p class="eyebrow">X Profile</p>
+        <h1>This profile has opted out.</h1>
+        <p>Payments and public token listings for @${esc(cleanHandle)} are disabled in ${esc(state.brand.name)}.</p>
+        <a href="#/explore" class="btn-light">Back to Explore</a>
+      </section>
+      ${moneyFooter()}
+    </main>`;
+  }
+
+  return `<main class="profile-page-v1">
+    <section class="wrap profile-v1-hero">
+      <div class="profile-v1-person">
+        ${avatar(display,true,r.avatar_url||'')}
+        <div class="profile-v1-name">
+          <p>X Profile</p>
+          <h1>${esc(display)}</h1>
+          <span>@${esc(cleanHandle)}</span>
+        </div>
+        ${xUrl?`<a class="profile-x-link" href="${xUrl}" target="_blank" rel="noopener">View on X ↗</a>`:''}
+      </div>
+
+      ${r.bio?`<p class="profile-v1-bio">${esc(r.bio)}</p>`:''}
+
+      <div class="profile-v1-total">
+        <span>Total received</span>
+        <strong>${fmtMoney(p.received||0)}</strong>
+        <small>Confirmed payouts through the project ledger.</small>
+      </div>
+
+      <div class="profile-v1-stats">
+        <div><span>Tokens</span><b>${tokens.length}</b></div>
+        <div><span>Currently owed</span><b>${fmtMoney(owed)}</b></div>
+        <div><span>Total earned</span><b>${fmtMoney(earned)}</b></div>
+        <div><span>Token payments</span><b>${fmtMoney(sent)}</b></div>
+      </div>
+    </section>
+
+    ${top?`
+      <section class="wrap profile-featured">
+        <div class="profile-section-head">
+          <h2>Top token</h2>
+          <a href="#/token/${encodeURIComponent(top.mint||top.contract)}">Open →</a>
+        </div>
+        <a class="profile-featured-card" href="#/token/${encodeURIComponent(top.mint||top.contract)}">
+          <div class="profile-featured-image">${avatar(top.symbol||top.name,true,top.image_url)}</div>
+          <div>
+            <span>${esc(top.platform||top.venue||'Token')}</span>
+            <h3>${esc(top.name||top.symbol||'Token')}</h3>
+            <p>${esc(top.symbol||'')}</p>
+          </div>
+          <div class="profile-featured-money">
+            <span>Sent</span>
+            <strong>${fmtMoney(top.sent||0)}</strong>
+          </div>
+        </a>
+      </section>
+    `:''}
+
+    <section class="wrap profile-v1-section">
+      <div class="profile-section-head">
+        <h2>Tokens</h2>
+        <span>${tokens.length}</span>
+      </div>
+      <div class="profile-token-list">
+        ${tokens.length?tokens.map(profileTokenCard).join(''):tokenDetailEmpty('No visible tokens','Tokens naming this X account will appear here after registration.')}
+      </div>
+    </section>
+
+    <section class="wrap profile-v1-section">
+      <div class="profile-section-head">
+        <h2>X Payments</h2>
+        <span>${payments.length}</span>
+      </div>
+      <div class="profile-payment-list">
+        ${payments.length?payments.map(profilePaymentCard).join(''):tokenDetailEmpty('No payments yet','Confirmed payouts to this X account will appear here.')}
+      </div>
+    </section>
+
+    <section class="wrap profile-recipient-note">
+      <strong>Recipient, not endorsement</strong>
+      <p>Being named as the recipient of creator-fee distributions does not mean this X account created, approved, promoted or endorsed any token shown here.</p>
+    </section>
+
+    ${moneyFooter()}
+  </main>`;
+}
+
 function adminPage(){return `<main><section class="wrap launch-page"><p class="eyebrow">Internal</p><h1>Operations</h1><p class="lead">Run workers manually without restarting the server. The admin token stays in your browser session only.</p><form class="launch-form" id="adminForm"><label>Admin token<input id="adminToken" type="password" autocomplete="off"></label><div class="launch-actions"><button type="button" class="btn-light" data-admin-run="discovery">Run discovery</button><button type="button" class="btn-light" data-admin-run="claims">Run claims</button><button type="button" class="btn-light" data-admin-run="payouts">Run payouts</button></div></form><pre class="status-box" id="adminOutput">Ready.</pre></section>${footer()}</main>`;}
 function launchModal(){return `<div class="modal-bg hidden" id="launchModal"><div class="modal"><button class="modal-x" data-action="close-launch">×</button><p class="eyebrow">Launch</p><h2>Route creator fees</h2><p>Create the token on pump.fun, name a recipient in metadata, then permanently route 100% of creator fees to the configured treasury.</p><a class="modal-option" href="#/launch"><span class="option-icon">●</span><div><b>Launch / route token</b><small>Build and sign the fee-sharing transaction</small></div><span>→</span></a><a class="modal-option" href="#/docs"><span class="option-icon">⌘</span><div><b>Read integration docs</b><small>Indexer, claims, ledger and payouts</small></div><span>→</span></a></div></div>`;}
 function loadingPage(){return `<main><section class="wrap launch-page"><p class="eyebrow">Loading</p><h1>Syncing ledger…</h1></section></main>`;}
