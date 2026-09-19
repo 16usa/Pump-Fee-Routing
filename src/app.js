@@ -312,11 +312,75 @@ function homeMostPayments(h){
   </section>`;
 }
 
+function homeOffRampIcon(kind){
+  if(kind==='usd') return '<span class="home-off-icon home-off-usd">🇺🇸</span>';
+  if(kind==='x') return '<span class="home-off-icon home-off-x">$</span>';
+  if(kind==='provider') return '<span class="home-off-icon home-off-provider">●</span>';
+  return '<span class="home-off-icon home-off-sol">≋</span>';
+}
+
+function homeOffRampCard(x,i){
+  const received=Number(x.received_usd||0);
+  const native=Number(x.volume_native||0);
+  const pair=String(x.pair||'SOLUSD').toUpperCase();
+  const side=String(x.side||'sell').toLowerCase();
+  const status=String(x.status||'queued');
+  const provider=String(x.provider||'provider');
+  const amount=received>0?fmtMoney(received):`${fmtNum(native)} SOL`;
+  const isSwap=side==='sell'||side==='swap'||/swap/i.test(status);
+  const leftKind=received>0?'usd':'sol';
+  const rightKind=isSwap?(received>0?'x':'usd'):'provider';
+  const subtitle=isSwap
+    ? (received>0?`USD sent to payout rail`:`swapped ${fmtNum(native)} SOL`)
+    : `${received>0?'USD':'SOL'} sent to ${provider}`;
+  return `<button class="home-off-card expandable" data-expand="home-off-${i}">
+    <div class="home-off-main">
+      <div class="home-off-copy">
+        <strong>${esc(amount)}</strong>
+        <span>${esc(subtitle)}</span>
+      </div>
+      <div class="home-off-route">
+        ${homeOffRampIcon(leftKind)}
+        <span class="home-off-arrow">${isSwap?'⇄':'→'}</span>
+        ${homeOffRampIcon(rightKind)}
+      </div>
+      <div class="home-off-meta">
+        <span class="home-off-status ${esc(status.toLowerCase().replace(/[^a-z0-9]+/g,'-'))}">${esc(status)}</span>
+        <time>${esc(ago(x.filled_at||x.created_at))}</time>
+      </div>
+      <span class="chev">⌄</span>
+    </div>
+    <div class="tx-details hidden">
+      <div><span>Provider</span><b>${esc(provider)}</b></div>
+      <div><span>Pair</span><b>${esc(pair)}</b></div>
+      <div><span>Side</span><b>${esc(side)}</b></div>
+      <div><span>Reference</span><b>${esc(x.provider_ref||x.id||'')}</b></div>
+    </div>
+  </button>`;
+}
+
 function homeOffRamp(h){
-  const exchanges=h.money?.exchange||[];
-  return `<section class="wrap section">${sectionTitle('Off-ramp')}
-    <div class="tabs small-tabs"><button class="active">All</button><button disabled>Deposits</button><button disabled>Swaps</button><button disabled>ACH</button></div>
-    <div class="tx-list">${exchanges.length?exchanges.slice(0,6).map(txCard).join(''):'<div class="empty">No off-ramp activity yet.</div>'}</div>
+  const exchanges=(h.money?.exchange||[]).slice(0,6);
+  return `<section class="wrap section home-off-ramp">
+    <div class="home-off-head">
+      <h2>Off-ramp</h2>
+      <div class="home-off-pager"><button disabled>‹</button><span>1</span><button disabled>›</button></div>
+    </div>
+    <div class="home-off-tabs">
+      <button class="active">All</button>
+      <button disabled>Deposits</button>
+      <button disabled>Swaps</button>
+      <button disabled>ACH</button>
+    </div>
+    <div class="home-off-list">
+      ${exchanges.length
+        ? exchanges.map(homeOffRampCard).join('')
+        : `<div class="home-off-empty">
+            <div class="home-off-empty-route">${homeOffRampIcon('sol')}<span>→</span>${homeOffRampIcon('provider')}</div>
+            <strong>No off-ramp activity yet.</strong>
+            <span>Confirmed exchange and payout-rail events will appear here.</span>
+          </div>`}
+    </div>
   </section>`;
 }
 
