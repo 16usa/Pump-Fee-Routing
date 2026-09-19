@@ -1258,7 +1258,80 @@ function paidPage(){
     ${moneyFooter()}
   </main>`;
 }
-function optOutPage(){return `<main><section class="wrap launch-page"><p class="eyebrow">Opt out</p><h1>Stop payments</h1><p class="lead">Authenticate the X account that owns the handle. Opting out stops payouts, hides tokens naming the handle, blocks it from launch selection and diverts future unpaid accounting to the protocol cut.</p><a class="btn-light full center-button" href="/api/auth/x/start">Sign in with X</a><div class="status-box">X OAuth requires X_CLIENT_ID and X_REDIRECT_URI in the server environment.</div></section>${footer()}</main>`;}
+function optOutPage(){
+  const raw=(location.hash||'').split('?')[1]||'';
+  const qs=new URLSearchParams(raw);
+  const done=qs.get('done')||'';
+
+  return `<main class="optout-page-v1">
+    <section class="wrap optout-hero">
+      <h1>Opt out of ${esc(state.brand.name)}</h1>
+      <p>Sign in with X to stop payments to your account and keep tokens that name you off this site.</p>
+    </section>
+
+    <section class="wrap optout-card">
+      <p class="eyebrow">Opt out</p>
+      <h2>Turn off everything tied to your handle</h2>
+      <p class="optout-lead">${esc(state.brand.name)} pays creator-fee distributions to the X account a token names. If that is you and you do not want it, opting out disables the recipient flow for your handle.</p>
+
+      <div class="optout-effects">
+        <div><b>1</b><section><h3>Payments stop</h3><p>We will not send future X Money-style payouts to your account.</p></section></div>
+        <div><b>2</b><section><h3>Tokens naming you are hidden</h3><p>They are removed from Explore, Payments, search and your public profile views.</p></section></div>
+        <div><b>3</b><section><h3>Unpaid fees move to protocol accounting</h3><p>Future unpaid recipient accounting can be diverted to the protocol allocation and pending $PAID buyback ledger.</p></section></div>
+        <div><b>4</b><section><h3>Launches here cannot pick you</h3><p>The launch flow rejects a recipient handle that has opted out.</p></section></div>
+      </div>
+
+      <div class="optout-limit">
+        <h3>What we cannot stop</h3>
+        <p>Anyone can still create a token on third-party launch venues using your handle or name. We do not control those venues. We can stop listing it here and stop paying your handle from it.</p>
+      </div>
+
+      <p class="optout-auth-note">Signing in verifies that the request comes from the X account owner. The existing OAuth flow reads the authenticated X identity for this opt-out action.</p>
+    </section>
+
+    <section class="wrap optout-status-card">
+      ${done ? `
+        <div class="optout-success">
+          <div class="optout-success-icon">✓</div>
+          <div>
+            <span>Opted out</span>
+            <h2>@${esc(done)}</h2>
+            <p>Payments and launch selection for this handle are now disabled by the backend.</p>
+          </div>
+        </div>
+        <div class="optout-check-grid">
+          <div><span>Your X account</span><b>@${esc(done)}</b></div>
+          <div><span>X Money payments</span><b>Stopped</b></div>
+          <div><span>Tokens shown here</span><b>Hidden</b></div>
+          <div><span>Selectable at launch</span><b>No</b></div>
+        </div>
+      ` : `
+        <div class="optout-checking">
+          <span>Checking</span>
+          <h2>Your X account</h2>
+          <div class="optout-check-grid">
+            <div><span>X Money payments</span><b>—</b></div>
+            <div><span>Tokens shown here</span><b>—</b></div>
+            <div><span>Selectable at launch</span><b>—</b></div>
+            <div><span>Unpaid fees</span><b>—</b></div>
+          </div>
+        </div>
+
+        <a class="btn-light full center-button optout-x-button" href="/api/auth/x/start">Sign in with X</a>
+        <div class="status-box optout-env-note">X OAuth must be configured on the server before sign-in can complete.</div>
+      `}
+
+      <div class="optout-progress">
+        <div class="${done?'done':'active'}"><b>1</b><span>Sign in with X</span></div>
+        <div class="${done?'done':''}"><b>2</b><span>Confirm</span></div>
+        <div class="${done?'done':''}"><b>3</b><span>Opted out</span></div>
+      </div>
+    </section>
+
+    ${moneyFooter()}
+  </main>`;
+}
+
 async function tokenPage(mint){const t=await api(`/api/tokens/${encodeURIComponent(mint)}`);return `<main><section class="wrap money-hero token-hero"><p class="back"><a href="#/explore">↖ Explore</a></p><div class="profile-row">${avatar(t.symbol,true,t.image_url)}<div><b>${esc(t.name)} ${esc(t.symbol)}</b><span>@${esc(t.recipient_handle)}</span></div></div><div class="money-stats"><div><span>Market cap</span><b>${fmtMc(t.market_cap_usd)}</b></div><div><span>Sent</span><b>${fmtMoney(t.sent)}</b></div><div><span>Owed</span><b>${fmtMoney(t.owed)}</b></div><div><span>Fee route</span><b>${t.permanent?'Permanent':'Pending'} · ${fmtNum(t.fee_share_bps/100)}%</b></div></div><code class="token-mint">${esc(t.mint)}</code></section><section class="wrap section">${sectionTitle('Claims')}<div class="tx-list">${(t.claims||[]).map((c,i)=>`<div class="rank-card"><div><b>${fmtNum(c.gross_native)} SOL</b><span>${esc(c.tx_signature||c.id)}</span></div><strong>${fmtMoney(c.gross_usd)}</strong></div>`).join('')||'<div class="empty">No claims yet.</div>'}</div></section><section class="wrap section">${sectionTitle('Payments')}<div class="payment-list">${(t.payouts||[]).map((p,i)=>paymentCard({...p,amount_usd:p.item_amount_usd,mints:t.mint},i)).join('')||'<div class="empty">No payments yet.</div>'}</div></section>${footer()}</main>`;}
 async function profilePage(handle){const p=await api(`/api/profiles/${encodeURIComponent(handle)}`);return `<main><section class="wrap money-hero token-hero"><p class="back"><a href="#/">↖ Home</a></p><div class="profile-row">${avatar(p.recipient.display_name||p.recipient.handle,true,p.recipient.avatar_url)}<div><b>${esc(p.recipient.display_name||p.recipient.handle)}</b><span>@${esc(p.recipient.handle)}</span></div></div><strong class="money-total">${fmtMoney(p.received)}</strong><span>Received</span></section><section class="wrap section">${sectionTitle('Tokens')}<div class="token-grid">${p.tokens.map(t=>tokenCard(t,true)).join('')||'<div class="empty">No visible tokens.</div>'}</div></section><section class="wrap section">${sectionTitle('X Payments')}<div class="payment-list">${p.payments.map(paymentCard).join('')||'<div class="empty">No payouts.</div>'}</div></section>${footer()}</main>`;}
 function adminPage(){return `<main><section class="wrap launch-page"><p class="eyebrow">Internal</p><h1>Operations</h1><p class="lead">Run workers manually without restarting the server. The admin token stays in your browser session only.</p><form class="launch-form" id="adminForm"><label>Admin token<input id="adminToken" type="password" autocomplete="off"></label><div class="launch-actions"><button type="button" class="btn-light" data-admin-run="discovery">Run discovery</button><button type="button" class="btn-light" data-admin-run="claims">Run claims</button><button type="button" class="btn-light" data-admin-run="payouts">Run payouts</button></div></form><pre class="status-box" id="adminOutput">Ready.</pre></section>${footer()}</main>`;}

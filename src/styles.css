@@ -2897,3 +2897,62 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   .launch-form-v1{gap:15px}.launch-field label,.launch-form-v1>label{font-size:10px}.launch-form-v1 input,.launch-success-v1 input{height:43px;font-size:11px}.launch-form-v1 textarea{min-height:92px;font-size:11px}.launch-two{gap:8px}.launch-help{font-size:9px}
   .launch-routing-block{padding:14px}.launch-config-grid{gap:7px}.launch-preview-card{position:static;border-radius:15px}.launch-preview-image{height:166px}.launch-page-v1 .money-footer{margin-top:58px}
 }
+
+/* optout-page-v1-reference */
+.optout-page-v1{padding-top:54px;background:#000;color:#fff}
+.optout-page-v1 .wrap{width:min(100% - 32px,720px)}
+.optout-hero{padding:10px 0 42px}
+.optout-hero h1{margin:0;font-size:52px;line-height:.98;letter-spacing:-.05em;font-weight:560}
+.optout-hero p{max-width:650px;margin:20px 0 0;color:#8a8a8a;font-size:15px;line-height:1.55}
+.optout-card,.optout-status-card{border:1px solid #292929;border-radius:18px;background:#101010}
+.optout-card{padding:26px}
+.optout-card>.eyebrow{margin:0 0 12px;color:#666;font-size:10px}
+.optout-card>h2{margin:0;font-size:27px;letter-spacing:-.035em;font-weight:550}
+.optout-lead{margin:14px 0 0;color:#878787;font-size:13px;line-height:1.55}
+.optout-effects{display:grid;gap:0;margin-top:28px;border-top:1px solid #242424}
+.optout-effects>div{display:grid;grid-template-columns:34px 1fr;gap:14px;padding:20px 0;border-bottom:1px solid #242424}
+.optout-effects>b,.optout-effects>div>b{width:29px;height:29px;display:grid;place-items:center;border:1px solid #303030;border-radius:50%;color:#777;font-size:9px}
+.optout-effects h3{margin:1px 0 7px;font-size:16px;font-weight:550}
+.optout-effects p{margin:0;color:#818181;font-size:11px;line-height:1.5}
+.optout-limit{margin-top:24px;padding:18px;border:1px solid #272727;border-radius:13px;background:#0c0c0c}
+.optout-limit h3{margin:0 0 8px;font-size:14px}
+.optout-limit p{margin:0;color:#7b7b7b;font-size:10px;line-height:1.5}
+.optout-auth-note{margin:22px 0 0;color:#666;font-size:10px;line-height:1.5}
+.optout-status-card{margin-top:18px;padding:24px}
+.optout-checking>span,.optout-success span{color:#696969;font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+.optout-checking h2,.optout-success h2{margin:7px 0 18px;font-size:24px;font-weight:550}
+.optout-check-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.optout-check-grid>div{min-height:72px;display:grid;align-content:space-between;gap:12px;padding:12px;border:1px solid #282828;border-radius:11px;background:#0b0b0b}
+.optout-check-grid span{color:#666;font-size:9px}
+.optout-check-grid b{font-size:12px;font-weight:550}
+.optout-x-button{margin-top:18px;min-height:48px}
+.optout-env-note{margin-top:12px}
+.optout-progress{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:22px}
+.optout-progress>div{display:grid;grid-template-columns:24px 1fr;align-items:center;gap:8px;padding-top:14px;border-top:1px solid #272727;color:#626262}
+.optout-progress b{width:23px;height:23px;display:grid;place-items:center;border:1px solid #303030;border-radius:50%;font-size:8px}
+.optout-progress span{font-size:9px}
+.optout-progress .active,.optout-progress .done{color:#fff}
+.optout-progress .done b{background:#fff;color:#000;border-color:#fff}
+.optout-success{display:grid;grid-template-columns:42px 1fr;gap:13px;align-items:start}
+.optout-success-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:50%;background:#fff;color:#000;font-weight:800}
+.optout-success p{margin:0;color:#7d7d7d;font-size:10px;line-height:1.5}
+.optout-page-v1 .money-footer{margin-top:68px}
+@media(max-width:640px){
+  .optout-page-v1{padding-top:42px}
+  .optout-page-v1 .wrap{width:calc(100% - 32px)}
+  .optout-hero{padding:6px 0 32px}
+  .optout-hero h1{font-size:40px}
+  .optout-hero p{margin-top:17px;font-size:12px}
+  .optout-card,.optout-status-card{border-radius:15px}
+  .optout-card{padding:20px}
+  .optout-card>h2{font-size:22px}
+  .optout-lead{font-size:11px}
+  .optout-effects>div{grid-template-columns:30px 1fr;gap:11px;padding:17px 0}
+  .optout-effects h3{font-size:14px}
+  .optout-effects p{font-size:10px}
+  .optout-check-grid{grid-template-columns:1fr}
+  .optout-status-card{padding:18px}
+  .optout-progress{grid-template-columns:1fr}
+  .optout-progress>div{border-top:0;padding-top:0}
+  .optout-page-v1 .money-footer{margin-top:54px}
+}
