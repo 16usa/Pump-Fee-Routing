@@ -793,7 +793,97 @@ function docsPage(){return `<main><article class="wrap doc"><p class="eyebrow">D
 function docSection(n,title,body){return `<section class="doc-section"><h2><span>${n}</span>${esc(title)}</h2>${body}</section>`;}
 function legalPage(){return `<main><article class="wrap doc legal-doc"><p class="eyebrow">Legal</p><h1>Terms and disclosures</h1><p class="lead">Replace these placeholders with terms reviewed for your actual operator, jurisdictions, launch workflow, token mechanics and payout providers before production launch.</p>${docSection('1','Independent service','<p>This project is not affiliated with X, X Money, pump.fun, Kraken or any other third-party provider merely because it integrates with or references them.</p>')}${docSection('2','No endorsement','<p>A token naming an X handle must not be presented as an endorsement, partnership or approval by that account.</p>')}${docSection('3','Third-party rails','<p>Launchpads, wallets, exchanges, social networks and payout providers have their own terms and availability rules.</p>')}</article>${footer()}</main>`;}
 function launchPage(){const treasury=state.brand.treasuryAddress||'';return `<main><section class="wrap launch-page"><p class="eyebrow">Launch</p><h1>Route a token</h1><p class="lead">Create the recipient line, launch the token on pump.fun, then make the creator-fee share permanent at 100% to this treasury.</p><form class="launch-form" id="launchForm"><label>X handle<input id="launchHandle" placeholder="@recipient" required></label><label>Creator wallet<input id="creatorPubkey" placeholder="Connect wallet or paste public key"></label><label>Token mint<input id="launchMint" placeholder="Paste mint after the token exists"></label><div class="config-box"><span>Treasury</span><b class="mono-small">${esc(treasury||'Configure TREASURY_ADDRESS')}</b><span>Fee share</span><b>100%</b><span>Recipient / protocol accounting</span><b>80% / 20%</b></div><button class="btn-light full" type="submit">Create launch intent</button></form><div class="success-card hidden" id="launchSuccess"><div class="success-icon">✓</div><h2>Launch intent ready</h2><p>Put this exact line in the token description:</p><code id="descriptionLine"></code><p class="muted">After the mint exists, connect the creator wallet and route the fee-sharing config.</p><div class="launch-actions"><button class="btn-light" data-action="connect-wallet">Connect Solana wallet</button><button class="btn-light" data-action="route-fees">Route fees 100%</button><button class="text-button" data-action="verify-mint">Verify registration</button></div><div id="launchStatus" class="status-box"></div></div></section>${footer()}</main>`;}
-function capitalFlowPage(){const m=state.money||{};return `<main><article class="wrap doc"><p class="eyebrow">Protocol</p><h1>Capital flow</h1><p class="lead">Every confirmed on-chain claim creates two ledger paths: recipient credit and protocol cut.</p>${docSection('1','Creator fees arrive','<p>Eligible pump.fun sharing configs distribute creator fees to the treasury. The claim worker confirms the transaction before accounting for it.</p>')}${docSection('2','Recipient share',`<p>${fmtMoney(m.totalOwed||0)} is currently owed across recipient ledgers. Completed payouts total ${fmtMoney(m.totalPaid||0)}.</p>`)}${docSection('3','Protocol cut',`<p>${fmtMoney(m.protocolPending||0)} is currently recorded as pending protocol-cut / buyback accounting.</p>`)}${docSection('4','Exchange orders',`<div class="tx-list">${(m.exchange||[]).map(txCard).join('')||'<div class="empty">No exchange orders recorded yet.</div>'}</div>`)}</article>${footer()}</main>`;}
+function capitalFlowStep(n,title,body,kind=''){
+  return `<section class="capital-flow-step ${kind}">
+    <div class="capital-flow-step-index">${esc(n)}</div>
+    <div>
+      <h2>${esc(title)}</h2>
+      <div class="capital-flow-step-copy">${body}</div>
+    </div>
+  </section>`;
+}
+
+function capitalFlowPage(){
+  const m=state.money||{};
+  const exchanges=m.exchange||[];
+  const offRamp=exchanges.filter(x=>!isOnRampOrder(x)).slice(0,8);
+
+  return `<main class="capital-flow-page">
+    <section class="wrap capital-flow-hero">
+      <p class="eyebrow">Protocol</p>
+      <h1>Capital flow</h1>
+      <p class="capital-flow-lead">Creator fees from pump.fun are claimed on a schedule, converted through the configured exchange rail, and recorded for recipient payout. The protocol share covers execution costs and the project’s buyback / burn accounting.</p>
+    </section>
+
+    <section class="wrap capital-flow-pons">
+      <h2>Pons fee flow</h2>
+      <div class="capital-flow-pons-grid">
+        <div><b>1</b><span>Native fees accrue and are claimed into the configured treasury.</span></div>
+        <div><b>2</b><span>When Pons support is enabled, bridged assets can be converted onto the Solana payout rail.</span></div>
+        <div><b>3</b><span>The recipient allocation is converted to dollars through the configured exchange and payout provider.</span></div>
+        <div><b>4</b><span>Recipient and protocol allocations remain separate in the ledger from claim through payout.</span></div>
+      </div>
+      <p>Accrued fees, claimed funds, conversion and completed payouts are separate stages. Token-denominated fees remain held until the configured rail can process them.</p>
+    </section>
+
+    <section class="wrap capital-flow-feed">
+      <p class="capital-flow-delay">Showing recent verified transfers while the feed refreshes.</p>
+      <div class="capital-flow-feed-head">
+        <h2>Off-ramp</h2>
+        <div class="money-pager"><button disabled>‹</button><span>1</span><button disabled>›</button></div>
+      </div>
+      <div class="money-filter-tabs capital-flow-tabs">
+        <button class="active">All</button>
+        <button disabled>Deposits</button>
+        <button disabled>Swaps</button>
+        <button disabled>ACH</button>
+      </div>
+      <div class="capital-flow-transfer-list">
+        ${offRamp.length
+          ? offRamp.map(moneyOffRampCard).join('')
+          : `<div class="capital-flow-empty">
+              <div class="capital-flow-empty-route">${moneyRoundIcon('≋','sol')}<b>→</b>${moneyRoundIcon('$','payout')}</div>
+              <strong>No verified transfers yet.</strong>
+              <span>Claim, exchange and payout events will appear here when they are recorded.</span>
+            </div>`}
+      </div>
+    </section>
+
+    <section class="wrap capital-flow-story">
+      ${capitalFlowStep('01','A token on pump.fun points its fees at us',
+        `<p>At launch, the token routes its creator-fee share to the configured treasury and locks that destination. The indexer verifies the permanent route before the token becomes payable.</p>`,
+        'pump')}
+
+      ${capitalFlowStep('02','The exchange rail converts it to dollars',
+        `<p>Confirmed recipient funds can be converted through the configured exchange adapter. Conversions and payouts are recorded separately so the ledger can distinguish what is claimed, converted, sent and still owed.</p>`,
+        'exchange')}
+
+      ${capitalFlowStep('03','The protocol share funds execution and buyback accounting',
+        `<p>The protocol allocation is tracked separately from recipient balances. Execution costs and buyback / burn activity can be reconciled back to the originating fee events instead of being mixed into recipient payouts.</p>`,
+        'protocol')}
+
+      ${capitalFlowStep('04','USD reaches the configured payout balance',
+        `<p>Converted recipient funds move onto the configured payout rail and remain identifiable as recipient liabilities until a confirmed payout is recorded.</p>`,
+        'balance')}
+
+      ${capitalFlowStep('05','The recipient receives the distribution',
+        `<p>Each completed payout is linked to the recipient and the tokens that funded it. The public product can show the confirmed amount, recipient, status and reference without exposing server secrets.</p>`,
+        'recipient')}
+
+      ${capitalFlowStep('06','Payout operations',
+        `<p>The current build keeps accounting and payout execution behind explicit provider configuration and read-only safeguards. Live sending is only available when the corresponding production adapters and secrets are enabled.</p>
+         <div class="capital-flow-ops">
+           <div><span>Recipient share</span><b>${fmtNum((state.brand.recipientShareBps||8000)/100)}%</b></div>
+           <div><span>Protocol share</span><b>${fmtNum((state.brand.protocolShareBps||2000)/100)}%</b></div>
+           <div><span>Currently owed</span><b>${fmtMoney(m.totalOwed||0)}</b></div>
+           <div><span>Total paid</span><b>${fmtMoney(m.totalPaid||0)}</b></div>
+         </div>`,
+        'operations')}
+    </section>
+
+    ${moneyFooter()}
+  </main>`;
+}
 function paidPage(){const m=state.money||{};return `<main><article class="wrap doc"><p class="eyebrow">Protocol</p><h1>Protocol cut</h1><p class="lead">The default accounting split is 80% recipient / 20% protocol. Pending protocol-cut balance: ${fmtMoney(m.protocolPending||0)}.</p>${docSection('1','Source','<p>Every confirmed claim records the protocol share separately from recipient balances, preserving a direct link back to the fee event.</p>')}${docSection('2','Buyback adapter','<p>The ledger and worker hooks are present. A production buy-and-burn transaction should only be enabled after the project token mint and execution policy are finalized.</p>')}</article>${footer()}</main>`;}
 function optOutPage(){return `<main><section class="wrap launch-page"><p class="eyebrow">Opt out</p><h1>Stop payments</h1><p class="lead">Authenticate the X account that owns the handle. Opting out stops payouts, hides tokens naming the handle, blocks it from launch selection and diverts future unpaid accounting to the protocol cut.</p><a class="btn-light full center-button" href="/api/auth/x/start">Sign in with X</a><div class="status-box">X OAuth requires X_CLIENT_ID and X_REDIRECT_URI in the server environment.</div></section>${footer()}</main>`;}
 async function tokenPage(mint){const t=await api(`/api/tokens/${encodeURIComponent(mint)}`);return `<main><section class="wrap money-hero token-hero"><p class="back"><a href="#/explore">↖ Explore</a></p><div class="profile-row">${avatar(t.symbol,true,t.image_url)}<div><b>${esc(t.name)} ${esc(t.symbol)}</b><span>@${esc(t.recipient_handle)}</span></div></div><div class="money-stats"><div><span>Market cap</span><b>${fmtMc(t.market_cap_usd)}</b></div><div><span>Sent</span><b>${fmtMoney(t.sent)}</b></div><div><span>Owed</span><b>${fmtMoney(t.owed)}</b></div><div><span>Fee route</span><b>${t.permanent?'Permanent':'Pending'} · ${fmtNum(t.fee_share_bps/100)}%</b></div></div><code class="token-mint">${esc(t.mint)}</code></section><section class="wrap section">${sectionTitle('Claims')}<div class="tx-list">${(t.claims||[]).map((c,i)=>`<div class="rank-card"><div><b>${fmtNum(c.gross_native)} SOL</b><span>${esc(c.tx_signature||c.id)}</span></div><strong>${fmtMoney(c.gross_usd)}</strong></div>`).join('')||'<div class="empty">No claims yet.</div>'}</div></section><section class="wrap section">${sectionTitle('Payments')}<div class="payment-list">${(t.payouts||[]).map((p,i)=>paymentCard({...p,amount_usd:p.item_amount_usd,mints:t.mint},i)).join('')||'<div class="empty">No payments yet.</div>'}</div></section>${footer()}</main>`;}
