@@ -1420,7 +1420,182 @@ function optOutPage(){
   </main>`;
 }
 
-async function tokenPage(mint){const t=await api(`/api/tokens/${encodeURIComponent(mint)}`);return `<main><section class="wrap money-hero token-hero"><p class="back"><a href="#/explore">↖ Explore</a></p><div class="profile-row">${avatar(t.symbol,true,t.image_url)}<div><b>${esc(t.name)} ${esc(t.symbol)}</b><span>@${esc(t.recipient_handle)}</span></div></div><div class="money-stats"><div><span>Market cap</span><b>${fmtMc(t.market_cap_usd)}</b></div><div><span>Sent</span><b>${fmtMoney(t.sent)}</b></div><div><span>Owed</span><b>${fmtMoney(t.owed)}</b></div><div><span>Fee route</span><b>${t.permanent?'Permanent':'Pending'} · ${fmtNum(t.fee_share_bps/100)}%</b></div></div><code class="token-mint">${esc(t.mint)}</code></section><section class="wrap section">${sectionTitle('Claims')}<div class="tx-list">${(t.claims||[]).map((c,i)=>`<div class="rank-card"><div><b>${fmtNum(c.gross_native)} SOL</b><span>${esc(c.tx_signature||c.id)}</span></div><strong>${fmtMoney(c.gross_usd)}</strong></div>`).join('')||'<div class="empty">No claims yet.</div>'}</div></section><section class="wrap section">${sectionTitle('Payments')}<div class="payment-list">${(t.payouts||[]).map((p,i)=>paymentCard({...p,amount_usd:p.item_amount_usd,mints:t.mint},i)).join('')||'<div class="empty">No payments yet.</div>'}</div></section>${footer()}</main>`;}
+function tokenDetailClaimCard(c,i){
+  return `<button class="token-detail-event expandable" data-expand="token-claim-${i}">
+    <div class="token-event-main">
+      <div>
+        <span>Claimed</span>
+        <strong>${fmtNum(c.gross_native||0)} ${esc(c.native_symbol||'SOL')}</strong>
+      </div>
+      <div class="token-event-value">
+        <b>${fmtMoney(c.gross_usd||0)}</b>
+        <time>${esc(ago(c.confirmed_at||c.created_at))}</time>
+      </div>
+    </div>
+    <div class="token-event-meta">
+      <span>Recipient ${fmtMoney(c.recipient_usd||0)}</span>
+      <span>Protocol ${fmtMoney(c.protocol_usd||0)}</span>
+      <span class="token-status-pill">${esc(c.status||'confirmed')}</span>
+    </div>
+    <div class="details hidden">
+      <div><span>Transaction</span><b class="token-detail-truncate">${esc(c.tx_signature||c.id||'—')}</b></div>
+      <div><span>SOL price</span><b>${fmtMoney(c.native_usd_price||0)}</b></div>
+    </div>
+  </button>`;
+}
+
+function tokenDetailPaymentCard(p,i,handle){
+  const amount=Number(p.item_amount_usd??p.amount_usd??0);
+  return `<button class="token-detail-event expandable" data-expand="token-payment-${i}">
+    <div class="token-event-main">
+      <div>
+        <span>Payment to @${esc(handle||p.recipient_handle||'recipient')}</span>
+        <strong>${fmtMoney(amount)}</strong>
+      </div>
+      <div class="token-event-value">
+        <span class="token-status-pill">${esc(p.status||'queued')}</span>
+        <time>${esc(ago(p.sent_at||p.created_at))}</time>
+      </div>
+    </div>
+    <div class="token-event-meta">
+      <span>${esc(p.provider||'payout rail')}</span>
+      <span>${p.public_confirmation_url?'Public confirmation':'Ledger record'}</span>
+    </div>
+    <div class="details hidden">
+      <div><span>Provider reference</span><b class="token-detail-truncate">${esc(p.provider_ref||p.id||'—')}</b></div>
+      <div><span>Created</span><b>${esc(p.created_at||'—')}</b></div>
+    </div>
+  </button>`;
+}
+
+function tokenDetailEmpty(title,copy){
+  return `<div class="token-detail-empty"><strong>${esc(title)}</strong><span>${esc(copy)}</span></div>`;
+}
+
+async function tokenPage(mint){
+  const t=await api(`/api/tokens/${encodeURIComponent(mint)}`);
+  const recipient=moneyProfile(t.recipient_handle)||{};
+  const chain=t.chain||null;
+  const recipientPct=fmtNum((state.brand.recipientShareBps||8000)/100);
+  const protocolPct=fmtNum((state.brand.protocolShareBps||2000)/100);
+  const routeGood=!!t.permanent && Number(t.fee_share_bps||0)>=10000;
+  const pumpUrl=t.venue==='pump'?`https://pump.fun/coin/${encodeURIComponent(t.mint)}`:'';
+  const totalClaims=(t.claims||[]).reduce((n,c)=>n+Number(c.gross_usd||0),0);
+
+  return `<main class="token-detail-page">
+    <section class="wrap token-detail-breadcrumb">
+      <a href="#/explore">← Explore</a>
+      <span>${esc(t.platform||t.venue||'Token')}</span>
+    </section>
+
+    <section class="wrap token-detail-hero">
+      <div class="token-detail-cover">
+        ${avatar(t.symbol||t.name,true,t.image_url)}
+      </div>
+
+      <div class="token-detail-identity">
+        <div class="token-detail-name-row">
+          <div>
+            <p>${esc(t.platform||t.venue||'Token')} · ${esc(t.age||'')}</p>
+            <h1>${esc(t.name||t.symbol||'Token')}</h1>
+            <span>${esc(t.symbol||'')}</span>
+          </div>
+          ${pumpUrl?`<a class="token-detail-external" href="${pumpUrl}" target="_blank" rel="noopener">Open on Pump ↗</a>`:''}
+        </div>
+
+        <a class="token-detail-recipient" href="#/profile/${encodeURIComponent(t.recipient_handle||'')}">
+          ${avatar(recipient.display_name||t.recipient_handle||'X',true,recipient.avatar_url||'')}
+          <div><span>X Money sent to</span><b>@${esc(t.recipient_handle||'—')}</b></div>
+          <i>→</i>
+        </a>
+      </div>
+
+      <div class="token-detail-money">
+        <div class="token-detail-primary">
+          <span>Total sent</span>
+          <strong>${fmtMoney(t.sent||0)}</strong>
+        </div>
+        <div><span>Currently owed</span><b>${fmtMoney(t.owed||0)}</b></div>
+        <div><span>Total earned</span><b>${fmtMoney(t.earned||0)}</b></div>
+        <div><span>Market cap</span><b>${fmtMc(t.market_cap_usd||0)}</b></div>
+      </div>
+    </section>
+
+    <section class="wrap token-detail-grid">
+      <div class="token-detail-panel token-route-panel">
+        <div class="token-detail-panel-head">
+          <div><span>Fee route</span><h2>${routeGood?'Verified':'Pending verification'}</h2></div>
+          <span class="token-route-badge ${routeGood?'good':''}">${routeGood?'Permanent':'Pending'}</span>
+        </div>
+
+        <div class="token-route-meter">
+          <div style="width:${Math.min(100,Math.max(0,Number(t.fee_share_bps||0)/100))}%"></div>
+        </div>
+
+        <div class="token-route-facts">
+          <div><span>Creator fees routed</span><b>${fmtNum(Number(t.fee_share_bps||0)/100)}%</b></div>
+          <div><span>Recipient share</span><b>${recipientPct}%</b></div>
+          <div><span>Protocol share</span><b>${protocolPct}%</b></div>
+          <div><span>Venue</span><b>${esc(t.platform||t.venue||'—')}</b></div>
+        </div>
+
+        <div class="token-route-addresses">
+          <div><span>Token mint</span><code>${esc(t.mint)}</code></div>
+          <div><span>Treasury</span><code>${esc(state.brand.treasuryAddress||'Not configured')}</code></div>
+        </div>
+      </div>
+
+      <div class="token-detail-panel token-chain-panel">
+        <div class="token-detail-panel-head">
+          <div><span>On-chain state</span><h2>${chain?'Indexed':'Waiting for index'}</h2></div>
+          <span class="token-route-badge ${chain?'good':''}">${chain?'Live':'—'}</span>
+        </div>
+
+        ${chain?`
+          <div class="token-chain-facts">
+            <div><span>Claimable now</span><b>${fmtMoney(chain.gross_unclaimed_usd||t.claimable_usd||0)}</b></div>
+            <div><span>Recipient unclaimed</span><b>${fmtMoney(chain.recipient_unclaimed_usd||0)}</b></div>
+            <div><span>Protocol unclaimed</span><b>${fmtMoney(chain.protocol_unclaimed_usd||0)}</b></div>
+            <div><span>Can distribute</span><b>${chain.can_distribute?'Yes':'Not yet'}</b></div>
+            <div><span>Graduated</span><b>${chain.is_graduated?'Yes':'No'}</b></div>
+            <div><span>Verified slot</span><b>${esc(chain.verified_slot??'—')}</b></div>
+          </div>
+          <p class="token-indexed-at">Indexed ${esc(ago(chain.indexed_at||t.chain_indexed_at))}</p>
+        `:tokenDetailEmpty('No active chain state yet','The next successful discovery pass will populate verified fee-routing state.')}
+      </div>
+    </section>
+
+    ${t.description?`
+      <section class="wrap token-detail-section">
+        <div class="token-detail-section-head"><h2>About</h2></div>
+        <p class="token-detail-description">${esc(t.description)}</p>
+      </section>
+    `:''}
+
+    <section class="wrap token-detail-section">
+      <div class="token-detail-section-head">
+        <h2>Claims</h2>
+        <span>${(t.claims||[]).length} records · ${fmtMoney(totalClaims)}</span>
+      </div>
+      <div class="token-detail-events">
+        ${(t.claims||[]).length?(t.claims||[]).map(tokenDetailClaimCard).join(''):tokenDetailEmpty('No claims yet','Confirmed creator-fee claims will appear here.')}
+      </div>
+    </section>
+
+    <section class="wrap token-detail-section">
+      <div class="token-detail-section-head">
+        <h2>Payments</h2>
+        <span>${(t.payouts||[]).length} records</span>
+      </div>
+      <div class="token-detail-events">
+        ${(t.payouts||[]).length?(t.payouts||[]).map((p,i)=>tokenDetailPaymentCard(p,i,t.recipient_handle)).join(''):tokenDetailEmpty('No payments yet','Confirmed recipient payouts funded by this token will appear here.')}
+      </div>
+    </section>
+
+    ${moneyFooter()}
+  </main>`;
+}
+
 async function profilePage(handle){const p=await api(`/api/profiles/${encodeURIComponent(handle)}`);return `<main><section class="wrap money-hero token-hero"><p class="back"><a href="#/">↖ Home</a></p><div class="profile-row">${avatar(p.recipient.display_name||p.recipient.handle,true,p.recipient.avatar_url)}<div><b>${esc(p.recipient.display_name||p.recipient.handle)}</b><span>@${esc(p.recipient.handle)}</span></div></div><strong class="money-total">${fmtMoney(p.received)}</strong><span>Received</span></section><section class="wrap section">${sectionTitle('Tokens')}<div class="token-grid">${p.tokens.map(t=>tokenCard(t,true)).join('')||'<div class="empty">No visible tokens.</div>'}</div></section><section class="wrap section">${sectionTitle('X Payments')}<div class="payment-list">${p.payments.map(paymentCard).join('')||'<div class="empty">No payouts.</div>'}</div></section>${footer()}</main>`;}
 function adminPage(){return `<main><section class="wrap launch-page"><p class="eyebrow">Internal</p><h1>Operations</h1><p class="lead">Run workers manually without restarting the server. The admin token stays in your browser session only.</p><form class="launch-form" id="adminForm"><label>Admin token<input id="adminToken" type="password" autocomplete="off"></label><div class="launch-actions"><button type="button" class="btn-light" data-admin-run="discovery">Run discovery</button><button type="button" class="btn-light" data-admin-run="claims">Run claims</button><button type="button" class="btn-light" data-admin-run="payouts">Run payouts</button></div></form><pre class="status-box" id="adminOutput">Ready.</pre></section>${footer()}</main>`;}
 function launchModal(){return `<div class="modal-bg hidden" id="launchModal"><div class="modal"><button class="modal-x" data-action="close-launch">×</button><p class="eyebrow">Launch</p><h2>Route creator fees</h2><p>Create the token on pump.fun, name a recipient in metadata, then permanently route 100% of creator fees to the configured treasury.</p><a class="modal-option" href="#/launch"><span class="option-icon">●</span><div><b>Launch / route token</b><small>Build and sign the fee-sharing transaction</small></div><span>→</span></a><a class="modal-option" href="#/docs"><span class="option-icon">⌘</span><div><b>Read integration docs</b><small>Indexer, claims, ledger and payouts</small></div><span>→</span></a></div></div>`;}
