@@ -163,6 +163,51 @@ function homeTopTokens(top){
   </section>`;
 }
 
+function homeProfileCard(p,index=0){
+  const name=p.display_name||p.handle;
+  const tokens=Number(p.token_count||0);
+  const received=Number(p.received||0);
+  return `<a class="home-profile-feature" href="#/profile/${encodeURIComponent(p.handle)}">
+    <div class="home-profile-cover home-profile-cover-${index%4}">
+      <div class="home-profile-cover-mark">${esc(initials(name))}</div>
+      <div class="home-profile-avatar">${avatar(name,true,p.avatar_url)}</div>
+      <div class="home-profile-open">↗</div>
+    </div>
+    <div class="home-profile-feature-body">
+      <div class="home-profile-feature-name">
+        <div><strong>${esc(name)}</strong><span>@${esc(p.handle)}</span></div>
+        <em>𝕏</em>
+      </div>
+      <div class="home-profile-feature-stats">
+        <div><small>Tokens</small><b>${fmtNum(tokens)}</b></div>
+        <div><small>Received</small><b>${fmtMoney(received)}</b></div>
+      </div>
+    </div>
+  </a>`;
+}
+
+function homeTopProfiles(profiles){
+  const rows=(profiles||[]).slice(0,4);
+  return `<section class="wrap section profiles-section home-top-profiles">
+    <div class="home-top-profiles-head">
+      <h2>Top X Profiles</h2>
+      <div class="home-top-profiles-pager"><button disabled>‹</button><span>1</span><button disabled>›</button></div>
+    </div>
+    ${rows.length
+      ? `<div class="home-profile-feature-grid">${rows.map(homeProfileCard).join('')}</div>`
+      : `<div class="home-profile-feature-grid home-profile-empty-grid">
+          <div class="home-profile-feature home-profile-empty">
+            <div class="home-profile-cover"><div class="home-profile-cover-mark">X</div></div>
+            <div class="home-profile-feature-body"><strong>Profiles appear after tokens register.</strong><span>Recipients are ranked from real payout data.</span></div>
+          </div>
+          <div class="home-profile-feature home-profile-empty">
+            <div class="home-profile-cover"><div class="home-profile-cover-mark">X</div></div>
+            <div class="home-profile-feature-body"><strong>Waiting for recipient data.</strong><span>No demo profiles are inserted.</span></div>
+          </div>
+        </div>`}
+  </section>`;
+}
+
 function homeMostPayments(h){
   const top=h.money?.topPaid||[];
   return `<section class="wrap section home-most-payments">${sectionTitle('Most Payments')}
@@ -206,10 +251,7 @@ function homePage(){
 
     ${homeTopTokens(top)}
 
-    <section class="wrap section profiles-section">
-      ${sectionTitle('Top X Profiles')}
-      <div class="profile-grid">${(h.profiles||[]).slice(0,6).map(p=>`<a class="profile-card" href="#/profile/${encodeURIComponent(p.handle)}">${avatar(p.display_name||p.handle)}<div><b>${esc(p.display_name||p.handle)}</b><span>@${esc(p.handle)}</span></div><div class="profile-value"><strong>${fmtNum(p.token_count)}</strong><span>Tokens</span><b>${fmtMoney(p.received)}</b><small>Received</small></div></a>`).join('')||'<div class="empty">Profiles appear after tokens register.</div>'}</div>
-    </section>
+    ${homeTopProfiles(h.profiles||[])}
 
     <section class="wrap section">
       ${sectionTitle('Recent payments')}
