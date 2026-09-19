@@ -47,7 +47,178 @@ function footer(){return `<footer class="site-footer">
 function tokenCard(t,compact=false){return `<a class="token-card ${compact?'compact':''}" href="#/token/${encodeURIComponent(t.mint||t.contract)}"><div class="token-img">${avatar(t.symbol||t.name,true,t.image_url)}</div><div class="token-meta"><div class="meta-line">${platformBadge(t.platform||'Pump')}<span class="muted">@${esc(t.profile||t.recipient_handle||'')}</span><span class="muted">${esc(t.age||ago(t.created_at))}</span></div><div class="token-name"><strong>${esc(t.name)}</strong><span>${esc(t.symbol)}</span></div><div class="token-numbers"><span>${fmtMc(t.mc??t.market_cap_usd)} <small>MC</small></span><span>${fmtNum(t.sent)} <small>Sent</small></span>${compact?'':`<span>${fmtNum(t.owed)} <small>Owed</small></span>`}</div>${compact?'':`<div class="contract">${esc((t.mint||'').slice(0,6))}…${esc((t.mint||'').slice(-6))}</div>`}</div></a>`;}
 function paymentCard(p,i){const amount=p.amount_usd??p.amount??0;const to=p.display_name||p.recipient_handle||p.to||'recipient';const mints=String(p.mints||'').split(',').filter(Boolean);return `<button class="payment-card expandable" data-expand="payment-${i}"><div class="row"><div><strong>${fmtMoney(amount)}</strong><span>${['sent','claimed'].includes(p.status)?'sent':'scheduled'} to <b>${esc(to)}</b> ${['sent','claimed'].includes(p.status)?'<em>✓</em>':''}</span></div><span class="chev">⌄</span></div><div class="mini-tokens">${mints.slice(0,5).map((x,j)=>`${j?'<span class="arrow">→</span>':''}<span class="mini-icon">${esc(x[0]||'T')}</span>`).join('')}<time>${esc(ago(p.sent_at||p.created_at))}</time></div><div class="details hidden"><div><span>Status</span><b>${esc(p.status||'queued')}</b></div><div><span>Provider</span><b>${esc(p.provider||'')}</b></div><div><span>Reference</span><b>${esc(p.provider_ref||p.id||'')}</b></div>${p.public_confirmation_url?`<div><span>Confirmation</span><b>${esc(p.public_confirmation_url)}</b></div>`:''}</div></button>`;}
 function txCard(x,i){return `<button class="transfer-card expandable" data-expand="tx-${i}"><div class="tx-icon">≋</div><div class="tx-main"><strong>${x.received_usd?fmtMoney(x.received_usd):`${fmtNum(x.volume_native)} SOL`}</strong><span>${esc(x.pair||'SOLUSD')} · ${esc(x.side||'sell')}</span></div><div class="tx-side"><span class="tx-status">${esc(x.status||'queued')}</span><small>${esc(ago(x.filled_at||x.created_at))}</small></div><span class="chev">⌄</span><div class="tx-details hidden"><div><span>Provider</span><b>${esc(x.provider||'')}</b></div><div><span>Reference</span><b>${esc(x.provider_ref||x.id||'')}</b></div></div></button>`;}
-function moneySections(money){const exchanges=money?.exchange||[];const top=money?.topPaid||[];return `<section class="wrap section">${sectionTitle('Off-ramp')}<div class="tabs small-tabs"><button class="active">All</button><button disabled>Deposits</button><button disabled>Swaps</button><button disabled>ACH</button></div><div class="tx-list">${exchanges.length?exchanges.map(txCard).join(''):'<div class="empty">No exchange orders recorded yet.</div>'}</div></section><section class="wrap section"><div class="section-title bridge-heading"><h2>Bridge <span class="bridge-dot">■</span><small>Configured treasury rail</small></h2></div><div class="empty">Bridge events appear here when a bridge adapter is configured.</div><p class="note">Payouts do not need to wait on this rail; the payout worker can use a pre-funded provider balance.</p></section><section class="wrap section">${sectionTitle('Top paid profiles')}<div class="rank-list">${top.length?top.map(x=>`<a class="rank-card" href="#/profile/${encodeURIComponent(x.handle)}">${avatar(x.display_name||x.handle)}<div><b>${esc(x.display_name||x.handle)}</b><span>@${esc(x.handle)}</span></div><strong>${fmtMoney(x.received)}</strong></a>`).join(''):'<div class="empty">No completed payouts yet.</div>'}</div></section>`;}
+function moneyProfile(handle){
+  const key=String(handle||'').replace(/^@/,'').toLowerCase();
+  return (state.home?.profiles||[]).find(p=>String(p.handle||'').replace(/^@/,'').toLowerCase()===key)||null;
+}
+
+function moneyTokenByMint(mint){
+  return (state.tokens||[]).find(t=>(t.mint||t.contract)===mint)||null;
+}
+
+function moneyRoundIcon(label,kind='dark'){
+  return `<span class="money-round-icon ${kind}">${esc(label)}</span>`;
+}
+
+function moneyRecentCard(p,i){
+  const amount=p.amount_usd??p.amount??0;
+  const handle=p.recipient_handle||p.to||'recipient';
+  const profile=moneyProfile(handle);
+  const mints=String(p.mints||'').split(',').filter(Boolean);
+  const token=moneyTokenByMint(mints[0]||'');
+  const confirmed=['sent','claimed'].includes(p.status);
+  return `<button class="money-payment-card expandable" data-expand="money-payment-${i}">
+    <div class="money-payment-copy">
+      <strong>${fmtMoney(amount)}</strong>
+      <span>${confirmed?'sent':'scheduled'} to <b>${esc(p.display_name||handle)}</b>${confirmed?' <em>✓</em>':''}</span>
+    </div>
+    <span class="chev">⌄</span>
+    <div class="money-payment-route">
+      <div class="money-payment-avatar">
+        ${token?avatar(token.symbol||token.name,true,token.image_url):avatar(mints[0]||'T',true)}
+        <i>●</i>
+      </div>
+      <b class="money-dollar">$</b>
+      <div class="money-payment-avatar">
+        ${avatar(profile?.display_name||p.display_name||handle,true,profile?.avatar_url||p.avatar_url||'')}
+        <i class="x">X</i>
+      </div>
+      <time>${esc(ago(p.sent_at||p.created_at))}</time>
+    </div>
+    <div class="details hidden">
+      <div><span>Status</span><b>${esc(p.status||'queued')}</b></div>
+      <div><span>Provider</span><b>${esc(p.provider||'')}</b></div>
+      <div><span>Reference</span><b>${esc(p.provider_ref||p.id||'')}</b></div>
+    </div>
+  </button>`;
+}
+
+function moneyOffRampCard(x,i){
+  const side=String(x.side||'sell').toLowerCase();
+  const status=String(x.status||'queued');
+  const provider=String(x.provider||'rail');
+  const native=Number(x.volume_native||0);
+  const usd=Number(x.received_usd||0);
+  const swapped=/swap/i.test(status)||side==='swap';
+  const sentUsd=usd>0 && !swapped;
+  const amount=usd>0?fmtMoney(usd):`${fmtNum(native)} SOL`;
+  const subtitle=swapped
+    ? `swapped ${fmtNum(native)} SOL`
+    : sentUsd?`USD sent to ${provider}`:`sent to ${provider}`;
+  const left=swapped||!sentUsd?moneyRoundIcon('≋','sol'):moneyRoundIcon('🇺🇸','usd');
+  const right=swapped?moneyRoundIcon('🇺🇸','usd'):moneyRoundIcon(provider.slice(0,1).toUpperCase(),'provider');
+  const arrow=swapped?'⇄':'→';
+  return `<button class="money-transfer-card expandable" data-expand="money-off-${i}">
+    <div class="money-transfer-copy"><strong>${esc(amount)}</strong><span>${esc(subtitle)}</span></div>
+    <div class="money-transfer-route">${left}<b>${arrow}</b>${right}</div>
+    <div class="money-transfer-side"><span class="money-status">${esc(status)}</span><time>${esc(ago(x.filled_at||x.created_at))}</time></div>
+    <span class="chev">⌄</span>
+    <div class="tx-details hidden">
+      <div><span>Provider</span><b>${esc(provider)}</b></div>
+      <div><span>Pair</span><b>${esc(x.pair||'SOLUSD')}</b></div>
+      <div><span>Reference</span><b>${esc(x.provider_ref||x.id||'')}</b></div>
+    </div>
+  </button>`;
+}
+
+function moneyTopTokenCard(t){
+  const handle=t.recipient_handle||t.profile||'';
+  const profile=moneyProfile(handle);
+  return `<a class="money-top-token-card" href="#/token/${encodeURIComponent(t.mint||t.contract||'')}">
+    <div class="money-top-route">
+      <div class="money-payment-avatar">${avatar(t.symbol||t.name,true,t.image_url)}<i>●</i></div>
+      <b class="money-dollar">$</b>
+      <div class="money-payment-avatar">${avatar(profile?.display_name||handle||'X',true,profile?.avatar_url||'')}<i class="x">X</i></div>
+    </div>
+    <div class="money-top-values">
+      <strong>${fmtMoney(t.sent||0)}</strong>
+      <span>${fmtMoney(t.owed||0)} owed</span>
+    </div>
+  </a>`;
+}
+
+function moneyOnRampCard(x,i){
+  const provider=String(x.provider||'Kraken');
+  const usd=Number(x.received_usd||x.gross_usd||0);
+  const native=Number(x.volume_native||0);
+  const amount=usd>0?fmtMoney(usd):(native>0?`${fmtNum(native)} SOL`:'$0.00');
+  return `<button class="money-on-card expandable" data-expand="money-on-${i}">
+    <div class="money-on-copy"><strong>${esc(amount)}</strong><span>from <b>${esc(provider)}</b></span></div>
+    ${moneyRoundIcon('$','payout')}
+    <div class="money-on-side"><span class="money-status">Received</span><time>${esc(ago(x.filled_at||x.created_at))}</time></div>
+    <span class="chev">⌄</span>
+    <div class="tx-details hidden">
+      <div><span>Provider</span><b>${esc(provider)}</b></div>
+      <div><span>Pair</span><b>${esc(x.pair||'')}</b></div>
+      <div><span>Reference</span><b>${esc(x.provider_ref||x.id||'')}</b></div>
+    </div>
+  </button>`;
+}
+
+function moneyBridgeSection(){
+  return `<section class="wrap money-section">
+    <div class="money-section-head money-bridge-head">
+      <h2>Bridge <small><i>↗</i> Configured treasury rail</small></h2>
+      <div class="money-pager"><button disabled>‹</button><span>1 / 1</span><button disabled>›</button></div>
+    </div>
+    <div class="money-empty-card">
+      <div class="money-empty-route">${moneyRoundIcon('◇','bridge')}<b>→</b>${moneyRoundIcon('≋','sol')}</div>
+      <strong>No bridge activity yet.</strong>
+      <span>Bridge events will appear here when a bridge adapter is configured.</span>
+    </div>
+  </section>`;
+}
+
+function moneySections(money){
+  const exchanges=money?.exchange||[];
+  const offRamp=exchanges.filter(x=>!isOnRampOrder(x));
+  const onRamp=exchanges.filter(isOnRampOrder);
+  const topTokens=(state.tokens||[]).slice().sort((a,b)=>Number(b.sent||0)-Number(a.sent||0)).slice(0,6);
+  const inTransit=onRamp.reduce((sum,x)=>sum+Number(x.received_usd||x.gross_usd||0),0);
+
+  return `<section class="wrap money-section">
+    <div class="money-section-head"><h2>Off-ramp</h2><div class="money-pager"><button disabled>‹</button><span>1</span><button disabled>›</button></div></div>
+    <div class="money-filter-tabs"><button class="active">All</button><button disabled>Deposits</button><button disabled>Swaps</button><button disabled>ACH</button></div>
+    <div class="money-list">${offRamp.length?offRamp.slice(0,6).map(moneyOffRampCard).join(''):'<div class="money-empty-card"><strong>No off-ramp activity yet.</strong><span>Exchange and payout-rail events will appear here.</span></div>'}</div>
+  </section>
+
+  ${moneyBridgeSection()}
+
+  <section class="wrap money-section">
+    <p class="money-delay">Updates are delayed. Showing top paid tokens from the confirmed ledger.</p>
+    <div class="money-section-head">
+      <h2>Top paid tokens</h2>
+      <div class="money-pager"><button disabled>‹</button><span>1 / 1</span><button disabled>›</button></div>
+    </div>
+    <p class="money-explainer">Ranked by all-time amount sent. Owed amounts do not affect rank. Recipient shown is the token's current beneficiary.</p>
+    <div class="money-list">${topTokens.length?topTokens.map(moneyTopTokenCard).join(''):'<div class="money-empty-card"><strong>No paid tokens yet.</strong><span>Tokens will be ranked here after confirmed payouts.</span></div>'}</div>
+  </section>
+
+  <section class="wrap money-section">
+    <div class="money-section-head">
+      <h2>On-ramp <small class="money-transit">${fmtMoney(inTransit)} <span>in transit</span></small></h2>
+      <div class="money-pager"><button disabled>‹</button><span>1</span><button disabled>›</button></div>
+    </div>
+    <div class="money-list">${onRamp.length?onRamp.slice(0,6).map(moneyOnRampCard).join(''):'<div class="money-empty-card"><strong>No on-ramp activity yet.</strong><span>Confirmed funding events will appear here.</span></div>'}</div>
+  </section>`;
+}
+
+function moneyFooter(){
+  return `<footer class="money-footer">
+    <div class="money-footer-inner">
+      <div class="money-footer-brand">
+        <b>${esc(state.brand.name)}</b>
+        <span>© 2026 ${esc(state.brand.name)}</span>
+        <em>𝕏</em>
+        <small>Not affiliated with X Corp.</small>
+      </div>
+      <div class="money-footer-links"><b>Product</b><a href="#/explore">Explore</a><a href="#/money">Payments</a><a href="#/money">Analytics</a><a href="#/launch">Launch</a></div>
+      <div class="money-footer-links"><b>Protocol</b><a href="#/capital-flow">Capital Flow</a><a href="#/paid">$PAID</a><a href="#/docs">Docs</a></div>
+      <div class="money-footer-links"><b>Legal</b><a href="#/legal">Terms</a><a href="#/legal">Privacy</a><a href="#/legal">Disclosures</a><a href="#/opt-out">Opt out</a></div>
+    </div>
+  </footer>`;
+}
+
 function homeHeroCard(h,top){
   const t=top[0]||null;
   const p=(h.profiles||[])[0]||null;
@@ -587,7 +758,37 @@ function explorePage(){
   </main>`;
 }
 
-function moneyPage(){const m=state.money||{recent:[],topPaid:[],exchange:[]};return `<main><section class="wrap money-hero"><p class="back">↖ Money</p><strong class="money-total">${fmtMoney(m.totalPaid||0)}</strong><span>Total paid out</span><div class="money-tabs"><button class="active">Payout rail</button><button>Solana treasury</button></div><div class="money-stats"><div><span>Currently owed</span><b>${fmtMoney(m.totalOwed||0)}</b></div><div><span>Pending protocol cut</span><b>${fmtMoney(m.protocolPending||0)}</b></div></div></section><section class="wrap update-note">Live values are calculated from the local ledger database and confirmed payout records.</section><section class="wrap section first">${sectionTitle('Recent payments')}<div class="payment-list">${(m.recent||[]).map(paymentCard).join('')||'<div class="empty">No payouts recorded yet.</div>'}</div></section>${moneySections(m)}${footer()}</main>`;}
+function moneyPage(){
+  const m=state.money||{recent:[],topPaid:[],exchange:[]};
+  const updated=m.indexer?.completedAt||m.indexer?.startedAt||m.recent?.[0]?.created_at||null;
+  return `<main class="money-page-v2">
+    <section class="wrap money-summary-card">
+      <p class="money-label">𝕏 Money</p>
+      <strong class="money-summary-total">${fmtMoney(m.totalPaid||0)}</strong>
+      <span class="money-summary-caption">Total paid out</span>
+
+      <div class="money-summary-tabs">
+        <button class="active">𝕏 Money</button>
+        <button>Solana treasury</button>
+      </div>
+
+      <div class="money-summary-stat"><span>Currently owed</span><b>${fmtMoney(m.totalOwed||0)}</b></div>
+      <div class="money-summary-stat"><span>Ledger updated</span><b>${updated?esc(ago(updated)):'—'}</b></div>
+    </section>
+
+    <section class="wrap money-section money-recent-section">
+      <p class="money-delay">Updates are delayed. Showing recent payments from the confirmed ledger.</p>
+      <div class="money-section-head">
+        <h2>Recent payments</h2>
+        <div class="money-pager"><button disabled>‹</button><span>1</span><button disabled>›</button></div>
+      </div>
+      <div class="money-list">${(m.recent||[]).slice(0,6).map(moneyRecentCard).join('')||'<div class="money-empty-card"><strong>No payouts recorded yet.</strong><span>Confirmed payments will appear here.</span></div>'}</div>
+    </section>
+
+    ${moneySections(m)}
+    ${moneyFooter()}
+  </main>`;
+}
 function docsPage(){return `<main><article class="wrap doc"><p class="eyebrow">Docs</p><h1>How ${esc(state.brand.name)} works</h1><p class="lead">This full-stack build uses a persistent ledger, a pump.fun fee-sharing verifier, claim worker, payout scheduler, exchange adapter, launch transaction builder, profile views and opt-out flow.</p>${docSection('1','Registration',`<p>On pump.fun the service verifies a fee-sharing config for the token mint. It only registers a token as payable when the configured treasury is the sole shareholder at 10,000 bps and the sharing authority is permanent.</p><pre>mint → sharing_config → treasury 100% → permanent</pre>`)}${docSection('2','Recipient',`<p>The indexer reads the recipient from the fixed metadata line:</p><pre>Fees to @yourhandle via ${esc(state.brand.name)}</pre><p>If the fixed line is absent, the parser can fall back to the first handle or an explicitly supplied linked handle.</p>`)}${docSection('3','Claims','<p>The claim worker checks each registered mint for distributable creator fees. In live mode it builds the permissionless Pump distribution transaction, pays transaction fees from a dedicated crank key, confirms on-chain settlement and records the treasury balance increase as a claim.</p>')}${docSection('4','80 / 20 ledger',`<p>Each confirmed claim is split at ${state.brand.recipientShareBps||8000} / ${state.brand.protocolShareBps||2000} basis points. Recipient credits and protocol-cut buyback entries are persisted in SQLite.</p>`)}${docSection('5','Payout milestones','<p>The payout worker evaluates cumulative milestones at $5, $10, $20, $50, $100, $250, $500, $1,000 and then each additional $1,000. When a milestone is crossed, the full outstanding recipient balance is queued for the configured payout adapter.</p>')}${docSection('6','Exchange and payout providers','<p>Kraken market-sell support is included behind an explicit live-trading flag. Payouts support manual reconciliation or a generic HTTP provider adapter. X Money itself does not expose a public payout API in this project; if you have an authorized gateway, point the HTTP adapter at it.</p>')}${docSection('7','Opt out','<p>An X OAuth flow is included so the owner of a handle can authenticate and opt out. Opted-out tokens are hidden, future recipient credits are diverted to the protocol cut, and unpaid balance is queued for buyback accounting.</p>')}${docSection('8','Safety','<p>No private key is requested from site visitors. Creator-side fee-routing transactions are built server-side but must be signed by the creator wallet in the browser. Server secrets stay in environment variables.</p>')}</article>${footer()}</main>`;}
 function docSection(n,title,body){return `<section class="doc-section"><h2><span>${n}</span>${esc(title)}</h2>${body}</section>`;}
 function legalPage(){return `<main><article class="wrap doc legal-doc"><p class="eyebrow">Legal</p><h1>Terms and disclosures</h1><p class="lead">Replace these placeholders with terms reviewed for your actual operator, jurisdictions, launch workflow, token mechanics and payout providers before production launch.</p>${docSection('1','Independent service','<p>This project is not affiliated with X, X Money, pump.fun, Kraken or any other third-party provider merely because it integrates with or references them.</p>')}${docSection('2','No endorsement','<p>A token naming an X handle must not be presented as an endorsement, partnership or approval by that account.</p>')}${docSection('3','Third-party rails','<p>Launchpads, wallets, exchanges, social networks and payout providers have their own terms and availability rules.</p>')}</article>${footer()}</main>`;}
