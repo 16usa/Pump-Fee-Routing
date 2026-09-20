@@ -7,5 +7,6 @@
   "LIVE_CHAIN_TRANSACTIONS": false,
   "KRAKEN_LIVE_TRADING": false,
   "PAYOUT_PROVIDER": "manual",
-  "EXCHANGE_PROVIDER": "disabled"
+  "EXCHANGE_PROVIDER": "disabled",
+  "USER_SIGNED_LAUNCH_ENABLED": true
 }

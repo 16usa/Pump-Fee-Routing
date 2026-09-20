@@ -257,3 +257,28 @@ server/api.js           JSON API + admin/webhook routes
 src/app.js              public web application
 src/styles.css          responsive design
 ```
+
+## User-signed end-to-end Pump launch
+
+`runtime.config.json` enables `USER_SIGNED_LAUNCH_ENABLED=true` while keeping
+`READ_ONLY_MODE=true`, claim workers, payout workers, server-signed chain
+transactions, and Kraken trading disabled.
+
+This narrow mode lets the Launch page build transactions that are signed and
+submitted only after explicit approval in the creator's browser wallet:
+
+1. Create a launch intent and X-recipient marker.
+2. Upload token image/metadata.
+3. Create the Pump token. With a zero dev buy, the mint signer is generated in
+   the browser and never sent to this server. With a positive dev buy, Pump's
+   transaction builder returns a mint-partially-signed create+buy transaction;
+   the creator wallet still must approve it.
+4. Confirm token creation on Solana.
+5. Build a second user-signed fee-sharing transaction.
+6. Route 100% of creator fees to the configured treasury and make the sharing
+   configuration permanent.
+7. Confirm, verify and register the mint immediately so it can appear in Explore.
+
+The server never receives the creator wallet private key and never signs the
+creator's transaction. `LIVE_CHAIN_TRANSACTIONS=false` remains valid for the
+server-owned claim crank.

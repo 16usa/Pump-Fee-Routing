@@ -3182,3 +3182,20 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   .docs-v1-section{scroll-margin-top:78px}
   .legal-block{scroll-margin-top:104px}
 }
+
+/* end-to-end-launch-v1 */
+.launch-live-note{
+  display:grid;
+  gap:7px;
+  margin:18px 0;
+  padding:15px;
+  border:1px solid #292929;
+  border-radius:12px;
+  background:#0a0a0a;
+}
+.launch-live-note b{margin-bottom:2px;font-size:11px;font-weight:650}
+.launch-live-note span{color:#777;font-size:9px;line-height:1.4}
+.launch-live-button{min-height:49px;margin-bottom:12px}
+.launch-fallback-link{display:block;margin:0 0 20px;color:#777;text-align:center;font-size:9px}
+.launch-manual-actions{margin-top:4px;padding-top:15px;border-top:1px solid #252525}
+.launch-success-v1 .status-box{margin-top:15px;white-space:pre-wrap}

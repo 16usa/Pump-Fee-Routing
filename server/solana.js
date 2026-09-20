@@ -29,7 +29,7 @@ function normalizeHandle(value=''){
   return url?.[1] || '';
 }
 export function parseRecipient(description='', fallback='') {
-  const exact = description.match(/Fees\s+to\s+@([A-Za-z0-9_]{1,15})\s+via\s+[A-Za-z0-9_\-]+/i);
+  const exact = description.match(/Fees\s+to\s+@([A-Za-z0-9_]{1,15})\b/i);
   if (exact) return {handle:exact[1],source:'fees-line'};
   const first = description.match(/@([A-Za-z0-9_]{1,15})/);
   if (first) return {handle:first[1],source:'first-handle'};
@@ -38,12 +38,19 @@ export function parseRecipient(description='', fallback='') {
   return null;
 }
 async function fetchMetadata(mint) {
-  const url=config.pumpMetadataUrlTemplate.replace('{mint}',encodeURIComponent(mint));
-  const r=await fetch(url,{headers:{accept:'application/json'},signal:AbortSignal.timeout(15000)});
-  if(!r.ok) throw new Error(`Pump metadata HTTP ${r.status}`);
-  const data=await r.json();
-  if(!data || typeof data!=='object') throw new Error('Pump metadata response was empty');
-  return data;
+  const primary=config.pumpMetadataUrlTemplate.replace('{mint}',encodeURIComponent(mint));
+  const urls=[...new Set([primary,`https://frontend-api-v3.pump.fun/coins-v2/${encodeURIComponent(mint)}`,`https://frontend-api-v3.pump.fun/coins/${encodeURIComponent(mint)}`])];
+  let lastError='';
+  for(const url of urls){
+    try{
+      const r=await fetch(url,{headers:{accept:'application/json'},signal:AbortSignal.timeout(15000)});
+      if(!r.ok){lastError=`HTTP ${r.status}`;continue;}
+      const data=await r.json();
+      if(data && typeof data==='object')return data;
+      lastError='empty response';
+    }catch(e){lastError=e.message;}
+  }
+  throw new Error(`Pump metadata unavailable: ${lastError||'unknown error'}`);
 }
 
 async function fetchSharingConfigNullable(connection,mintPk,PUMP_SDK,feeSharingConfigPda){
@@ -116,7 +123,7 @@ export async function verifyAndRegisterMint(mint,{fallbackHandle='',connection:p
     description:description||existing?.description||'',recipient_handle:handle,recipient_source:recipientSource,
     market_cap_usd:Number.isFinite(marketCap)?marketCap:Number(existing.market_cap_usd),
     fee_share_bps:10000,permanent:true,hidden:false,fee_config_address:cfg,
-    created_at:meta.created_timestamp?new Date(meta.created_timestamp).toISOString():existing?.created_at||null,metadata:meta
+    created_at:meta.created_timestamp?new Date(Number(meta.created_timestamp)<1e12?Number(meta.created_timestamp)*1000:Number(meta.created_timestamp)).toISOString():existing?.created_at||null,metadata:meta
   });
   upsertTokenChainState({
     mint,sharing_config_address:cfg,verified_slot:slot,admin_revoked:true,sole_treasury:true,fee_share_bps:10000,
@@ -228,8 +235,74 @@ export async function fetchSolUsd(){
   throw new Error('Unable to fetch SOL/USD price');
 }
 
+
+export async function buildPumpCreateTransaction({mint,user,name,symbol,uri}) {
+  if(!config.userSignedLaunchEnabled) throw new Error('User-signed launch is disabled');
+  const cleanName=String(name||'').trim(), cleanSymbol=String(symbol||'').trim(), cleanUri=String(uri||'').trim();
+  if(!cleanName || cleanName.length>32) throw new Error('Token name must be 1-32 characters');
+  if(!cleanSymbol || cleanSymbol.length>13) throw new Error('Ticker must be 1-13 characters');
+  if(!cleanUri || cleanUri.length>200) throw new Error('Metadata URI must be 1-200 characters');
+  const {Connection,PublicKey,TransactionMessage,VersionedTransaction,PUMP_SDK}=await sdk();
+  const connection=new Connection(config.solanaRpcUrl,'confirmed');
+  const mintPk=new PublicKey(mint), userPk=new PublicKey(user);
+  const ix=await PUMP_SDK.createV2Instruction({
+    mint:mintPk,
+    name:cleanName,
+    symbol:cleanSymbol,
+    uri:cleanUri,
+    creator:userPk,
+    user:userPk,
+    mayhemMode:false,
+    holderReward:false
+  });
+  const latest=await connection.getLatestBlockhash('confirmed');
+  const msg=new TransactionMessage({
+    payerKey:userPk,
+    recentBlockhash:latest.blockhash,
+    instructions:[ix]
+  }).compileToV0Message();
+  const tx=new VersionedTransaction(msg);
+  return {
+    transactionBase64:Buffer.from(tx.serialize()).toString('base64'),
+    blockhash:latest.blockhash,
+    lastValidBlockHeight:latest.lastValidBlockHeight,
+    mint:mintPk.toBase58(),
+    requiresMintSignature:true,
+    mode:'create-only'
+  };
+}
+
+export async function confirmUserSignedTransaction({signature,mint}) {
+  if(!signature) throw new Error('Transaction signature required');
+  const {Connection,PublicKey}=await sdk();
+  const connection=new Connection(config.solanaRpcUrl,'confirmed');
+  const mintPk=new PublicKey(mint);
+  let confirmed=false, lastStatus=null;
+  for(let i=0;i<30;i++){
+    const out=await connection.getSignatureStatuses([String(signature)],{searchTransactionHistory:true});
+    const status=out?.value?.[0]||null;
+    lastStatus=status;
+    if(status?.err) throw new Error(`Transaction failed: ${JSON.stringify(status.err)}`);
+    if(status && (status.confirmationStatus==='confirmed'||status.confirmationStatus==='finalized')){
+      confirmed=true;
+      break;
+    }
+    await new Promise(r=>setTimeout(r,750));
+  }
+  if(!confirmed) throw new Error('Transaction is not confirmed yet. Retry in a few seconds.');
+  const mintAccount=await connection.getAccountInfo(mintPk,'confirmed');
+  if(!mintAccount) throw new Error('Mint account is not visible on-chain after confirmation');
+  return {
+    ok:true,
+    signature:String(signature),
+    mint:mintPk.toBase58(),
+    mintOwner:mintAccount.owner.toBase58(),
+    confirmationStatus:lastStatus?.confirmationStatus||'confirmed'
+  };
+}
+
 export async function buildFeeRoutingTransaction({mint,creator}) {
-  if(config.readOnlyMode) throw new Error('Read-only mode: fee-routing transactions are disabled');
+  if(!config.userSignedLaunchEnabled) throw new Error('User-signed launch routing is disabled');
   requireTreasury();
   const {Connection,PublicKey,TransactionMessage,VersionedTransaction,PUMP_SDK,OnlinePumpSdk,canonicalPumpPoolPda}=await sdk();
   const connection=new Connection(config.solanaRpcUrl,'confirmed'); const online=new OnlinePumpSdk(connection);
