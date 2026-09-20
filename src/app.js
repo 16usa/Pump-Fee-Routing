@@ -2180,3 +2180,144 @@ app.addEventListener('submit',async e=>{if(e.target.id==='launchForm'){e.prevent
   setLaunchStatus(err.message);
 }}});
 window.addEventListener('hashchange',render);render();
+
+/* launch-demo-rotator-v1
+   Adds the UsePaid-style animated two-mode payment demo card on Launch.
+   Built as a DOM enhancer so it does not require rebuilding existing Launch markup. */
+const launchDemoScenes=[5,10,20,50,100].flatMap(amount=>[
+  {kind:'paid',amount},
+  {kind:'sent',amount}
+]);
+
+let launchDemoSceneIndex=0;
+let launchDemoTimer=null;
+
+function getLaunchDemoRecipient(){
+  if(typeof launchSelectedXProfile!=='undefined' && launchSelectedXProfile && (launchSelectedXProfile.name || launchSelectedXProfile.username)){
+    return {
+      name: launchSelectedXProfile.name || launchSelectedXProfile.username || 'GG',
+      username: launchSelectedXProfile.username || 'GG',
+      verified: !!launchSelectedXProfile.verified,
+      initial: String(launchSelectedXProfile.name || launchSelectedXProfile.username || 'G').trim().charAt(0).toUpperCase() || 'G',
+      avatarUrl: launchSelectedXProfile.profileImageUrl || ''
+    };
+  }
+  return {name:'GG',username:'GG',verified:true,initial:'G',avatarUrl:''};
+}
+
+function launchDemoAvatar(profile, extraClass=''){
+  if(profile.avatarUrl){
+    return `<span class="launch-demo-avatar ${extraClass}"><img src="${escapeHtml(profile.avatarUrl)}" alt="" referrerpolicy="no-referrer"></span>`;
+  }
+  return `<span class="launch-demo-avatar ${extraClass}">${escapeHtml(profile.initial||'G')}</span>`;
+}
+
+function launchDemoVerified(show){
+  return show ? '<span class="launch-demo-verified" aria-hidden="true">✓</span>' : '';
+}
+
+function launchDemoContent(scene){
+  const recipient=getLaunchDemoRecipient();
+  const amount=`$${Number(scene.amount).toFixed(2)}`;
+  if(scene.kind==='paid'){
+    return `
+      <div class="launch-demo-card-icons">
+        <span class="launch-demo-brand">P</span>
+        ${launchDemoAvatar(recipient)}
+      </div>
+      <div class="launch-demo-card-copy">
+        <div class="launch-demo-card-line launch-demo-card-line-main"><strong>Paid</strong> sent you <strong>${amount}</strong></div>
+        <div class="launch-demo-card-line launch-demo-card-line-sub">for <strong>"Creator fees via @UsePaid"</strong> · now</div>
+      </div>
+      <div class="launch-demo-card-end">
+        <span class="launch-demo-bell" aria-hidden="true">◔</span>
+      </div>
+    `;
+  }
+  return `
+    <div class="launch-demo-card-icons">
+      <span class="launch-demo-brand">P</span>
+      ${launchDemoAvatar(recipient)}
+    </div>
+    <div class="launch-demo-card-copy">
+      <div class="launch-demo-card-line launch-demo-card-line-main"><strong>$${Number(scene.amount).toFixed(0)}</strong> sent to <strong>${escapeHtml(recipient.name)}</strong> ${launchDemoVerified(recipient.verified)}</div>
+      <div class="launch-demo-card-line launch-demo-card-line-sub">Creator fees via <strong>@UsePaid</strong> · now</div>
+    </div>
+    <div class="launch-demo-card-end"></div>
+  `;
+}
+
+function renderLaunchDemoScene(force=false){
+  const rotator=document.querySelector('#launchDemoRotator');
+  if(!rotator)return;
+  const scene=launchDemoScenes[launchDemoSceneIndex % launchDemoScenes.length];
+  if(force || !rotator.dataset.ready){
+    rotator.innerHTML=launchDemoContent(scene);
+    rotator.dataset.ready='1';
+    return;
+  }
+  rotator.classList.remove('is-active');
+  setTimeout(()=>{
+    if(!document.body.contains(rotator))return;
+    rotator.innerHTML=launchDemoContent(scene);
+    rotator.classList.add('is-active');
+  },160);
+}
+
+function startLaunchDemoRotation(){
+  const card=document.querySelector('#launchDemoRotator');
+  if(!card)return;
+  renderLaunchDemoScene(true);
+  card.classList.add('is-active');
+  if(launchDemoTimer)return;
+  launchDemoTimer=setInterval(()=>{
+    if(!document.querySelector('#launchDemoRotator')){
+      clearInterval(launchDemoTimer);
+      launchDemoTimer=null;
+      return;
+    }
+    launchDemoSceneIndex=(launchDemoSceneIndex+1)%launchDemoScenes.length;
+    renderLaunchDemoScene(false);
+  },2600);
+}
+
+function stopLaunchDemoRotation(){
+  if(launchDemoTimer){
+    clearInterval(launchDemoTimer);
+    launchDemoTimer=null;
+  }
+}
+
+function ensureLaunchDemoBlock(){
+  const previewStack=document.querySelector('.launch-preview-stack');
+  if(!previewStack){
+    stopLaunchDemoRotation();
+    return;
+  }
+  if(document.querySelector('#launchDemoBlock')){
+    startLaunchDemoRotation();
+    return;
+  }
+  const wrap=document.createElement('div');
+  wrap.id='launchDemoBlock';
+  wrap.className='launch-demo-block';
+  wrap.innerHTML=`
+    <p class="launch-demo-terms">By launching, you agree to the <a href="#/legal">Terms of Use</a>.</p>
+    <div class="launch-demo-rotator is-active" id="launchDemoRotator" aria-live="polite"></div>
+  `;
+  previewStack.parentNode.insertBefore(wrap, previewStack);
+  startLaunchDemoRotation();
+}
+
+const launchDemoObserver=new MutationObserver(()=>{
+  const onLaunch=!!document.querySelector('.launch-preview-stack');
+  if(onLaunch)ensureLaunchDemoBlock();
+  else stopLaunchDemoRotation();
+});
+
+if(document.body){
+  launchDemoObserver.observe(document.body,{childList:true,subtree:true});
+  setTimeout(ensureLaunchDemoBlock,0);
+}
+window.addEventListener('hashchange',()=>setTimeout(ensureLaunchDemoBlock,40));
+window.addEventListener('load',()=>setTimeout(ensureLaunchDemoBlock,40));

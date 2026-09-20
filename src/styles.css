@@ -3893,3 +3893,173 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 .launch-preview-usepaid .launch-preview-stat{
   display:none!important;
 }
+
+/* launch-demo-rotator-v1
+   Launch page terms note + animated payment demo notification block. */
+.launch-demo-block{
+  margin-top:18px;
+}
+
+.launch-demo-terms{
+  margin:0 0 10px;
+  color:#8a8a8a;
+  font-size:11px;
+  line-height:1.45;
+}
+
+.launch-demo-terms a{
+  color:#bcbcbc;
+  text-decoration:none;
+}
+
+.launch-demo-terms a:hover{
+  color:#fff;
+}
+
+.launch-demo-rotator{
+  min-height:78px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 16px;
+  border:1px solid #292929;
+  border-radius:16px;
+  background:#101010;
+  box-shadow:
+    0 10px 24px rgba(0,0,0,.22),
+    0 24px 54px rgba(0,0,0,.28);
+  opacity:0;
+  transform:translateY(4px);
+  transition:opacity .18s ease, transform .22s ease;
+  overflow:hidden;
+}
+
+.launch-demo-rotator.is-active{
+  opacity:1;
+  transform:translateY(0);
+}
+
+.launch-demo-card-icons{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  margin-right:2px;
+}
+
+.launch-demo-brand,
+.launch-demo-avatar{
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  border-radius:50%;
+  border:1px solid #222;
+  background:#090909;
+  color:#fff;
+  font-size:14px;
+  line-height:1;
+  font-weight:800;
+}
+
+.launch-demo-brand{
+  position:relative;
+  z-index:2;
+  font-style:italic;
+}
+
+.launch-demo-avatar{
+  margin-left:-10px;
+  background:#161616;
+  color:#d6d6d6;
+  font-size:13px;
+  font-weight:700;
+}
+
+.launch-demo-avatar img{
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:cover;
+}
+
+.launch-demo-card-copy{
+  min-width:0;
+  flex:1 1 auto;
+}
+
+.launch-demo-card-line{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.launch-demo-card-line-main{
+  color:#f3f3f3;
+  font-size:13px;
+  line-height:1.28;
+}
+
+.launch-demo-card-line-sub{
+  margin-top:3px;
+  color:#8c8c8c;
+  font-size:11px;
+  line-height:1.28;
+}
+
+.launch-demo-card-line strong{
+  font-weight:650;
+}
+
+.launch-demo-card-end{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  min-width:18px;
+}
+
+.launch-demo-bell{
+  color:#6f6f6f;
+  font-size:14px;
+  line-height:1;
+}
+
+.launch-demo-verified{
+  display:inline-grid;
+  place-items:center;
+  width:13px;
+  height:13px;
+  margin-left:4px;
+  border-radius:50%;
+  background:#1d9bf0;
+  color:#fff;
+  font-size:8px;
+  line-height:1;
+  font-weight:800;
+  vertical-align:middle;
+}
+
+@media (max-width:760px){
+  .launch-demo-block{
+    margin-top:16px;
+  }
+  .launch-demo-rotator{
+    min-height:72px;
+    padding:12px 14px;
+    border-radius:15px;
+  }
+  .launch-demo-brand,
+  .launch-demo-avatar{
+    width:32px;
+    height:32px;
+  }
+  .launch-demo-card-line-main{
+    font-size:12px;
+  }
+  .launch-demo-card-line-sub,
+  .launch-demo-terms{
+    font-size:10px;
+  }
+}
