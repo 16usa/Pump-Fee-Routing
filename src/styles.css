@@ -5599,3 +5599,138 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   .home-v2-payments-footer span{font-size:11px}
 }
 
+
+/* analytics-reference-match-v17 */
+.home-reference-v2-previews .home-preview-card.home-v2-analytics-card[data-analytics-reference="v17"]{
+  position:relative;
+  display:block;
+  min-height:246px;
+  padding:12px;
+  overflow:hidden;
+  border:1px solid #303030;
+  border-radius:20px;
+  background:#171717;
+  box-shadow:none;
+  isolation:isolate;
+}
+.home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-stage{
+  position:relative;
+  min-height:220px;
+  padding:14px 14px 44px;
+}
+.home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-topline{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:12px;
+}
+.home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-topline strong,
+.home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-topline span{
+  color:#b9b9b9;
+  font-size:12px;
+  line-height:1;
+  font-weight:450;
+  letter-spacing:.02em;
+}
+.home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-total{
+  display:block;
+  color:#f5f5f5;
+  font-size:31px;
+  line-height:.98;
+  letter-spacing:-.05em;
+  font-weight:520;
+}
+.home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-graph{
+  position:relative;
+  margin-top:22px;
+  height:128px;
+  border-radius:12px;
+  overflow:hidden;
+}
+.home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-graph svg{
+  width:100%;
+  height:100%;
+  display:block;
+}
+.home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-graph .grid{
+  stroke:rgba(255,255,255,.08);
+  stroke-width:.65;
+  fill:none;
+}
+.home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-graph .line{
+  stroke:rgba(255,255,255,.34);
+  stroke-width:1.15;
+  fill:none;
+  filter:drop-shadow(0 0 8px rgba(255,255,255,.09));
+}
+.home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-bottom-shade{
+  position:absolute;
+  left:-12px;
+  right:-12px;
+  bottom:-12px;
+  z-index:2;
+  height:80px;
+  pointer-events:none;
+  background:linear-gradient(180deg,rgba(23,23,23,0) 0%,rgba(23,23,23,.55) 54%,#171717 100%);
+}
+.home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-footer{
+  position:absolute;
+  left:6px;
+  right:6px;
+  bottom:3px;
+  z-index:3;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  pointer-events:none;
+}
+.home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-footer strong,
+.home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-footer span{
+  color:#d0d0d0;
+  font-size:12px;
+  line-height:1;
+  font-weight:420;
+  letter-spacing:0;
+  white-space:nowrap;
+}
+@media(max-width:640px){
+  .home-reference-v2-previews .home-preview-card.home-v2-analytics-card[data-analytics-reference="v17"]{
+    min-height:218px;
+    padding:9px;
+    border-radius:16px;
+  }
+  .home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-stage{
+    min-height:198px;
+    padding:12px 10px 38px;
+  }
+  .home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-topline{
+    margin-bottom:11px;
+  }
+  .home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-topline strong,
+  .home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-topline span{
+    font-size:11px;
+  }
+  .home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-total{
+    font-size:28px;
+  }
+  .home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-graph{
+    margin-top:18px;
+    height:122px;
+  }
+  .home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-bottom-shade{
+    left:-9px;
+    right:-9px;
+    bottom:-9px;
+    height:71px;
+  }
+  .home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-footer{
+    left:4px;
+    right:4px;
+    bottom:2px;
+  }
+  .home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-footer strong,
+  .home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-footer span{
+    font-size:11px;
+  }
+}
+

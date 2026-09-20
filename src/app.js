@@ -433,12 +433,27 @@ function homePreviewDeck(h,top){
         </div>
       </a>
 
-      <a class="home-preview-card home-ref-card home-v2-analytics-card" href="#/money">
-        <div class="home-preview-label"><b>Analytics</b><span>Open →</span></div>
-        <div class="home-v2-analytics-tabs"><b>Fees</b><span>1D</span><span>30D</span><span>All time</span></div>
-        <div class="home-v2-analytics-period">1D</div>
-        <strong class="home-v2-analytics-total">${fmtMoney(total)}</strong>
-        <div class="home-v2-chart">${Array.from({length:32},(_,i)=>`<i style="height:${18+((i*37)%76)}%"></i>`).join('')}</div>
+      <a class="home-preview-card home-ref-card home-v2-analytics-card" data-analytics-reference="v17" href="#/money">
+        <div class="home-v2-analytics-stage">
+          <div class="home-v2-analytics-topline"><strong>Fees</strong><span>1D</span></div>
+          <strong class="home-v2-analytics-total">${fmtMoney(total)}</strong>
+          <div class="home-v2-analytics-graph" aria-hidden="true">
+            <svg viewBox="0 0 100 42" preserveAspectRatio="none" role="presentation">
+              <defs>
+                <linearGradient id="homeAnalyticsFillV17" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="rgba(255,255,255,0.18)"/>
+                  <stop offset="68%" stop-color="rgba(255,255,255,0.06)"/>
+                  <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+                </linearGradient>
+              </defs>
+              <path class="grid" d="M0 9.5 H100 M0 25.5 H100"/>
+              <path class="area" d="M0 34 C8 33 13 31 18 32 C23 33 27 36 33 35 C40 34 44 26 50 24 C58 21 64 32 69 33 C74 34 80 27 85 28 C91 29 95 34 100 33 L100 42 L0 42 Z" fill="url(#homeAnalyticsFillV17)"/>
+              <path class="line" d="M0 34 C8 33 13 31 18 32 C23 33 27 36 33 35 C40 34 44 26 50 24 C58 21 64 32 69 33 C74 34 80 27 85 28 C91 29 95 34 100 33"/>
+            </svg>
+          </div>
+          <div class="home-v2-analytics-bottom-shade" aria-hidden="true"></div>
+          <div class="home-v2-analytics-footer"><strong>Analytics</strong><span>Open →</span></div>
+        </div>
       </a>
 
       <a class="home-preview-card home-ref-card home-v2-launch-card" href="#/launch">
