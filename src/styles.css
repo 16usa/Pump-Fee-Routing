@@ -3697,3 +3697,36 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     margin:2px -10px -10px;
   }
 }
+
+/* launch-preview-restore-project-colors-v1
+   Keep the compact preview layout, restore the project's original palette. */
+.launch-preview-usepaid{
+  border-color:#292929!important;
+  background:#101010!important;
+  box-shadow:none!important;
+}
+
+.launch-preview-usepaid .launch-preview-image{
+  background:
+    radial-gradient(circle at 50% 45%, #202020, #080808 68%)!important;
+  color:#fff!important;
+  border-color:#242424!important;
+}
+
+.launch-preview-usepaid .launch-preview-image.has-image{
+  background:#0a0a0a!important;
+}
+
+.launch-preview-badge{
+  border-color:#292929!important;
+  background:rgba(10,10,10,.92)!important;
+}
+
+.launch-preview-usepaid .launch-preview-stat>span,
+.launch-preview-usepaid .launch-preview-split{
+  border-color:#242424!important;
+}
+
+.launch-preview-usepaid .launch-preview-split>div+div{
+  border-left-color:#242424!important;
+}
