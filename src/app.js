@@ -2192,6 +2192,15 @@ const launchDemoScenes=[5,10,20,50,100].flatMap(amount=>[
 let launchDemoSceneIndex=0;
 let launchDemoTimer=null;
 
+function launchDemoEscapeHtml(value){
+  return String(value??'')
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#039;");
+}
+
 function getLaunchDemoRecipient(){
   if(typeof launchSelectedXProfile!=='undefined' && launchSelectedXProfile && (launchSelectedXProfile.name || launchSelectedXProfile.username)){
     return {
@@ -2207,9 +2216,9 @@ function getLaunchDemoRecipient(){
 
 function launchDemoAvatar(profile, extraClass=''){
   if(profile.avatarUrl){
-    return `<span class="launch-demo-avatar ${extraClass}"><img src="${escapeHtml(profile.avatarUrl)}" alt="" referrerpolicy="no-referrer"></span>`;
+    return `<span class="launch-demo-avatar ${extraClass}"><img src="${launchDemoEscapeHtml(profile.avatarUrl)}" alt="" referrerpolicy="no-referrer"></span>`;
   }
-  return `<span class="launch-demo-avatar ${extraClass}">${escapeHtml(profile.initial||'G')}</span>`;
+  return `<span class="launch-demo-avatar ${extraClass}">${launchDemoEscapeHtml(profile.initial||'G')}</span>`;
 }
 
 function launchDemoVerified(show){
@@ -2240,7 +2249,7 @@ function launchDemoContent(scene){
       ${launchDemoAvatar(recipient)}
     </div>
     <div class="launch-demo-card-copy">
-      <div class="launch-demo-card-line launch-demo-card-line-main"><strong>$${Number(scene.amount).toFixed(0)}</strong> sent to <strong>${escapeHtml(recipient.name)}</strong> ${launchDemoVerified(recipient.verified)}</div>
+      <div class="launch-demo-card-line launch-demo-card-line-main"><strong>$${Number(scene.amount).toFixed(0)}</strong> sent to <strong>${launchDemoEscapeHtml(recipient.name)}</strong> ${launchDemoVerified(recipient.verified)}</div>
       <div class="launch-demo-card-line launch-demo-card-line-sub">Creator fees via <strong>@UsePaid</strong> · now</div>
     </div>
     <div class="launch-demo-card-end"></div>
@@ -2321,3 +2330,5 @@ if(document.body){
 }
 window.addEventListener('hashchange',()=>setTimeout(ensureLaunchDemoBlock,40));
 window.addEventListener('load',()=>setTimeout(ensureLaunchDemoBlock,40));
+
+/* launch-demo-rotator-fix-v1 */
