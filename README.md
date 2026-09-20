@@ -282,3 +282,13 @@ submitted only after explicit approval in the creator's browser wallet:
 The server never receives the creator wallet private key and never signs the
 creator's transaction. `LIVE_CHAIN_TRANSACTIONS=false` remains valid for the
 server-owned claim crank.
+
+## X recipient lookup on Launch
+
+The Launch recipient field performs a real exact-username lookup against X API v2
+after a short debounce and renders the returned display name, avatar, username,
+and verified state directly under the existing field.
+
+Configure `X_BEARER_TOKEN` as a Replit Secret. The token stays server-side and is
+never returned to the browser. The lookup endpoint is `GET /api/x/profile` and
+uses X's `/2/users/by/username/:username` endpoint.

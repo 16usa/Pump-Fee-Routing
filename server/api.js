@@ -27,6 +27,33 @@ export async function handleApi(req,res,url){
     if(req.method==='GET'&&url.pathname.startsWith('/api/profiles/')){ const row=profile(decodeURIComponent(url.pathname.slice('/api/profiles/'.length))); return row?json(res,200,row):json(res,404,{error:'Not found'}); }
     if(req.method==='GET'&&url.pathname==='/api/money') return json(res,200,moneySummary());
     if(req.method==='GET'&&url.pathname==='/api/payments') return json(res,200,{payments:listPayments(Number(url.searchParams.get('limit')||50))});
+    if(req.method==='GET'&&url.pathname==='/api/x/profile'){
+      const username=String(url.searchParams.get('username')||'').replace(/^@/,'').trim();
+      if(!/^[A-Za-z0-9_]{1,15}$/.test(username))throw Object.assign(new Error('Invalid X username'),{statusCode:400});
+      if(!config.xBearerToken)throw Object.assign(new Error('X lookup is not configured'),{statusCode:503});
+      const fields='id,name,username,profile_image_url,verified,verified_type';
+      const r=await fetch(`https://api.x.com/2/users/by/username/${encodeURIComponent(username)}?user.fields=${encodeURIComponent(fields)}`,{
+        headers:{authorization:`Bearer ${config.xBearerToken}`,accept:'application/json'},
+        signal:AbortSignal.timeout(12000)
+      });
+      const payload=await r.json().catch(()=>({}));
+      if(r.status===404 || (!payload.data && Array.isArray(payload.errors) && payload.errors.some(x=>x?.status===404))){
+        return json(res,404,{error:'X account not found'});
+      }
+      if(!r.ok || !payload.data){
+        const message=payload?.detail||payload?.title||payload?.errors?.[0]?.detail||payload?.errors?.[0]?.message||`X API HTTP ${r.status}`;
+        throw Object.assign(new Error(message),{statusCode:r.status===429?429:502});
+      }
+      const u=payload.data;
+      return json(res,200,{
+        id:String(u.id||''),
+        name:String(u.name||u.username||''),
+        username:String(u.username||username),
+        profileImageUrl:String(u.profile_image_url||''),
+        verified:Boolean(u.verified),
+        verifiedType:String(u.verified_type||'')
+      });
+    }
     if(req.method==='POST'&&url.pathname==='/api/tokens/register'){ const b=await body(req); const out=await verifyAndRegisterMint(b.mint,{fallbackHandle:b.recipient_handle||''}); return json(res,out.ok?200:422,out); }
     if(req.method==='POST'&&url.pathname==='/api/launch/intents'){ const b=await body(req); const handle=String(b.recipient_handle||'').replace(/^@/,'').trim(); if(!/^[A-Za-z0-9_]{1,15}$/.test(handle))throw Object.assign(new Error('Invalid X handle'),{statusCode:400}); const opted=db.prepare('SELECT opted_out FROM recipients WHERE handle=? COLLATE NOCASE').get(handle); if(opted?.opted_out)throw Object.assign(new Error('Recipient has opted out'),{statusCode:409}); const id=randomUUID(); const line=`Fees to @${handle} via ${config.appName}`; db.prepare(`INSERT INTO launch_intents(id,mint,recipient_handle,creator_pubkey,description_line,status) VALUES(?,?,?,?,?,'draft')`).run(id,b.mint||null,handle,b.creator_pubkey||null,line); return json(res,201,{id,descriptionLine:line,treasuryAddress:config.treasuryAddress,status:'draft'}); }
     if(req.method==='POST'&&url.pathname==='/api/launch/metadata'){

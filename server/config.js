@@ -67,6 +67,7 @@ export const config = Object.freeze({
   xClientId: process.env.X_CLIENT_ID || '',
   xClientSecret: process.env.X_CLIENT_SECRET || '',
   xRedirectUri: process.env.X_REDIRECT_URI || '',
+  xBearerToken: process.env.X_BEARER_TOKEN || process.env.TWITTER_BEARER_TOKEN || '',
   exchangeProvider: setting('EXCHANGE_PROVIDER', 'disabled') || 'disabled',
   krakenApiKey: process.env.KRAKEN_API_KEY || '',
   krakenApiSecret: process.env.KRAKEN_API_SECRET || '',
