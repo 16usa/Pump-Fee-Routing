@@ -3401,3 +3401,46 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   outline:1px solid #777;
   outline-offset:3px;
 }
+
+/* launch-terms-checkbox-v2 — force a true compact square */
+.launch-terms{
+  grid-template-columns:16px 1fr!important;
+  column-gap:8px!important;
+  align-items:start!important;
+}
+.launch-terms input[type="checkbox"]{
+  -webkit-appearance:none!important;
+  appearance:none!important;
+  box-sizing:border-box!important;
+  inline-size:16px!important;
+  block-size:16px!important;
+  width:16px!important;
+  height:16px!important;
+  min-width:16px!important;
+  max-width:16px!important;
+  min-height:16px!important;
+  max-height:16px!important;
+  aspect-ratio:1/1!important;
+  padding:0!important;
+  margin:1px 0 0 0!important;
+  border:1px solid #f2f2f2!important;
+  border-radius:4px!important;
+  background:#f7f7f7!important;
+  display:grid!important;
+  place-items:center!important;
+  box-shadow:none!important;
+  outline:none!important;
+}
+.launch-terms input[type="checkbox"]::after{
+  content:"";
+  box-sizing:border-box;
+  width:4px;
+  height:8px;
+  border:solid #111;
+  border-width:0 1.7px 1.7px 0;
+  transform:translateY(-1px) rotate(45deg) scale(0);
+  transform-origin:center;
+}
+.launch-terms input[type="checkbox"]:checked::after{
+  transform:translateY(-1px) rotate(45deg) scale(1);
+}
