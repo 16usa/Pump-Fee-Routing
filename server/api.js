@@ -19,11 +19,10 @@ function requireUserSignedLaunch(){ if(!config.userSignedLaunchEnabled)throw Obj
 
 
 
-/* home-explore-token-image-v9 */
+/* all-token-images-v10 */
 function tokenImageCandidates(raw){
   const value=String(raw||'').trim();
   if(!value) return [];
-
   const out=[];
   const add=(url)=>{
     const u=String(url||'').trim();
@@ -59,31 +58,16 @@ function tokenImageCandidates(raw){
 function imageValuesFromMetadata(meta){
   if(!meta || typeof meta!=='object') return [];
   const values=[
-    meta.image_uri,
-    meta.image,
-    meta.imageUrl,
-    meta.image_url,
-    meta.metadata?.image_uri,
-    meta.metadata?.image,
-    meta.metadata?.imageUrl,
-    meta.metadata?.image_url,
-    meta.coin_metadata?.image_uri,
-    meta.coin_metadata?.image,
-    meta.coin_metadata?.imageUrl,
-    meta.coin_metadata?.image_url
+    meta.image_uri,meta.image,meta.imageUrl,meta.image_url,
+    meta.metadata?.image_uri,meta.metadata?.image,meta.metadata?.imageUrl,meta.metadata?.image_url,
+    meta.coin_metadata?.image_uri,meta.coin_metadata?.image,meta.coin_metadata?.imageUrl,meta.coin_metadata?.image_url
   ];
   return [...new Set(values.map(v=>String(v||'').trim()).filter(Boolean))];
 }
 
 function metadataUris(meta){
   if(!meta || typeof meta!=='object') return [];
-  const values=[
-    meta.uri,
-    meta.metadata_uri,
-    meta.metadataUri,
-    meta.metadata?.uri,
-    meta.coin_metadata?.uri
-  ];
+  const values=[meta.uri,meta.metadata_uri,meta.metadataUri,meta.metadata?.uri,meta.coin_metadata?.uri];
   return [...new Set(values.map(v=>String(v||'').trim()).filter(Boolean))];
 }
 
@@ -91,7 +75,6 @@ async function fetchMetadataJson(target){
   const direct=String(target||'').trim();
   const candidates=tokenImageCandidates(direct);
   if(/^https?:\/\//i.test(direct) && !candidates.includes(direct)) candidates.unshift(direct);
-
   for(const url of candidates.length?candidates:[direct]){
     if(!/^https?:\/\//i.test(url)) continue;
     try{
@@ -129,16 +112,11 @@ async function resolvePumpTokenImages(mint){
 
   for(const target of urls){
     try{
-      const r=await fetch(target,{
-        headers:{accept:'application/json'},
-        redirect:'follow',
-        signal:AbortSignal.timeout(12000)
-      });
+      const r=await fetch(target,{headers:{accept:'application/json'},redirect:'follow',signal:AbortSignal.timeout(12000)});
       if(!r.ok) continue;
       const meta=await r.json();
 
       for(const raw of imageValuesFromMetadata(meta)) addRaw(raw);
-
       for(const uri of metadataUris(meta)){
         const metadata=await fetchMetadataJson(uri);
         if(!metadata) continue;
@@ -164,7 +142,6 @@ async function resolvePumpTokenImages(mint){
 
 async function proxyTokenImage(res,mint){
   const candidates=await resolvePumpTokenImages(mint);
-
   for(const target of candidates){
     try{
       const r=await fetch(target,{
@@ -176,10 +153,8 @@ async function proxyTokenImage(res,mint){
         signal:AbortSignal.timeout(15000)
       });
       if(!r.ok) continue;
-
       const type=String(r.headers.get('content-type')||'').split(';')[0].trim().toLowerCase();
       if(!type.startsWith('image/')) continue;
-
       const bytes=Buffer.from(await r.arrayBuffer());
       if(!bytes.length || bytes.length>8_000_000) continue;
 
@@ -193,7 +168,6 @@ async function proxyTokenImage(res,mint){
       return true;
     }catch{}
   }
-
   return false;
 }
 

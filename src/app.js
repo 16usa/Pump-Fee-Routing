@@ -10,6 +10,34 @@ const ago=v=>{if(!v)return'';const ms=Math.max(0,Date.now()-new Date(v).getTime(
 const initials=s=>String(s||'?').replace(/^@/,'').split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase();
 async function api(path,opts={}){const r=await fetch(path,{...opts,headers:{'content-type':'application/json',...(opts.headers||{})}});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||`HTTP ${r.status}`);return j;}
 const avatar=(text,large=false,img='')=>img?`<div class="avatar ${large?'avatar-lg':''}"><img src="${esc(img)}" alt=""></div>`:`<div class="avatar ${large?'avatar-lg':''}" aria-hidden="true">${esc(initials(text))}</div>`;
+/* all-token-images-v10 */
+const tokenImageSource=(t)=>{
+  const mint=String(t?.mint||t?.contract||'').trim();
+  const direct=String(t?.image_url||'').trim();
+  return mint?`/api/token-image/${encodeURIComponent(mint)}`:direct;
+};
+const tokenImageErrorAttrs=(t)=>{
+  const mint=String(t?.mint||t?.contract||'').trim();
+  const direct=String(t?.image_url||'').trim();
+  if(mint&&direct){
+    return ` data-token-direct="${esc(direct)}" onerror="if(!this.dataset.tokenRetried){this.dataset.tokenRetried='1';this.src=this.dataset.tokenDirect;return}this.style.display='none';this.nextElementSibling.style.display='grid'"`;
+  }
+  return ` onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"`;
+};
+const tokenAvatar=(t,large=false)=>{
+  const label=t?.symbol||t?.name||'T';
+  const src=tokenImageSource(t);
+  if(!src) return avatar(label,large);
+  return `<div class="avatar ${large?'avatar-lg':''} token-avatar"><img src="${esc(src)}" alt="" loading="lazy" decoding="async"${tokenImageErrorAttrs(t)}><span class="token-avatar-fallback" style="display:none">${esc(initials(label))}</span></div>`;
+};
+const tokenMedia=(t,fallbackClass='token-image-fallback',fallbackContent='',imageClass='')=>{
+  const label=t?.symbol||t?.name||'T';
+  const content=fallbackContent||esc(initials(label));
+  const src=tokenImageSource(t);
+  if(!src) return `<div class="${fallbackClass}">${content}</div>`;
+  return `<img${imageClass?` class="${imageClass}"`:''} src="${esc(src)}" alt="" loading="lazy" decoding="async"${tokenImageErrorAttrs(t)}><div class="${fallbackClass}" style="display:none">${content}</div>`;
+};
+
 const logo=()=>`<a class="logo" href="#/" aria-label="Home"><span>${esc(state.brand.mark||'P')}</span></a>`;
 const platformBadge=(name='Pump')=>`<span class="platform-badge">${String(name).toLowerCase()==='pons'?'◼':'◉'} ${esc(name)}</span>`;
 const sectionTitle=(title,link='')=>`<div class="section-title"><h2>${esc(title)}</h2>${link?`<a href="${link}">View all</a>`:''}</div>`;
@@ -44,7 +72,7 @@ function footer(){return `<footer class="site-footer">
     </div>
   </div>
 </footer>`;}
-function tokenCard(t,compact=false){return `<a class="token-card ${compact?'compact':''}" href="#/token/${encodeURIComponent(t.mint||t.contract)}"><div class="token-img">${avatar(t.symbol||t.name,true,t.image_url)}</div><div class="token-meta"><div class="meta-line">${platformBadge(t.platform||'Pump')}<span class="muted">@${esc(t.profile||t.recipient_handle||'')}</span><span class="muted">${esc(t.age||ago(t.created_at))}</span></div><div class="token-name"><strong>${esc(t.name)}</strong><span>${esc(t.symbol)}</span></div><div class="token-numbers"><span>${fmtMc(t.mc??t.market_cap_usd)} <small>MC</small></span><span>${fmtNum(t.sent)} <small>Sent</small></span>${compact?'':`<span>${fmtNum(t.owed)} <small>Owed</small></span>`}</div>${compact?'':`<div class="contract">${esc((t.mint||'').slice(0,6))}…${esc((t.mint||'').slice(-6))}</div>`}</div></a>`;}
+function tokenCard(t,compact=false){return `<a class="token-card ${compact?'compact':''}" href="#/token/${encodeURIComponent(t.mint||t.contract)}"><div class="token-img">${tokenAvatar(t,true)}</div><div class="token-meta"><div class="meta-line">${platformBadge(t.platform||'Pump')}<span class="muted">@${esc(t.profile||t.recipient_handle||'')}</span><span class="muted">${esc(t.age||ago(t.created_at))}</span></div><div class="token-name"><strong>${esc(t.name)}</strong><span>${esc(t.symbol)}</span></div><div class="token-numbers"><span>${fmtMc(t.mc??t.market_cap_usd)} <small>MC</small></span><span>${fmtNum(t.sent)} <small>Sent</small></span>${compact?'':`<span>${fmtNum(t.owed)} <small>Owed</small></span>`}</div>${compact?'':`<div class="contract">${esc((t.mint||'').slice(0,6))}…${esc((t.mint||'').slice(-6))}</div>`}</div></a>`;}
 function paymentCard(p,i){const amount=p.amount_usd??p.amount??0;const to=p.display_name||p.recipient_handle||p.to||'recipient';const mints=String(p.mints||'').split(',').filter(Boolean);return `<button class="payment-card expandable" data-expand="payment-${i}"><div class="row"><div><strong>${fmtMoney(amount)}</strong><span>${['sent','claimed'].includes(p.status)?'sent':'scheduled'} to <b>${esc(to)}</b> ${['sent','claimed'].includes(p.status)?'<em>✓</em>':''}</span></div><span class="chev">⌄</span></div><div class="mini-tokens">${mints.slice(0,5).map((x,j)=>`${j?'<span class="arrow">→</span>':''}<span class="mini-icon">${esc(x[0]||'T')}</span>`).join('')}<time>${esc(ago(p.sent_at||p.created_at))}</time></div><div class="details hidden"><div><span>Status</span><b>${esc(p.status||'queued')}</b></div><div><span>Provider</span><b>${esc(p.provider||'')}</b></div><div><span>Reference</span><b>${esc(p.provider_ref||p.id||'')}</b></div>${p.public_confirmation_url?`<div><span>Confirmation</span><b>${esc(p.public_confirmation_url)}</b></div>`:''}</div></button>`;}
 function txCard(x,i){return `<button class="transfer-card expandable" data-expand="tx-${i}"><div class="tx-icon">≋</div><div class="tx-main"><strong>${x.received_usd?fmtMoney(x.received_usd):`${fmtNum(x.volume_native)} SOL`}</strong><span>${esc(x.pair||'SOLUSD')} · ${esc(x.side||'sell')}</span></div><div class="tx-side"><span class="tx-status">${esc(x.status||'queued')}</span><small>${esc(ago(x.filled_at||x.created_at))}</small></div><span class="chev">⌄</span><div class="tx-details hidden"><div><span>Provider</span><b>${esc(x.provider||'')}</b></div><div><span>Reference</span><b>${esc(x.provider_ref||x.id||'')}</b></div></div></button>`;}
 function moneyProfile(handle){
@@ -75,7 +103,7 @@ function moneyRecentCard(p,i){
     <span class="chev">⌄</span>
     <div class="money-payment-route">
       <div class="money-payment-avatar">
-        ${token?avatar(token.symbol||token.name,true,token.image_url):avatar(mints[0]||'T',true)}
+        ${token?tokenAvatar(token,true):avatar(mints[0]||'T',true)}
         <i>●</i>
       </div>
       <b class="money-dollar">$</b>
@@ -126,7 +154,7 @@ function moneyTopTokenCard(t){
   const profile=moneyProfile(handle);
   return `<a class="money-top-token-card" href="#/token/${encodeURIComponent(t.mint||t.contract||'')}">
     <div class="money-top-route">
-      <div class="money-payment-avatar">${avatar(t.symbol||t.name,true,t.image_url)}<i>●</i></div>
+      <div class="money-payment-avatar">${tokenAvatar(t,true)}<i>●</i></div>
       <b class="money-dollar">$</b>
       <div class="money-payment-avatar">${avatar(profile?.display_name||handle||'X',true,profile?.avatar_url||'')}<i class="x">X</i></div>
     </div>
@@ -228,7 +256,7 @@ function homeHeroCard(h,top){
   const owed=Number(t?.owed||0);
   return `<a class="home-hero-card" href="${t?`#/token/${encodeURIComponent(t.mint||t.contract)}`:'#/explore'}">
     <div class="home-hero-media">
-      ${t?.image_url?`<img src="${esc(t.image_url)}" alt="">`:`<div class="home-hero-media-empty"><span>${esc(initials(t?.symbol||t?.name||'P'))}</span><small>${t?'Image unavailable':'No routed token yet'}</small></div>`}
+      ${t?tokenMedia(t,'home-hero-media-empty',`<span>${esc(initials(t?.symbol||t?.name||'P'))}</span><small>Image unavailable</small>`):`<div class="home-hero-media-empty"><span>P</span><small>No routed token yet</small></div>`}
       <div class="home-hero-media-badge">${platformBadge(t?.platform||'Pump')}</div>
       <div class="home-hero-media-route">${handle?`@${esc(handle)}`:'Treasury'}</div>
     </div>
@@ -408,7 +436,7 @@ function homeTopTokenCard(t){
   const ageText=t.age||ago(t.created_at);
   return `<a class="home-top-token-card" href="#/token/${encodeURIComponent(mint)}">
     <div class="home-top-token-media">
-      ${t.image_url?`<img src="${esc(t.image_url)}" alt="">`:`<div class="home-top-token-fallback">${esc(initials(t.symbol||t.name||'T'))}</div>`}
+      ${tokenMedia(t,'home-top-token-fallback')}
       <div class="home-top-token-platform">${platformBadge(t.platform||'Pump')}</div>
       <div class="home-top-token-age">${esc(ageText||'')}</div>
       <div class="home-top-token-recipient">
@@ -510,7 +538,7 @@ function homeRecentPaymentCard(p,i,tokens){
     </div>
     <div class="home-payment-route">
       <div class="home-payment-party home-payment-token">
-        ${token?avatar(token.symbol||token.name,true,token.image_url):`<span class="home-payment-placeholder">${esc(initials(token?.symbol||firstMint||'T'))}</span>`}
+        ${token?tokenAvatar(token,true):`<span class="home-payment-placeholder">${esc(initials(token?.symbol||firstMint||'T'))}</span>`}
         <i class="home-payment-badge">●</i>
       </div>
       <span class="home-payment-dollar">$</span>
@@ -560,7 +588,7 @@ function homeMostPaymentRow(x,index,tokens){
   return `<a class="home-most-payment-row" href="#/profile/${encodeURIComponent(handle)}">
     <div class="home-most-payment-route">
       <div class="home-most-token">
-        ${lead?avatar(lead.symbol||lead.name,true,lead.image_url):avatar(name,true)}
+        ${lead?tokenAvatar(lead,true):avatar(name,true)}
         <i class="home-most-token-mark">●</i>
       </div>
       <span class="home-most-dollar">$</span>
@@ -751,7 +779,7 @@ function homePage(){
 }
 function exploreTrendingCard(t){
   return `<a class="explore-trend-card" href="#/token/${encodeURIComponent(t.mint||t.contract||'')}">
-    ${avatar(t.symbol||t.name,true,t.image_url)}
+    ${tokenAvatar(t,true)}
     <div>
       <strong>${esc(t.name)}</strong>
       <span>${esc(t.symbol||'')}</span>
@@ -765,7 +793,7 @@ function exploreTokenCard(t){
   const handle=t.profile||t.recipient_handle||'';
   return `<a class="explore-token-card" href="#/token/${encodeURIComponent(mint)}">
     <div class="explore-token-image">
-      ${t.image_url?`<img src="${esc(t.image_url)}" alt="">`:`<div class="explore-token-fallback">${esc(initials(t.symbol||t.name||'T'))}</div>`}
+      ${tokenMedia(t,'explore-token-fallback')}
     </div>
     <div class="explore-token-info">
       <div class="explore-token-meta">
@@ -1975,7 +2003,7 @@ async function tokenPage(mint){
 
     <section class="wrap token-detail-hero">
       <div class="token-detail-cover">
-        ${avatar(t.symbol||t.name,true,t.image_url)}
+        ${tokenAvatar(t,true)}
       </div>
 
       <div class="token-detail-identity">
@@ -2083,7 +2111,7 @@ async function tokenPage(mint){
 
 function profileTokenCard(t){
   return `<a class="profile-token-card" href="#/token/${encodeURIComponent(t.mint||t.contract)}">
-    <div class="profile-token-image">${avatar(t.symbol||t.name,true,t.image_url)}</div>
+    <div class="profile-token-image">${tokenAvatar(t,true)}</div>
     <div class="profile-token-copy">
       <span>${esc(t.platform||t.venue||'Token')} · ${esc(t.age||ago(t.created_at))}</span>
       <strong>${esc(t.name||t.symbol||'Token')}</strong>
@@ -2186,7 +2214,7 @@ async function profilePage(handle){
           <a href="#/token/${encodeURIComponent(top.mint||top.contract)}">Open →</a>
         </div>
         <a class="profile-featured-card" href="#/token/${encodeURIComponent(top.mint||top.contract)}">
-          <div class="profile-featured-image">${avatar(top.symbol||top.name,true,top.image_url)}</div>
+          <div class="profile-featured-image">${tokenAvatar(top,true)}</div>
           <div>
             <span>${esc(top.platform||top.venue||'Token')}</span>
             <h3>${esc(top.name||top.symbol||'Token')}</h3>
