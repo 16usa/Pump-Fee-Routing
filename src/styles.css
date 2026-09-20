@@ -4885,3 +4885,20 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   .home-v2-paying>strong{font-size:11px}
 }
 
+
+
+/* home-explore-static-reference-v1
+   Explore on the Home page is intentionally static, matching the reference. */
+.home-ref-explore-card,
+.home-ref-explore-card *{
+  animation:none!important;
+}
+.home-ref-explore-stage,
+.home-ref-explore-primary,
+.home-ref-explore-secondary,
+.home-ref-main-art,
+.home-ref-side-art{
+  transform:none!important;
+  transition:none!important;
+}
+
