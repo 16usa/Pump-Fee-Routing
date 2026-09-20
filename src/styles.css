@@ -4063,3 +4063,25 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     font-size:10px;
   }
 }
+
+/* launch-demo-bell-v1 */
+.launch-demo-rotator{
+  position:relative;
+}
+.launch-demo-card-end{
+  align-self:flex-start;
+  padding-top:2px;
+}
+.launch-demo-bell{
+  width:18px;
+  height:18px;
+  display:grid;
+  place-items:center;
+  color:#f4f4f4;
+}
+.launch-demo-bell svg{
+  width:16px;
+  height:16px;
+  display:block;
+  fill:currentColor;
+}

@@ -2242,7 +2242,7 @@ function launchDemoContent(scene){
         <div class="launch-demo-card-line launch-demo-card-line-sub">for <strong>"Creator fees via @UsePaid"</strong> · now</div>
       </div>
       <div class="launch-demo-card-end">
-        <span class="launch-demo-bell" aria-hidden="true">◔</span>
+        <span class="launch-demo-bell" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 22a2.25 2.25 0 0 0 2.12-1.5H9.88A2.25 2.25 0 0 0 12 22Zm7-5.25-1.45-1.7V10a5.55 5.55 0 0 0-4.3-5.42V3.75a1.25 1.25 0 0 0-2.5 0v.83A5.55 5.55 0 0 0 6.45 10v5.05L5 16.75a1 1 0 0 0 .76 1.65h12.48a1 1 0 0 0 .76-1.65Z"/></svg></span>
       </div>
     `;
   }
@@ -2341,3 +2341,5 @@ window.addEventListener('load',()=>setTimeout(ensureLaunchDemoBlock,40));
 /* launch-demo-rotator-loop-fix-v2 */
 
 /* launch-demo-recipient-logic-v1 */
+
+/* launch-demo-bell-v1 */
