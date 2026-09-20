@@ -10,6 +10,19 @@ const ago=v=>{if(!v)return'';const ms=Math.max(0,Date.now()-new Date(v).getTime(
 const initials=s=>String(s||'?').replace(/^@/,'').split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase();
 async function api(path,opts={}){const r=await fetch(path,{...opts,headers:{'content-type':'application/json',...(opts.headers||{})}});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||`HTTP ${r.status}`);return j;}
 const avatar=(text,large=false,img='')=>img?`<div class="avatar ${large?'avatar-lg':''}"><img src="${esc(img)}" alt=""></div>`:`<div class="avatar ${large?'avatar-lg':''}" aria-hidden="true">${esc(initials(text))}</div>`;
+/* sitewide-x-avatars-v13 */
+const recipientAvatar=(handle,label='',large=false,direct='')=>{
+  const clean=String(handle||'').replace(/^@/,'').trim();
+  const title=String(label||clean||'X').trim()||'X';
+  if(!clean) return avatar(title,large,direct);
+  const resolved=`/api/x-avatar/${encodeURIComponent(clean)}`;
+  const fallback=String(direct||'').trim();
+  const retry=fallback
+    ? ` data-x-avatar-direct="${esc(fallback)}" onerror="if(!this.dataset.xAvatarRetried){this.dataset.xAvatarRetried='1';this.src=this.dataset.xAvatarDirect;return}this.style.display='none';this.nextElementSibling.style.display='grid'"`
+    : ` onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"`;
+  return `<div class="avatar ${large?'avatar-lg':''} x-recipient-avatar"><img src="${esc(resolved)}" alt="" loading="lazy" decoding="async"${retry}><span class="x-recipient-avatar-fallback" style="display:none">${esc(initials(title))}</span></div>`;
+};
+
 /* all-token-images-v10 */
 const tokenImageSource=(t)=>{
   const mint=String(t?.mint||t?.contract||'').trim();
@@ -108,7 +121,7 @@ function moneyRecentCard(p,i){
       </div>
       <b class="money-dollar">$</b>
       <div class="money-payment-avatar">
-        ${avatar(profile?.display_name||p.display_name||handle,true,profile?.avatar_url||p.avatar_url||'')}
+        ${recipientAvatar(handle,profile?.display_name||p.display_name||handle,true,profile?.avatar_url||p.avatar_url||'')}
         <i class="x">X</i>
       </div>
       <time>${esc(ago(p.sent_at||p.created_at))}</time>
@@ -156,7 +169,7 @@ function moneyTopTokenCard(t){
     <div class="money-top-route">
       <div class="money-payment-avatar">${tokenAvatar(t,true)}<i>●</i></div>
       <b class="money-dollar">$</b>
-      <div class="money-payment-avatar">${avatar(profile?.display_name||handle||'X',true,profile?.avatar_url||'')}<i class="x">X</i></div>
+      <div class="money-payment-avatar">${recipientAvatar(handle,profile?.display_name||handle||'X',true,profile?.avatar_url||'')}<i class="x">X</i></div>
     </div>
     <div class="money-top-values">
       <strong>${fmtMoney(t.sent||0)}</strong>
@@ -342,7 +355,7 @@ function homePreviewDeck(h,top){
             const handle = String(token?.profile || token?.recipient_handle || token?.recipient_handles || '').replace(/^@/, '').trim();
             const label = profile?.display_name || handle || 'Recipient';
             const avatarUrl = String(profile?.avatar_url || '').trim();
-            return `<div class="home-explore-v8-recipient"><i>$</i>${avatar(label, false, avatarUrl)}<b>${esc(label)}</b></div>`;
+            return `<div class="home-explore-v8-recipient"><i>$</i>${recipientAvatar(handle,label,false,avatarUrl)}<b>${esc(label)}</b></div>`;
           };
 
           const renderPrimary = (token) => {
@@ -397,11 +410,11 @@ function homePreviewDeck(h,top){
         <div class="home-v2-profile-strip">
           ${profiles.length?profiles.map((p,i)=>{
             const n=p.display_name||p.handle;
-            return `<span class="${i===0?'active':''}">${avatar(n,false,p.avatar_url||'')}<b>${esc(n)}</b><small>@${esc(p.handle||'')}</small></span>`;
+            return `<span class="${i===0?'active':''}">${recipientAvatar(p.handle,n,false,p.avatar_url||'')}<b>${esc(n)}</b><small>@${esc(p.handle||'')}</small></span>`;
           }).join(''):`<span class="active">${avatar(leadName,false,'')}<b>${esc(leadName)}</b><small>@${esc(leadHandle)}</small></span>`}
         </div>
         <div class="home-v2-paying">
-          <div>${avatar(leadName,true,leadProfile?.avatar_url||'')}</div>
+          <div>${leadProfile?recipientAvatar(leadHandle,leadName,true,leadProfile?.avatar_url||''):avatar(leadName,true,'')}</div>
           <span><small>Paying out</small><b>${esc(leadName)}</b><em>@${esc(leadHandle)}</em></span>
           <strong>${payments[0]?fmtMoney(payments[0].amount_usd??payments[0].amount??0):'$0.00'}</strong>
         </div>
@@ -439,7 +452,7 @@ function homeTopTokenCard(t){
       <div class="home-top-token-platform">${platformBadge(t.platform||'Pump')}</div>
       <div class="home-top-token-age">${esc(ageText||'')}</div>
       <div class="home-top-token-recipient">
-        ${avatar(handle||t.symbol)}
+        ${handle?recipientAvatar(handle,handle,false,''):avatar(t.symbol||'T')}
         <span>${handle?`@${esc(handle)}`:'Recipient'}</span>
       </div>
     </div>
@@ -482,7 +495,7 @@ function homeProfileCard(p,index=0){
   return `<a class="home-profile-feature" href="#/profile/${encodeURIComponent(p.handle)}">
     <div class="home-profile-cover home-profile-cover-${index%4}">
       <div class="home-profile-cover-mark">${esc(initials(name))}</div>
-      <div class="home-profile-avatar">${avatar(name,true,p.avatar_url)}</div>
+      <div class="home-profile-avatar">${recipientAvatar(p.handle,name,true,p.avatar_url||'')}</div>
       <div class="home-profile-open">↗</div>
     </div>
     <div class="home-profile-feature-body">
@@ -542,7 +555,7 @@ function homeRecentPaymentCard(p,i,tokens){
       </div>
       <span class="home-payment-dollar">$</span>
       <div class="home-payment-party home-payment-recipient">
-        ${avatar(to,true,p.avatar_url||'')}
+        ${recipientAvatar(p.recipient_handle||p.to||'',to,true,p.avatar_url||'')}
         <i class="home-payment-x">X</i>
       </div>
       <time>${esc(ago(p.sent_at||p.created_at))}</time>
@@ -592,7 +605,7 @@ function homeMostPaymentRow(x,index,tokens){
       </div>
       <span class="home-most-dollar">$</span>
       <div class="home-most-recipient">
-        ${avatar(name,true,x.avatar_url||'')}
+        ${recipientAvatar(handle,name,true,x.avatar_url||'')}
         <i class="home-most-x">X</i>
       </div>
     </div>
@@ -1182,11 +1195,19 @@ function renderLaunchXLookup(profile){
 
   const avatar=document.createElement('div');
   avatar.className='launch-x-avatar';
-  if(profile.profileImageUrl){
+  if(profile.username||profile.profileImageUrl){
     const img=document.createElement('img');
-    img.src=profile.profileImageUrl;
+    img.src=profile.username?`/api/x-avatar/${encodeURIComponent(profile.username)}`:profile.profileImageUrl;
     img.alt='';
     img.referrerPolicy='no-referrer';
+    if(profile.profileImageUrl){
+      img.dataset.directAvatar=profile.profileImageUrl;
+      img.onerror=()=>{
+        if(img.dataset.retried)return;
+        img.dataset.retried='1';
+        img.src=img.dataset.directAvatar;
+      };
+    }
     avatar.appendChild(img);
   }else{
     avatar.textContent=(profile.name||profile.username||'X').trim().charAt(0).toUpperCase()||'X';
@@ -1369,11 +1390,19 @@ function launchPreviewProfileNode(profile,mode='row'){
 
   const avatar=document.createElement('span');
   avatar.className='launch-preview-profile-avatar';
-  if(profile.profileImageUrl){
+  if(profile.username||profile.profileImageUrl){
     const img=document.createElement('img');
-    img.src=profile.profileImageUrl;
+    img.src=profile.username?`/api/x-avatar/${encodeURIComponent(profile.username)}`:profile.profileImageUrl;
     img.alt='';
     img.referrerPolicy='no-referrer';
+    if(profile.profileImageUrl){
+      img.dataset.directAvatar=profile.profileImageUrl;
+      img.onerror=()=>{
+        if(img.dataset.retried)return;
+        img.dataset.retried='1';
+        img.src=img.dataset.directAvatar;
+      };
+    }
     avatar.appendChild(img);
   }else{
     avatar.textContent=(profile.name||profile.username||'X').trim().charAt(0).toUpperCase()||'X';
@@ -2016,7 +2045,7 @@ async function tokenPage(mint){
         </div>
 
         <a class="token-detail-recipient" href="#/profile/${encodeURIComponent(t.recipient_handle||'')}">
-          ${avatar(recipient.display_name||t.recipient_handle||'X',true,recipient.avatar_url||'')}
+          ${recipientAvatar(t.recipient_handle||'',recipient.display_name||t.recipient_handle||'X',true,recipient.avatar_url||'')}
           <div><span>X Money sent to</span><b>@${esc(t.recipient_handle||'—')}</b></div>
           <i>→</i>
         </a>
@@ -2181,7 +2210,7 @@ async function profilePage(handle){
   return `<main class="profile-page-v1">
     <section class="wrap profile-v1-hero">
       <div class="profile-v1-person">
-        ${avatar(display,true,r.avatar_url||'')}
+        ${recipientAvatar(cleanHandle,display,true,r.avatar_url||'')}
         <div class="profile-v1-name">
           <p>X Profile</p>
           <h1>${esc(display)}</h1>
@@ -2822,8 +2851,10 @@ function launchDemoAvatar(profile, extraClass=''){
   if(!profile){
     return `<span class="launch-demo-avatar ${extraClass}" aria-hidden="true"></span>`;
   }
-  if(profile.avatarUrl){
-    return `<span class="launch-demo-avatar ${extraClass}"><img src="${launchDemoEscapeHtml(profile.avatarUrl)}" alt="" referrerpolicy="no-referrer"></span>`;
+  if(profile.username||profile.avatarUrl){
+    const primary=profile.username?`/api/x-avatar/${encodeURIComponent(profile.username)}`:profile.avatarUrl;
+    const retry=profile.avatarUrl?` data-direct-avatar="${launchDemoEscapeHtml(profile.avatarUrl)}" onerror="if(!this.dataset.retried){this.dataset.retried='1';this.src=this.dataset.directAvatar}"`:'';
+    return `<span class="launch-demo-avatar ${extraClass}"><img src="${launchDemoEscapeHtml(primary)}" alt="" referrerpolicy="no-referrer"${retry}></span>`;
   }
   return `<span class="launch-demo-avatar ${extraClass}">${launchDemoEscapeHtml(profile.initial||'')}</span>`;
 }

@@ -35,7 +35,7 @@ export function moneySummary(){
   const totalOwed=Number(db.prepare(`SELECT COALESCE(SUM(recipient_usd),0) v FROM claims WHERE status='confirmed'`).get().v)+indexedOwed-Number(db.prepare(`SELECT COALESCE(SUM(pi.amount_usd),0) v FROM payout_items pi JOIN payouts p ON p.id=pi.payout_id WHERE p.status IN ('sent','claimed')`).get().v);
   const protocolPending=Number(db.prepare(`SELECT COALESCE(SUM(amount_usd),0) v FROM buybacks WHERE status='pending'`).get().v)+Number(db.prepare(`SELECT COALESCE(SUM(protocol_unclaimed_usd),0) v FROM token_chain_state WHERE active=1`).get().v);
   const recent=listPayments(50);
-  const topPaid=db.prepare(`SELECT r.handle,r.display_name,COALESCE(SUM(p.amount_usd),0) received FROM recipients r JOIN payouts p ON p.recipient_handle=r.handle WHERE p.status IN ('sent','claimed') GROUP BY r.handle ORDER BY received DESC LIMIT 10`).all();
+  const topPaid=db.prepare(`SELECT r.handle,r.display_name,r.avatar_url,COALESCE(SUM(p.amount_usd),0) received FROM recipients r JOIN payouts p ON p.recipient_handle=r.handle WHERE p.status IN ('sent','claimed') GROUP BY r.handle ORDER BY received DESC LIMIT 10`).all();
   const exchange=db.prepare(`SELECT * FROM exchange_orders ORDER BY created_at DESC LIMIT 20`).all();
   return {totalPaid,totalOwed:Math.max(0,totalOwed),protocolPending,recent,topPaid,exchange,indexer:getIndexerStatus()};
 }
@@ -45,4 +45,4 @@ export function profile(handle){
   const payments=db.prepare(`SELECT * FROM payouts WHERE recipient_handle=? COLLATE NOCASE ORDER BY created_at DESC LIMIT 100`).all(handle);
   return {recipient,tokens,payments,received:payments.filter(p=>['sent','claimed'].includes(p.status)).reduce((a,p)=>a+Number(p.amount_usd),0)};
 }
-export function homeData(){ const tokens=listTokens({limit:40}); return {tokens, trending:tokens.slice(0,10), payments:listPayments(12), money:moneySummary(), profiles:db.prepare(`SELECT r.handle,r.display_name,COUNT(DISTINCT t.mint) token_count,COALESCE(SUM(p.amount_usd),0) received FROM recipients r LEFT JOIN tokens t ON t.recipient_handle=r.handle AND t.hidden=0 LEFT JOIN payouts p ON p.recipient_handle=r.handle AND p.status IN ('sent','claimed') WHERE r.opted_out=0 GROUP BY r.handle ORDER BY received DESC LIMIT 12`).all()}; }
+export function homeData(){ const tokens=listTokens({limit:40}); return {tokens, trending:tokens.slice(0,10), payments:listPayments(12), money:moneySummary(), profiles:db.prepare(`SELECT r.handle,r.display_name,r.avatar_url,COUNT(DISTINCT t.mint) token_count,COALESCE(SUM(p.amount_usd),0) received FROM recipients r LEFT JOIN tokens t ON t.recipient_handle=r.handle AND t.hidden=0 LEFT JOIN payouts p ON p.recipient_handle=r.handle AND p.status IN ('sent','claimed') WHERE r.opted_out=0 GROUP BY r.handle ORDER BY received DESC LIMIT 12`).all()}; }
