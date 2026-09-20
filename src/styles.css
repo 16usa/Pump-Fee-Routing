@@ -3730,3 +3730,13 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 .launch-preview-usepaid .launch-preview-split>div+div{
   border-left-color:#242424!important;
 }
+
+/* launch-preview-ambient-shadow-v1
+   Soft ambient shadow around the existing Launch preview card.
+   Layout, colors, sizing and image treatment stay unchanged. */
+.launch-preview-usepaid{
+  box-shadow:
+    0 10px 26px rgba(0,0,0,.34),
+    0 28px 72px rgba(0,0,0,.52),
+    0 0 24px rgba(255,255,255,.025)!important;
+}
