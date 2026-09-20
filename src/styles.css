@@ -5379,3 +5379,26 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   }
 }
 
+
+/* explore-image-frame-cleanup-v15-7 */
+
+/* Remove the line directly under the LEFT image. */
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] > .home-explore-v8-copy{
+  border-top:0 !important;
+  box-shadow:none !important;
+}
+
+/* Remove the inner right-side divider on the LEFT card. */
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"]{
+  border-right:0 !important;
+}
+
+/* Keep the overall Explore block/card construction, but remove frames only around the media/images. */
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] > .home-explore-v8-media,
+.home-explore-reference-v8 .home-explore-v8-secondary-card,
+.home-explore-reference-v8 .home-explore-v8-secondary-card > .home-explore-v8-media{
+  border:0 !important;
+  outline:0 !important;
+  box-shadow:none !important;
+}
+
