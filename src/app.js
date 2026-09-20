@@ -276,45 +276,68 @@ function homePreviewDeck(h,top){
   return `<section class="home-preview-shell home-ref-previews home-reference-v2-previews">
     <div class="wrap home-preview-stack">
 
-      <a class="home-preview-card home-ref-card home-ref-explore-card home-explore-reference-v3" href="#/explore">
+      <a class="home-preview-card home-ref-card home-ref-explore-card home-explore-modules-v4" href="#/explore">
         ${(()=>{
-          const primary=tokens[0]||null;
-          const secondary=tokens[1]||primary;
-          const handle=primary?.profile||primary?.recipient_handle||'';
-          const profile=profiles.find(p=>String(p.handle||'').replace(/^@/,'').toLowerCase()===String(handle).replace(/^@/,'').toLowerCase())||null;
-          const recipientName=profile?.display_name||handle||'Recipient';
+          const withImage=tokens.filter(t=>String(t?.image_url||'').trim());
+          const primary=withImage[0]||tokens[0]||null;
+          const secondary=withImage.find(t=>t!==primary)||tokens.find(t=>t!==primary)||primary;
 
-          const media=(token,klass)=>{
-            const mint=String(token?.mint||token?.contract||'').trim();
-            if(!mint)return `<span class="home-explore-v3-fallback ${klass}"></span>`;
-            const direct=String(token?.image_url||'').trim();
-            const fallback=direct
-              ? `this.onerror=function(){this.style.display='none';this.nextElementSibling.style.display='block'};this.src='${esc(direct)}'`
-              : `this.style.display='none';this.nextElementSibling.style.display='block'`;
-            return `<img class="home-explore-v3-art ${klass}" src="/api/token-image/${encodeURIComponent(mint)}" alt="" loading="eager" decoding="async" onerror="${fallback}"><span class="home-explore-v3-fallback ${klass}" style="display:none"></span>`;
+          const tokenModule=(token,role)=>{
+            if(!token){
+              return `<div class="home-explore-v4-module ${role} is-empty">
+                <div class="home-explore-v4-media"><span class="home-explore-v4-fallback">P</span></div>
+                <div class="home-explore-v4-meta"><strong>Token</strong><span>—</span></div>
+              </div>`;
+            }
+
+            const mint=String(token.mint||token.contract||'').trim();
+            const handle=String(token.profile||token.recipient_handle||'').replace(/^@/,'');
+            const profile=profiles.find(p=>String(p.handle||'').replace(/^@/,'').toLowerCase()===handle.toLowerCase())||null;
+            const recipientName=profile?.display_name||handle||'Recipient';
+            const recipientAvatar=profile?.avatar_url||'';
+            const initial=esc(initials(token.symbol||token.name||'P'));
+            const direct=String(token.image_url||'').trim();
+
+            let media=`<span class="home-explore-v4-fallback">${initial}</span>`;
+            if(mint){
+              const onerror=direct
+                ? `this.onerror=function(){this.style.display='none';this.nextElementSibling.style.display='grid'};this.src='${esc(direct)}'`
+                : `this.style.display='none';this.nextElementSibling.style.display='grid'`;
+              media=`<img class="home-explore-v4-art" src="/api/token-image/${encodeURIComponent(mint)}" alt="" loading="eager" decoding="async" onerror="${onerror}">
+                <span class="home-explore-v4-fallback" style="display:none">${initial}</span>`;
+            }else if(direct){
+              media=`<img class="home-explore-v4-art" src="${esc(direct)}" alt="" loading="eager" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
+                <span class="home-explore-v4-fallback" style="display:none">${initial}</span>`;
+            }
+
+            return `<div class="home-explore-v4-module ${role}">
+              <div class="home-explore-v4-media">
+                ${media}
+                <div class="home-explore-v4-venue">${platformBadge(token.platform||'Pump')}</div>
+                <div class="home-explore-v4-recipient">
+                  <i>$</i>
+                  ${avatar(recipientName,false,recipientAvatar)}
+                  <b>${esc(recipientName)}</b>
+                </div>
+              </div>
+              <div class="home-explore-v4-meta">
+                <div class="home-explore-v4-title">
+                  <strong>${esc(token.name||'Token')}</strong>
+                  <span>${esc(token.symbol||'')}</span>
+                </div>
+                <div class="home-explore-v4-stats">
+                  <span>${fmtMc(token.mc??token.market_cap_usd)} MC</span>
+                  <b>${fmtMoney(token.sent||0)}</b>
+                </div>
+              </div>
+            </div>`;
           };
 
-          return `<div class="home-explore-v3-stage">
-            <div class="home-explore-v3-primary">
-              <div class="home-explore-v3-primary-image">${media(primary,'primary')}</div>
-              ${primary?`<div class="home-explore-v3-recipient-pill">
-                <i>$</i>
-                ${avatar(recipientName,false,'')}
-                <b>${esc(recipientName)}</b>
-              </div>`:''}
-              ${primary?`<div class="home-explore-v3-token-copy">
-                <strong>${esc(primary.name||'')}</strong>
-                <span>${esc(primary.symbol||'')}</span>
-                <small>${fmtMoney(primary.sent||0)}</small>
-              </div>`:''}
-            </div>
-
-            <div class="home-explore-v3-secondary">
-              ${media(secondary,'secondary')}
-            </div>
-
-            <div class="home-explore-v3-shade" aria-hidden="true"></div>
-            <div class="home-explore-v3-footer">
+          return `<div class="home-explore-v4-stage">
+            <div class="home-explore-v4-primary-slot">${tokenModule(primary,'primary')}</div>
+            <div class="home-explore-v4-secondary-slot">${tokenModule(secondary,'secondary')}</div>
+            <div class="home-explore-v4-shade" aria-hidden="true"></div>
+            <div class="home-explore-v4-footer">
               <strong>Explore</strong>
               <span>Open →</span>
             </div>
