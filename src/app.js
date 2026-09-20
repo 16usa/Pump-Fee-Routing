@@ -252,93 +252,108 @@ function homeHeroCard(h,top){
 }
 
 function homePreviewDeck(h,top){
-  const tokens=(top||[]).slice(0,3);
-  const t=tokens[0]||null;
-  const t2=tokens[1]||null;
-  const payments=(h.payments||[]).slice(0,2);
+  const tokens=(top||[]).filter(Boolean).slice(0,8);
+  const profiles=(h.profiles||[]).filter(Boolean).slice(0,3);
+  const payments=(h.payments||[]).filter(Boolean).slice(0,5);
   const money=h.money||{};
-  const profile=(h.profiles||[])[0]||null;
   const total=Number(money.totalPaid||0);
-  const handle=t?.profile||t?.recipient_handle||profile?.handle||'';
-  const display=profile?.display_name||handle||'Recipient';
 
-  const tokenVisual=(x,cls='')=>x?.image_url
-    ? `<img class="${cls}" src="${esc(x.image_url)}" alt="">`
-    : `<div class="home-ref-token-fallback ${cls}">${esc(initials(x?.symbol||x?.name||'P'))}</div>`;
+  const railTokens=tokens.length?tokens:[null];
+  const repeated=Array.from({length:Math.max(8,railTokens.length*3)},(_,i)=>railTokens[i%railTokens.length]);
 
-  const paymentRows=payments.length
-    ? payments.map((p,i)=>{
-        const amount=p.amount_usd??p.amount??0;
-        const to=p.display_name||p.recipient_handle||p.to||'recipient';
-        return `<div class="home-ref-pay-row">
-          <span class="home-ref-pay-coin">$</span>
-          <div><strong>${fmtMoney(amount)}</strong><small>sent to <b>${esc(to)}</b></small></div>
-          <time>${esc(ago(p.sent_at||p.created_at))}</time>
-        </div>`;
-      }).join('')
-    : `<div class="home-ref-empty-route"><i></i><b>$</b><i></i><span>No payouts recorded yet.</span></div>`;
+  const exploreMini=(t,i)=>{
+    const name=t?.name||'Waiting for token';
+    const symbol=t?.symbol||'';
+    const handle=t?.profile||t?.recipient_handle||'';
+    const media=t?.image_url
+      ? `<img src="${esc(t.image_url)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><span class="home-v2-token-fallback" style="display:none">${esc(initials(symbol||name||'P'))}</span>`
+      : `<span class="home-v2-token-fallback">${esc(initials(symbol||name||'P'))}</span>`;
+    return `<div class="home-v2-token-mini">
+      <div class="home-v2-token-media">${media}</div>
+      <div class="home-v2-token-copy">
+        <small>${handle?`@${esc(handle)}`:'Pump'}${t?.created_at?` · ${esc(ago(t.created_at))}`:''}</small>
+        <strong>${esc(name)}</strong>
+        <span>${esc(symbol)}${t?` · ${fmtMc(t.mc??t.market_cap_usd)} MC`:''}</span>
+      </div>
+      <b>${t?`${fmtNum(t.sent||0)} Sent`:'—'}</b>
+    </div>`;
+  };
 
-  return `<section class="home-preview-shell home-ref-previews">
+  const paymentMini=(p)=>{
+    if(!p) return '';
+    const amount=p.amount_usd??p.amount??0;
+    const to=p.display_name||p.recipient_handle||p.to||'recipient';
+    return `<div class="home-v2-payment-mini">
+      <strong>${fmtMoney(amount)}</strong>
+      <span>sent to <b>${esc(to)}</b></span>
+      <time>${esc(ago(p.sent_at||p.created_at))}</time>
+    </div>`;
+  };
+
+  const leadProfile=profiles[0]||null;
+  const leadName=leadProfile?.display_name||leadProfile?.handle||'Recipient';
+  const leadHandle=leadProfile?.handle||'recipient';
+
+  return `<section class="home-preview-shell home-ref-previews home-reference-v2-previews">
     <div class="wrap home-preview-stack">
 
-      <a class="home-preview-card home-preview-token-card home-ref-card" href="#/explore">
+      <a class="home-preview-card home-ref-card home-v2-explore-card" href="#/explore">
         <div class="home-preview-label"><b>Explore</b><span>Open →</span></div>
-        <div class="home-ref-explore-stage">
-          <div class="home-ref-explore-primary">
-            ${tokenVisual(t,'home-ref-main-art')}
-            <div class="home-ref-floating-badge">${platformBadge(t?.platform||'Pump')}</div>
-            <div class="home-ref-floating-profile">${handle?`@${esc(handle)}`:'Recipient'}</div>
-          </div>
-          <div class="home-ref-explore-secondary">
-            ${tokenVisual(t2,'home-ref-side-art')}
-            <small>${t2?esc(t2.symbol||''):'Route'}</small>
-            <b>${t2?fmtMoney(t2.sent||0):'100%'}</b>
-          </div>
+        <div class="home-v2-token-rail">
+          <div class="home-v2-token-track">${repeated.map(exploreMini).join('')}</div>
         </div>
-        <div class="home-ref-explore-foot">
-          <div><small>${handle?`@${esc(handle)}`:'Token routing'}</small><strong>${t?esc(t.name):'No routed token yet'}</strong><span>${t?`${esc(t.symbol||'')} · ${fmtMc(t.mc??t.market_cap_usd)} MC`:'Verified tokens appear here'}</span></div>
-          <b>${t?fmtMoney(t.sent||0):'$0.00'}</b>
+        <div class="home-v2-token-rail home-v2-token-rail-reverse">
+          <div class="home-v2-token-track">${repeated.slice().reverse().map(exploreMini).join('')}</div>
         </div>
       </a>
 
-      <a class="home-preview-card home-preview-payment-card home-ref-card" href="#/money">
+      <a class="home-preview-card home-ref-card home-v2-payments-card" href="#/money">
         <div class="home-preview-label"><b>Payments</b><span>Open →</span></div>
-        <div class="home-ref-payment-stage">${paymentRows}</div>
-        <div class="home-ref-card-bottom"><span>Confirmed payouts</span><b>${payments.length?fmtMoney(payments.reduce((s,p)=>s+Number(p.amount_usd??p.amount??0),0)):'$0.00'}</b></div>
+        ${payments.length
+          ? `<div class="home-v2-payments-list">${payments.map(paymentMini).join('')}</div>`
+          : `<div class="home-v2-empty-row"><i></i><b>$</b><i></i><span>No payouts recorded yet.</span></div>`}
       </a>
 
-      <a class="home-preview-card home-preview-analytics-card home-ref-card" href="#/money">
+      <a class="home-preview-card home-ref-card home-v2-analytics-card" href="#/money">
         <div class="home-preview-label"><b>Analytics</b><span>Open →</span></div>
-        <div class="home-ref-analytics-tabs"><b>Fees</b><span>1D</span><span>30D</span><span>All time</span></div>
-        <strong class="home-ref-analytics-total">${fmtMoney(total)}</strong>
-        <div class="home-ref-chart">${Array.from({length:28},(_,i)=>`<i style="height:${14+((i*31)%72)}%"></i>`).join('')}</div>
-        <div class="home-ref-card-bottom"><span>Confirmed ledger activity</span><b>Live</b></div>
+        <div class="home-v2-analytics-tabs"><b>Fees</b><span>1D</span><span>30D</span><span>All time</span></div>
+        <div class="home-v2-analytics-period">1D</div>
+        <strong class="home-v2-analytics-total">${fmtMoney(total)}</strong>
+        <div class="home-v2-chart">${Array.from({length:32},(_,i)=>`<i style="height:${18+((i*37)%76)}%"></i>`).join('')}</div>
       </a>
 
-      <a class="home-preview-card home-preview-launch-card home-ref-card" href="#/launch">
+      <a class="home-preview-card home-ref-card home-v2-launch-card" href="#/launch">
         <div class="home-preview-label"><b>Launch</b><span>Open →</span></div>
-        <div class="home-ref-launch-label">Recipient X handle</div>
-        <div class="home-ref-launch-input">@${profile?esc(profile.handle):'recipient'}</div>
-        <div class="home-ref-launch-pay">
-          <div>${avatar(display,true,profile?.avatar_url||'')}</div>
-          <span><small>Paying out</small><b>${esc(display)}</b>${profile?.handle?`<em>@${esc(profile.handle)}</em>`:''}</span>
-          <strong>${fmtMoney(payments[0]?.amount_usd??payments[0]?.amount??0)}</strong>
+        <div class="home-v2-launch-label">Fees route to</div>
+        <div class="home-v2-profile-strip">
+          ${profiles.length?profiles.map((p,i)=>{
+            const n=p.display_name||p.handle;
+            return `<span class="${i===0?'active':''}">${avatar(n,false,p.avatar_url||'')}<b>${esc(n)}</b><small>@${esc(p.handle||'')}</small></span>`;
+          }).join(''):`<span class="active">${avatar(leadName,false,'')}<b>${esc(leadName)}</b><small>@${esc(leadHandle)}</small></span>`}
         </div>
-        <div class="home-ref-launch-meta">
-          <span>Creator fees</span><b>100%</b>
-          <span>Treasury route</span><b>Permanent</b>
+        <div class="home-v2-paying">
+          <div>${avatar(leadName,true,leadProfile?.avatar_url||'')}</div>
+          <span><small>Paying out</small><b>${esc(leadName)}</b><em>@${esc(leadHandle)}</em></span>
+          <strong>${payments[0]?fmtMoney(payments[0].amount_usd??payments[0].amount??0):'$0.00'}</strong>
         </div>
+        <div class="home-v2-sent-via">Sent via X Money</div>
       </a>
 
-      <a class="home-preview-card home-preview-doc-card home-ref-card" href="#/docs">
-        <div class="home-preview-label"><b>How it works</b><span>Read →</span></div>
-        <div class="home-ref-doc-head"><small>Sharing config</small><strong>Attribution is per-mint</strong></div>
-        <p class="home-ref-doc-copy">One config account per token mint. The treasury is stored in its shareholders array so every token keeps clean attribution.</p>
-        <div class="home-ref-doc-grid">
+      <a class="home-preview-card home-ref-card home-v2-docs-card" href="#/docs">
+        <div class="home-preview-label"><b>Docs</b><span>Open →</span></div>
+        <small class="home-v2-docs-eyebrow">Sharing config</small>
+        <strong class="home-v2-docs-title">Attribution is per-mint</strong>
+        <p>One config account per token mint. The treasury appears in its shareholders array, so a single wallet gets clean per-token attribution.</p>
+        <div class="home-v2-docs-fields">
+          <span><small>Off</small><small>Len</small><small>Field</small></span>
+          <b><i>0</i><i>8</i><em>discriminator</em></b>
+          <b><i>11</i><i>32</i><em>token mint</em></b>
+          <b><i>43</i><i>32</i><em>admin</em></b>
+          <b><i>75</i><i>1</i><em>revoke flag</em></b>
+        </div>
+        <div class="home-v2-docs-bottom">
           <span><small>Detection</small><b>On-chain</b></span>
           <span><small>Claiming</small><b>Creator fees</b></span>
-          <span><small>Route</small><b>100%</b></span>
-          <span><small>Recipient</small><b>X handle</b></span>
         </div>
       </a>
 
