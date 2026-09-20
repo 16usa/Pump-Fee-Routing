@@ -19,47 +19,184 @@ function requireUserSignedLaunch(){ if(!config.userSignedLaunchEnabled)throw Obj
 
 
 
-/* home-explore-token-image-v6 */
-function normalizePumpTokenImage(raw,mint=''){
-  let value=String(raw||'').trim();
-  if(!value) return '';
-  let cid='';
+/* home-explore-token-image-v9 */
+function tokenImageCandidates(raw){
+  const value=String(raw||'').trim();
+  if(!value) return [];
+
+  const out=[];
+  const add=(url)=>{
+    const u=String(url||'').trim();
+    if(u && /^https?:\/\//i.test(u) && !out.includes(u)) out.push(u);
+  };
+
+  if(/^ar:\/\//i.test(value)){
+    add(`https://arweave.net/${value.replace(/^ar:\/\//i,'')}`);
+    return out;
+  }
+
+  let ipfsPath='';
   if(/^ipfs:\/\//i.test(value)){
-    cid=value.replace(/^ipfs:\/\//i,'').replace(/^ipfs\//i,'').split(/[/?#]/)[0];
+    ipfsPath=value.replace(/^ipfs:\/\//i,'').replace(/^ipfs\//i,'');
   }else{
-    const m=value.match(/\/ipfs\/([^/?#]+)/i);
-    if(m) cid=m[1];
+    const m=value.match(/\/ipfs\/([^?#]+)/i);
+    if(m) ipfsPath=m[1];
   }
-  if(cid){
-    const src=`https://ipfs.io/ipfs/${cid}`;
-    return `https://images.pump.fun/coin-image/${encodeURIComponent(mint)}?variant=public&ipfs=${encodeURIComponent(cid)}&src=${encodeURIComponent(src)}`;
+
+  if(ipfsPath){
+    ipfsPath=ipfsPath.replace(/^\/+/,'');
+    add(value);
+    add(`https://ipfs.io/ipfs/${ipfsPath}`);
+    add(`https://gateway.pinata.cloud/ipfs/${ipfsPath}`);
+    add(`https://dweb.link/ipfs/${ipfsPath}`);
+    return out;
   }
-  if(/^https?:\/\//i.test(value)) return value;
-  if(/^ar:\/\//i.test(value)) return `https://arweave.net/${value.replace(/^ar:\/\//i,'')}`;
-  return '';
+
+  add(value);
+  return out;
 }
 
-async function resolvePumpTokenImage(mint){
+function imageValuesFromMetadata(meta){
+  if(!meta || typeof meta!=='object') return [];
+  const values=[
+    meta.image_uri,
+    meta.image,
+    meta.imageUrl,
+    meta.image_url,
+    meta.metadata?.image_uri,
+    meta.metadata?.image,
+    meta.metadata?.imageUrl,
+    meta.metadata?.image_url,
+    meta.coin_metadata?.image_uri,
+    meta.coin_metadata?.image,
+    meta.coin_metadata?.imageUrl,
+    meta.coin_metadata?.image_url
+  ];
+  return [...new Set(values.map(v=>String(v||'').trim()).filter(Boolean))];
+}
+
+function metadataUris(meta){
+  if(!meta || typeof meta!=='object') return [];
+  const values=[
+    meta.uri,
+    meta.metadata_uri,
+    meta.metadataUri,
+    meta.metadata?.uri,
+    meta.coin_metadata?.uri
+  ];
+  return [...new Set(values.map(v=>String(v||'').trim()).filter(Boolean))];
+}
+
+async function fetchMetadataJson(target){
+  const direct=String(target||'').trim();
+  const candidates=tokenImageCandidates(direct);
+  if(/^https?:\/\//i.test(direct) && !candidates.includes(direct)) candidates.unshift(direct);
+
+  for(const url of candidates.length?candidates:[direct]){
+    if(!/^https?:\/\//i.test(url)) continue;
+    try{
+      const r=await fetch(url,{
+        headers:{accept:'application/json,text/plain;q=0.9,*/*;q=0.5'},
+        redirect:'follow',
+        signal:AbortSignal.timeout(12000)
+      });
+      if(!r.ok) continue;
+      const text=await r.text();
+      if(text.length>2_000_000) continue;
+      const data=JSON.parse(text);
+      if(data && typeof data==='object') return data;
+    }catch{}
+  }
+  return null;
+}
+
+async function resolvePumpTokenImages(mint){
+  const candidates=[];
+  const addRaw=(raw)=>{
+    for(const url of tokenImageCandidates(raw)){
+      if(!candidates.includes(url)) candidates.push(url);
+    }
+  };
+
   const stored=getToken(mint);
-  const storedImage=normalizePumpTokenImage(stored?.image_url||'',mint);
-  if(storedImage) return storedImage;
+  addRaw(stored?.image_url||'');
+
   const urls=[...new Set([
     config.pumpMetadataUrlTemplate.replace('{mint}',encodeURIComponent(mint)),
     `https://frontend-api-v3.pump.fun/coins-v2/${encodeURIComponent(mint)}`,
     `https://frontend-api-v3.pump.fun/coins/${encodeURIComponent(mint)}`
   ])];
+
   for(const target of urls){
     try{
-      const r=await fetch(target,{headers:{accept:'application/json'},signal:AbortSignal.timeout(12000)});
+      const r=await fetch(target,{
+        headers:{accept:'application/json'},
+        redirect:'follow',
+        signal:AbortSignal.timeout(12000)
+      });
       if(!r.ok) continue;
       const meta=await r.json();
-      const raw=meta?.image_uri || meta?.image || meta?.metadata?.image_uri || meta?.metadata?.image || meta?.coin_metadata?.image_uri || meta?.coin_metadata?.image || '';
-      const image=normalizePumpTokenImage(raw,mint);
-      if(image) return image;
+
+      for(const raw of imageValuesFromMetadata(meta)) addRaw(raw);
+
+      for(const uri of metadataUris(meta)){
+        const metadata=await fetchMetadataJson(uri);
+        if(!metadata) continue;
+        for(const raw of imageValuesFromMetadata(metadata)) addRaw(raw);
+      }
     }catch{}
   }
-  return '';
+
+  if(stored?.metadata_json){
+    try{
+      const meta=JSON.parse(stored.metadata_json);
+      for(const raw of imageValuesFromMetadata(meta)) addRaw(raw);
+      for(const uri of metadataUris(meta)){
+        const metadata=await fetchMetadataJson(uri);
+        if(!metadata) continue;
+        for(const raw of imageValuesFromMetadata(metadata)) addRaw(raw);
+      }
+    }catch{}
+  }
+
+  return candidates;
 }
+
+async function proxyTokenImage(res,mint){
+  const candidates=await resolvePumpTokenImages(mint);
+
+  for(const target of candidates){
+    try{
+      const r=await fetch(target,{
+        headers:{
+          accept:'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+          'user-agent':'Mozilla/5.0'
+        },
+        redirect:'follow',
+        signal:AbortSignal.timeout(15000)
+      });
+      if(!r.ok) continue;
+
+      const type=String(r.headers.get('content-type')||'').split(';')[0].trim().toLowerCase();
+      if(!type.startsWith('image/')) continue;
+
+      const bytes=Buffer.from(await r.arrayBuffer());
+      if(!bytes.length || bytes.length>8_000_000) continue;
+
+      res.writeHead(200,{
+        'content-type':type,
+        'content-length':String(bytes.length),
+        'cache-control':'public, max-age=900, stale-while-revalidate=3600',
+        'x-content-type-options':'nosniff'
+      });
+      res.end(bytes);
+      return true;
+    }catch{}
+  }
+
+  return false;
+}
+
 
 export async function handleApi(req,res,url){
   try{
@@ -67,10 +204,9 @@ export async function handleApi(req,res,url){
     if(req.method==='GET'&&url.pathname.startsWith('/api/token-image/')){
       const mint=decodeURIComponent(url.pathname.slice('/api/token-image/'.length)).trim();
       if(!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(mint)) return json(res,400,{error:'Invalid mint'});
-      const image=await resolvePumpTokenImage(mint);
-      if(!image) return json(res,404,{error:'Token image not found'});
-      res.writeHead(302,{location:image,'cache-control':'public, max-age=300'});
-      return res.end();
+      const sent=await proxyTokenImage(res,mint);
+      if(sent) return;
+      return json(res,404,{error:'Token image not found'});
     }
     if(req.method==='GET'&&url.pathname==='/api/health') return json(res,200,{ok:true,name:config.appName,treasuryConfigured:!!config.treasuryAddress,readOnly:config.readOnlyMode,liveChain:config.liveChainTransactions,userSignedLaunch:config.userSignedLaunchEnabled,onchainDiscovery:config.onchainDiscoveryEnabled,claimWorker:!config.readOnlyMode&&config.claimWorkerEnabled&&config.liveChainTransactions,payoutWorker:!config.readOnlyMode&&config.payoutWorkerEnabled,payoutProvider:config.payoutProvider,exchangeProvider:config.exchangeProvider,indexer:getIndexerStatus()});
     if(req.method==='GET'&&url.pathname==='/api/indexer/status') return json(res,200,getIndexerStatus());

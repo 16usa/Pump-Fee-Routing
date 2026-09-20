@@ -119,7 +119,7 @@ export async function verifyAndRegisterMint(mint,{fallbackHandle='',connection:p
   if(!Number.isSafeInteger(distributableLamports)||!Number.isSafeInteger(minimumLamports)) throw new Error(`Creator-fee balance exceeds safe integer range for ${mint}`);
   const grossUnclaimedUsd=(distributableLamports/1e9)*solPrice;
   upsertToken({
-    mint,venue:'pump',name:name||existing.name,symbol:symbol||existing.symbol,image_url:meta.image_uri||meta.image||meta.metadata?.image||existing?.image_url||'',
+    mint,venue:'pump',name:name||existing.name,symbol:symbol||existing.symbol,image_url:meta.image_uri||meta.image||meta.image_url||meta.metadata?.image_uri||meta.metadata?.image||meta.metadata?.image_url||meta.coin_metadata?.image_uri||meta.coin_metadata?.image||meta.coin_metadata?.image_url||existing?.image_url||'',
     description:description||existing?.description||'',recipient_handle:handle,recipient_source:recipientSource,
     market_cap_usd:Number.isFinite(marketCap)?marketCap:Number(existing.market_cap_usd),
     fee_share_bps:10000,permanent:true,hidden:false,fee_config_address:cfg,
