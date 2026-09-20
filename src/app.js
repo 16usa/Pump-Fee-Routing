@@ -352,7 +352,6 @@ function homePreviewDeck(h,top){
             return `<div class="home-explore-v8-primary-card">
               <div class="home-explore-v8-media">
                 ${renderTokenArt(token, 'primary')}
-                <div class="home-explore-v8-venue">${platformBadge(token.platform || 'Pump')}</div>
                 ${renderRecipient(token)}
                 <div class="home-explore-v8-copy">
                   <div class="home-explore-v8-title"><strong>${esc(token.name || 'Token')}</strong><span>${esc(token.symbol || '')}</span></div>

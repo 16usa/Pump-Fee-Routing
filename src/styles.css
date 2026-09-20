@@ -4958,3 +4958,21 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 .token-avatar{position:relative;overflow:hidden}
 .token-avatar>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit}
 .token-avatar-fallback{position:absolute;inset:0;width:100%;height:100%;place-items:center;background:radial-gradient(circle at 35% 25%,#555,#1b1b1b 58%,#0b0b0b);color:#fff}
+
+
+/* home-explore-footer-match-v11 */
+.home-explore-reference-v8 .home-explore-v8-footer strong,
+.home-explore-reference-v8 .home-explore-v8-footer span{
+  color:#777;
+  font-size:12px;
+  line-height:1;
+  font-weight:450;
+  letter-spacing:0;
+  white-space:nowrap;
+}
+@media (max-width:640px){
+  .home-explore-reference-v8 .home-explore-v8-footer strong,
+  .home-explore-reference-v8 .home-explore-v8-footer span{
+    font-size:11px;
+  }
+}
