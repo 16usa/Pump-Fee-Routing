@@ -295,17 +295,37 @@ function homeHeroCard(h,top){
 function homePreviewDeck(h,top){
   const tokens=(top||[]).filter(Boolean).slice(0,8);
   const profiles=(h.profiles||[]).filter(Boolean).slice(0,3);
-  const payments=(h.payments||[]).filter(Boolean).slice(0,5);
+  const payments=(h.payments||[]).filter(Boolean).slice(0,3);
   const money=h.money||{};
   const total=Number(money.totalPaid||0);
 
   const paymentMini=(p)=>{
     if(!p) return '';
     const amount=p.amount_usd??p.amount??0;
-    const to=p.display_name||p.recipient_handle||p.to||'recipient';
-    return `<div class="home-v2-payment-mini">
-      <strong>${fmtMoney(amount)}</strong>
-      <span>sent to <b>${esc(to)}</b></span>
+    const handle=String(p.recipient_handle||p.handle||p.to||'').replace(/^@/,'').trim();
+    const to=p.display_name||handle||'recipient';
+    const profile=profiles.find(x=>String(x?.handle||'').replace(/^@/,'').trim().toLowerCase()===handle.toLowerCase())||null;
+    const mint=String(p.mint||p.token_mint||p.mints||'').split(',').filter(Boolean)[0]?.trim()||'';
+    const token=tokens.find(x=>String(x?.mint||x?.contract||'').trim()===mint)||null;
+    const tokenInitial=esc(initials(token?.symbol||token?.name||'P'));
+    const tokenDirect=String(token?.image_url||'').trim();
+    const tokenVisual=mint
+      ? `<span class="home-v2-payment-route-token"><img src="/api/token-image/${encodeURIComponent(mint)}" alt="" loading="eager" decoding="async" onerror="${tokenDirect?`this.onerror=function(){this.style.display='none';this.nextElementSibling.style.display='grid'};this.src='${esc(tokenDirect)}'`:`this.style.display='none';this.nextElementSibling.style.display='grid'`}"><i style="display:none">${tokenInitial}</i></span>`
+      : `<span class="home-v2-payment-route-token"><i>${tokenInitial}</i></span>`;
+    const recipientVisual=handle
+      ? recipientAvatar(handle,to,false,profile?.avatar_url||'')
+      : avatar(to,false,'');
+    const verified=(p.verified||profile?.verified)?'<em class="home-v2-payment-verified">✓</em>':'';
+    return `<div class="home-v2-payment-mini home-v2-payment-ref-row">
+      <div class="home-v2-payment-copy">
+        <strong>${fmtMoney(amount)}</strong>
+        <span>sent to <b>${esc(to)}</b>${verified}</span>
+      </div>
+      <div class="home-v2-payment-route">
+        ${tokenVisual}
+        <span class="home-v2-payment-swap">⇄</span>
+        <span class="home-v2-payment-recipient">${recipientVisual}<i>X</i></span>
+      </div>
       <time>${esc(ago(p.sent_at||p.created_at))}</time>
     </div>`;
   };
@@ -403,11 +423,14 @@ function homePreviewDeck(h,top){
           </div>`;
         })()}
       </a>
-      <a class="home-preview-card home-ref-card home-v2-payments-card" href="#/money">
-        <div class="home-preview-label"><b>Payments</b><span>Open →</span></div>
-        ${payments.length
-          ? `<div class="home-v2-payments-list">${payments.map(paymentMini).join('')}</div>`
-          : `<div class="home-v2-empty-row"><i></i><b>$</b><i></i><span>No payouts recorded yet.</span></div>`}
+      <a class="home-preview-card home-ref-card home-v2-payments-card" data-payments-reference="v16" href="#/money">
+        <div class="home-v2-payments-stage">
+          ${payments.length
+            ? `<div class="home-v2-payments-list">${payments.map(paymentMini).join('')}</div>`
+            : `<div class="home-v2-payments-empty-ref"><i></i><b>$</b><i></i><span>No payouts recorded yet.</span></div>`}
+          <div class="home-v2-payments-bottom-shade" aria-hidden="true"></div>
+          <div class="home-v2-payments-footer"><strong>Payments</strong><span>Open →</span></div>
+        </div>
       </a>
 
       <a class="home-preview-card home-ref-card home-v2-analytics-card" href="#/money">
