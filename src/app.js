@@ -501,20 +501,27 @@ function homeTopTokenCard(t){
   const handle=t.profile||t.recipient_handle||'';
   const mint=t.mint||t.contract||'';
   const ageText=t.age||ago(t.created_at);
-  return `<a class="home-top-token-card" href="#/token/${encodeURIComponent(mint)}">
+  const mc=t.mc??t.market_cap_usd;
+  return `<a class="home-top-token-card" data-top-token-layout="v21" href="#/token/${encodeURIComponent(mint)}">
     <div class="home-top-token-media">
       ${tokenMedia(t,'home-top-token-fallback')}
       <div class="home-top-token-platform">${platformBadge(t.platform||'Pump')}</div>
       <div class="home-top-token-age">${esc(ageText||'')}</div>
       <div class="home-top-token-recipient">
+        <i class="home-top-token-money-mark">$</i>
         ${handle?recipientAvatar(handle,handle,false,''):avatar(t.symbol||'T')}
-        <span>${handle?`@${esc(handle)}`:'Recipient'}</span>
+        <span>${handle?esc(handle.replace(/^@/,'')):'Recipient'}</span>
       </div>
     </div>
     <div class="home-top-token-body">
-      <div class="home-top-token-title"><strong>${esc(t.name)}</strong><span>${esc(t.symbol||'')}</span></div>
-      <div class="home-top-token-sub"><span>${fmtMc(t.mc??t.market_cap_usd)} MC</span><span>${fmtMoney(t.owed||0)} Owed</span></div>
-      <div class="home-top-token-paid"><small>Sent</small><b>${fmtMoney(t.sent||0)}</b></div>
+      <div class="home-top-token-title">
+        <strong>${esc(t.name)}</strong>
+        <span>${esc(t.symbol||'')}</span>
+      </div>
+      <div class="home-top-token-market">
+        <strong>${fmtMc(mc)}</strong>
+        <span>MC</span>
+      </div>
     </div>
   </a>`;
 }
