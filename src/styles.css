@@ -5147,3 +5147,58 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   }
 }
 
+
+
+/* explore-image-inset-v15-2 */
+
+/* Reference-style breathing room around the LEFT Explore image:
+   top + left + right. */
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"]{
+  padding:12px 12px 42px;
+}
+
+/* Image becomes an inset module inside the card. */
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] > .home-explore-v8-media{
+  border:1px solid #2b2b2b;
+  border-radius:14px;
+  overflow:hidden;
+  background:#0a0a0a;
+}
+
+/* Info stays directly below the image. */
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] > .home-explore-v8-copy{
+  padding:9px 1px 10px;
+  border-top:0;
+  background:#0b0b0b;
+}
+
+/* Keep overlays relative to the inset image. */
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-top-token-age{
+  top:7px;
+  right:7px;
+}
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-recipient{
+  left:8px;
+  bottom:8px;
+}
+
+@media (max-width:640px){
+  .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"]{
+    padding:9px 9px 36px;
+  }
+  .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] > .home-explore-v8-media{
+    border-radius:11px;
+  }
+  .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] > .home-explore-v8-copy{
+    padding:7px 1px 8px;
+  }
+  .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-top-token-age{
+    top:6px;
+    right:6px;
+  }
+  .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-recipient{
+    left:6px;
+    bottom:6px;
+  }
+}
+
