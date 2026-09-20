@@ -456,21 +456,23 @@ function homePreviewDeck(h,top){
         </div>
       </a>
 
-      <a class="home-preview-card home-ref-card home-v2-launch-card" href="#/launch">
-        <div class="home-preview-label"><b>Launch</b><span>Open →</span></div>
-        <div class="home-v2-launch-label">Fees route to</div>
-        <div class="home-v2-profile-strip">
-          ${profiles.length?profiles.map((p,i)=>{
-            const n=p.display_name||p.handle;
-            return `<span class="${i===0?'active':''}">${recipientAvatar(p.handle,n,false,p.avatar_url||'')}<b>${esc(n)}</b><small>@${esc(p.handle||'')}</small></span>`;
-          }).join(''):`<span class="active">${avatar(leadName,false,'')}<b>${esc(leadName)}</b><small>@${esc(leadHandle)}</small></span>`}
+      <a class="home-preview-card home-ref-card home-v2-launch-card" data-launch-reference="v18" href="#/launch">
+        <div class="home-v2-launch-stage">
+          <div class="home-v2-launch-eyebrow">FEES ROUTE TO</div>
+          <div class="home-v2-launch-search">
+            <i aria-hidden="true"></i>
+            <strong>@${esc(leadHandle)}</strong>
+          </div>
+          <div class="home-v2-launch-result">
+            <div class="home-v2-launch-result-avatar">${leadProfile?recipientAvatar(leadHandle,leadName,true,leadProfile?.avatar_url||''):avatar(leadName,true,'')}</div>
+            <div class="home-v2-launch-result-copy">
+              <strong>${esc(leadName)}${leadProfile?.verified?'<em>✓</em>':''}</strong>
+              <span>@${esc(leadHandle)}</span>
+            </div>
+          </div>
+          <div class="home-v2-launch-bottom-shade" aria-hidden="true"></div>
+          <div class="home-v2-launch-footer"><strong>Launch</strong><span>Open →</span></div>
         </div>
-        <div class="home-v2-paying">
-          <div>${leadProfile?recipientAvatar(leadHandle,leadName,true,leadProfile?.avatar_url||''):avatar(leadName,true,'')}</div>
-          <span><small>Paying out</small><b>${esc(leadName)}</b><em>@${esc(leadHandle)}</em></span>
-          <strong>${payments[0]?fmtMoney(payments[0].amount_usd??payments[0].amount??0):'$0.00'}</strong>
-        </div>
-        <div class="home-v2-sent-via">Sent via X Money</div>
       </a>
 
       <a class="home-preview-card home-ref-card home-v2-docs-card" href="#/docs">
