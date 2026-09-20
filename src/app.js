@@ -2359,8 +2359,100 @@ async function launchImageBase64(file){
   return btoa(binary);
 }
 
+function isLaunchConfirmationPendingError(err){
+  return /transaction is not confirmed yet|mint account is not visible on-chain/i.test(String(err?.message||''));
+}
+
+async function confirmCreatedLaunch(attempts=2){
+  if(!currentLaunch?.id||!currentLaunch?.mint||!currentLaunch?.createSignature)throw new Error('Pending token transaction is incomplete');
+  let lastError=null;
+  for(let attempt=1;attempt<=attempts;attempt++){
+    setLaunchStatus(`Token submitted: ${currentLaunch.mint.slice(0,6)}…${currentLaunch.mint.slice(-6)}. Waiting for confirmation${attempt>1?' (retry)':''}…`);
+    try{
+      const out=await api('/api/launch/created',{
+        method:'POST',
+        body:JSON.stringify({
+          intent_id:currentLaunch.id,
+          mint:currentLaunch.mint,
+          creator_pubkey:currentLaunch.creatorPubkey,
+          tx_signature:currentLaunch.createSignature
+        })
+      });
+      currentLaunch={...currentLaunch,createConfirmed:true,createPending:false};
+      return out;
+    }catch(err){
+      lastError=err;
+      if(!isLaunchConfirmationPendingError(err))throw err;
+      if(attempt<attempts)await new Promise(r=>setTimeout(r,1800));
+    }
+  }
+  currentLaunch={...currentLaunch,createPending:true};
+  return {ok:false,pending:true,reason:lastError?.message||'Transaction confirmation is still pending'};
+}
+
+async function confirmRoutingLaunch(attempts=2){
+  if(!currentLaunch?.id||!currentLaunch?.mint||!currentLaunch?.routingSignature)throw new Error('Pending fee-routing transaction is incomplete');
+  let lastError=null;
+  for(let attempt=1;attempt<=attempts;attempt++){
+    setLaunchStatus(`Fee routing submitted. Waiting for confirmation${attempt>1?' (retry)':''}…`);
+    try{
+      const out=await api('/api/launch/confirm',{
+        method:'POST',
+        body:JSON.stringify({
+          intent_id:currentLaunch.id,
+          mint:currentLaunch.mint,
+          recipient_handle:currentLaunch.handle,
+          tx_signature:currentLaunch.routingSignature
+        })
+      });
+      if(out.ok)currentLaunch={...currentLaunch,routingConfirmed:true,routingPending:false};
+      return out;
+    }catch(err){
+      lastError=err;
+      if(!isLaunchConfirmationPendingError(err))throw err;
+      if(attempt<attempts)await new Promise(r=>setTimeout(r,1800));
+    }
+  }
+  currentLaunch={...currentLaunch,routingPending:true};
+  return {ok:false,pending:true,reason:lastError?.message||'Fee-routing confirmation is still pending'};
+}
+
+async function finishCurrentLaunch(){
+  if(!currentLaunch?.mint||!currentLaunch?.createSignature)throw new Error('No submitted token transaction to finish');
+  const button=document.querySelector('#launchSubmitButton');
+
+  if(!currentLaunch.createConfirmed){
+    const created=await confirmCreatedLaunch();
+    if(created?.pending){
+      if(button){button.disabled=false;button.textContent='Retry confirmation';}
+      setLaunchStatus('Token transaction was submitted, but confirmation is still pending. Tap Retry confirmation — do not launch a second token.');
+      return created;
+    }
+  }
+
+  setLaunchStatus('Token confirmed. One more wallet approval will permanently route 100% of creator fees to the treasury.');
+  const routed=await routeFees();
+
+  if(routed?.pending){
+    if(button){button.disabled=false;button.textContent='Retry confirmation';}
+    setLaunchStatus('Fee-routing transaction was submitted, but confirmation is still pending. Tap Retry confirmation — it will check the same transaction.');
+    return routed;
+  }
+
+  if(routed?.ok){
+    if(button){button.disabled=true;button.textContent='Launched';}
+    const symbol=String(currentLaunch.symbol||document.querySelector('#launchTicker')?.value||'TOKEN').trim().toUpperCase();
+    setLaunchStatus(`Launch complete. ${symbol} is registered and live in Explore.`,true);
+    setTimeout(()=>{location.hash=`#/token/${encodeURIComponent(currentLaunch.mint)}`;},900);
+  }
+  return routed;
+}
+
 async function launchTokenOnPump(){
   if(!currentLaunch)throw new Error('Create the launch intent first');
+
+  if(currentLaunch?.mint&&currentLaunch?.createSignature)return finishCurrentLaunch();
+
   if(!window.solanaWeb3?.VersionedTransaction||!window.solanaWeb3?.Keypair)throw new Error('Solana web3 browser bundle did not load');
 
   let creator=currentLaunch?.creatorPubkey||currentWallet?.publicKey?.toString?.()||'';
@@ -2447,31 +2539,54 @@ async function launchTokenOnPump(){
   }
 
   const mint=built.mint;
-  currentLaunch={...currentLaunch,mint,creatorPubkey:creator,createSignature:String(sig),metadataUri:metadata.metadataUri};
+  currentLaunch={
+    ...currentLaunch,
+    mint,
+    symbol,
+    creatorPubkey:creator,
+    createSignature:String(sig),
+    metadataUri:metadata.metadataUri,
+    createConfirmed:false,
+    createPending:true
+  };
 
-  setLaunchStatus(`Token submitted: ${mint.slice(0,6)}…${mint.slice(-6)}. Waiting for confirmation…`);
-  await api('/api/launch/created',{
-    method:'POST',
-    body:JSON.stringify({
-      intent_id:currentLaunch.id,
-      mint,
-      creator_pubkey:creator,
-      tx_signature:String(sig)
-    })
-  });
-
-  setLaunchStatus('Token confirmed. One more wallet approval will permanently route 100% of creator fees to the treasury.');
-  const routed=await routeFees();
-  if(routed?.ok){
-    const submitButton=document.querySelector('#launchSubmitButton');
-    if(submitButton){submitButton.disabled=true;submitButton.textContent='Launched';}
-    setLaunchStatus(`Launch complete. ${symbol} is registered and live in Explore.`,true);
-    setTimeout(()=>{location.hash=`#/token/${encodeURIComponent(mint)}`;},900);
-  }
-  return routed;
+  return finishCurrentLaunch();
 }
 
-async function routeFees(){if(!currentLaunch)throw new Error('Create the launch intent first');const mint=String(currentLaunch.mint||'').trim();let creator=String(currentLaunch.creatorPubkey||currentWallet?.publicKey?.toString?.()||'').trim();if(!creator)creator=await connectWallet();if(!mint)throw new Error('Token mint is not available yet');if(!currentWallet)await connectWallet();setLaunchStatus('Building fee-sharing transaction…');const p=await api('/api/launch/prepare-routing',{method:'POST',body:JSON.stringify({intent_id:currentLaunch.id,mint,creator_pubkey:creator})});if(!window.solanaWeb3?.VersionedTransaction)throw new Error('Solana web3 browser bundle did not load');const bytes=Uint8Array.from(atob(p.transactionBase64),c=>c.charCodeAt(0));const tx=window.solanaWeb3.VersionedTransaction.deserialize(bytes);setLaunchStatus('Approve the transaction in your wallet…');let sig;if(currentWallet.signAndSendTransaction){const out=await currentWallet.signAndSendTransaction(tx);sig=out.signature||out;}else{const signed=await currentWallet.signTransaction(tx);sig=await currentWallet.sendTransaction(signed);}setLaunchStatus(`Submitted ${sig}. Waiting for confirmation and verifying on-chain…`);const out=await api('/api/launch/confirm',{method:'POST',body:JSON.stringify({intent_id:currentLaunch.id,mint,recipient_handle:currentLaunch.handle,tx_signature:String(sig)})});setLaunchStatus(out.ok?`Registered. Fees are permanently routed to treasury for @${out.recipient}.`:`Not registered yet: ${out.reason}`,out.ok);if(out.ok){state.home=null;await loadBase();}return out;}
+async function routeFees(){
+  if(!currentLaunch)throw new Error('Create the launch intent first');
+  const mint=String(currentLaunch.mint||'').trim();
+  let creator=String(currentLaunch.creatorPubkey||currentWallet?.publicKey?.toString?.()||'').trim();
+
+  if(!creator)creator=await connectWallet();
+  if(!mint)throw new Error('Token mint is not available yet');
+  if(!currentWallet)await connectWallet();
+
+  if(currentLaunch.routingSignature)return confirmRoutingLaunch();
+
+  setLaunchStatus('Building fee-sharing transaction…');
+  const p=await api('/api/launch/prepare-routing',{
+    method:'POST',
+    body:JSON.stringify({intent_id:currentLaunch.id,mint,creator_pubkey:creator})
+  });
+
+  if(!window.solanaWeb3?.VersionedTransaction)throw new Error('Solana web3 browser bundle did not load');
+  const bytes=Uint8Array.from(atob(p.transactionBase64),c=>c.charCodeAt(0));
+  const tx=window.solanaWeb3.VersionedTransaction.deserialize(bytes);
+
+  setLaunchStatus('Approve the transaction in your wallet…');
+  let sig;
+  if(currentWallet.signAndSendTransaction){
+    const out=await currentWallet.signAndSendTransaction(tx);
+    sig=out.signature||out;
+  }else{
+    const signed=await currentWallet.signTransaction(tx);
+    sig=await currentWallet.sendTransaction(signed);
+  }
+
+  currentLaunch={...currentLaunch,routingSignature:String(sig),routingPending:true};
+  return confirmRoutingLaunch();
+}
 
 app.addEventListener('click',async e=>{
   try{
@@ -2531,6 +2646,13 @@ app.addEventListener('submit',async e=>{if(e.target.id==='launchForm'){e.prevent
     return;
   }
 
+  if(currentLaunch?.mint&&currentLaunch?.createSignature){
+    if(button){button.disabled=true;button.textContent='Checking confirmation…';}
+    const resumed=await finishCurrentLaunch();
+    if(resumed?.pending&&button){button.disabled=false;button.textContent='Retry confirmation';}
+    return;
+  }
+
   const handle=document.querySelector('#launchHandle').value.trim();
   const creator=currentWallet.publicKey?.toString?.()||await connectWallet();
   if(button){button.disabled=true;button.textContent='Preparing launch…';}
@@ -2546,11 +2668,15 @@ app.addEventListener('submit',async e=>{if(e.target.id==='launchForm'){e.prevent
   setLaunchStatus('Launch intent created. Preparing token transaction…');
   if(button)button.textContent='Launching…';
   const routed=await launchTokenOnPump();
-  if(!routed?.ok&&button){button.disabled=false;button.textContent='Launch token';}
+  if(!routed?.ok&&!routed?.pending&&button){button.disabled=false;button.textContent='Launch token';}
 }catch(err){
-  if(button){button.disabled=false;button.textContent=currentWallet?'Launch token':'Connect wallet';}
+  if(button){
+    button.disabled=false;
+    button.textContent=(currentLaunch?.mint&&currentLaunch?.createSignature)?'Retry confirmation':(currentWallet?'Launch token':'Connect wallet');
+  }
   setLaunchStatus(err.message);
 }}});
+
 window.addEventListener('hashchange',render);render();
 
 /* launch-demo-rotator-v1
@@ -2738,3 +2864,5 @@ window.addEventListener('load',()=>setTimeout(()=>{syncLaunchWalletUi();restoreL
 /* launch-mobile-wallet-loading-hotfix-v1 */
 
 /* launch-wallet-picker-click-fix-v1 */
+
+/* launch-confirmation-retry-v3 */
