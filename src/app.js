@@ -2290,10 +2290,10 @@ function syncLaunchWalletUi(){
   if(provider && provider.publicKey){
     currentWallet=provider;
     const button=document.querySelector('#launchSubmitButton');
-    if(button && !button.disabled)button.textContent='Launch token';
+    if(button && !button.disabled && button.textContent!=='Launch token')button.textContent='Launch token';
   }else if(mobileBrowserWithoutWallet()){
     const button=document.querySelector('#launchSubmitButton');
-    if(button && !button.disabled)button.textContent='Connect wallet';
+    if(button && !button.disabled && button.textContent!=='Connect wallet')button.textContent='Connect wallet';
   }
 }
 
@@ -2712,6 +2712,8 @@ const launchWalletRestoreObserver=new MutationObserver(()=>{
     launchWalletRestoreTimer=setTimeout(restoreLaunchWalletDraft,20);
   }
 });
-if(document.body)launchWalletRestoreObserver.observe(document.body,{childList:true,subtree:true});
+if(app)launchWalletRestoreObserver.observe(app,{childList:true});
 window.addEventListener('load',()=>setTimeout(()=>{syncLaunchWalletUi();restoreLaunchWalletDraft();},60));
 
+
+/* launch-mobile-wallet-loading-hotfix-v1 */
