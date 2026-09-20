@@ -5002,3 +5002,148 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   color:#fff;
 }
 
+
+
+/* explore-card-info-v15 */
+
+/* The left Explore token is a real card:
+   image area -> token information -> shared Explore/Open footer. */
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"]{
+  box-sizing:border-box;
+  display:grid;
+  grid-template-rows:minmax(0,1fr) 62px;
+  padding-bottom:42px;
+  background:#0b0b0b;
+}
+
+/* Image stays completely separate from the text section. */
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] > .home-explore-v8-media{
+  width:100%;
+  height:auto;
+  min-height:0;
+  overflow:hidden;
+  background:#0a0a0a;
+}
+
+/* Recipient pill remains on the image, near its lower-left edge. */
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-recipient{
+  left:12px;
+  bottom:10px;
+}
+
+/* Name / ticker / MC / Sent are no longer an image overlay. */
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] > .home-explore-v8-copy{
+  position:relative;
+  left:auto;
+  right:auto;
+  bottom:auto;
+  z-index:6;
+  box-sizing:border-box;
+  display:grid;
+  align-content:center;
+  gap:5px;
+  width:100%;
+  min-width:0;
+  padding:9px 13px 10px;
+  border-top:1px solid #272727;
+  background:#0b0b0b;
+}
+
+/* First row: token name + ticker. */
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-title{
+  display:flex;
+  align-items:baseline;
+  gap:7px;
+  min-width:0;
+}
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-title strong{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#efefef;
+  font-size:12px;
+  line-height:1.15;
+  font-weight:650;
+}
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-title span{
+  flex:0 0 auto;
+  color:#6f6f6f;
+  font-size:9px;
+  line-height:1.15;
+  font-weight:450;
+}
+
+/* Second row: market cap on the left, amount + Sent on the right. */
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-stats{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:10px;
+  min-width:0;
+  color:#696969;
+  font-size:9px;
+  line-height:1.15;
+}
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-stats > b{
+  display:flex;
+  align-items:baseline;
+  gap:4px;
+  flex:0 0 auto;
+  color:#e8e8e8;
+  font-size:12px;
+  line-height:1.15;
+  font-weight:650;
+}
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-stats > b > strong{
+  color:inherit;
+  font:inherit;
+}
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-stats > b > small{
+  color:#666;
+  font-size:9px;
+  line-height:1.15;
+  font-weight:450;
+}
+
+/* The old wide fade is no longer needed over the token information.
+   Keep a smaller footer fade only for the shared Explore / Open row. */
+.home-explore-reference-v8 .home-explore-v8-bottom-shade{
+  height:18%;
+  background:linear-gradient(180deg,rgba(23,23,23,0) 0%,rgba(23,23,23,.48) 52%,#171717 100%);
+}
+
+@media (max-width:640px){
+  .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"]{
+    grid-template-rows:minmax(0,1fr) 53px;
+    padding-bottom:36px;
+  }
+  .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-recipient{
+    left:8px;
+    bottom:8px;
+  }
+  .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] > .home-explore-v8-copy{
+    gap:3px;
+    padding:7px 10px 8px;
+  }
+  .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-title strong{
+    font-size:10px;
+  }
+  .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-title span{
+    font-size:7px;
+  }
+  .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-stats{
+    font-size:7px;
+  }
+  .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-stats > b{
+    gap:3px;
+    font-size:10px;
+  }
+  .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-stats > b > small{
+    font-size:7px;
+  }
+  .home-explore-reference-v8 .home-explore-v8-bottom-shade{
+    height:17%;
+  }
+}
+
