@@ -1285,6 +1285,7 @@ function launchPage(){
           <div class="launch-field">
             <label>Social links <small>(optional)</small></label>
             <p class="launch-help">You can use the registered token page as the website link.</p>
+            <input id="launchWebsite" type="url" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" placeholder="https://yoursite.com">
             <div class="launch-two"><input id="launchTelegram" placeholder="Telegram"><input id="launchX" placeholder="X"></div>
           </div>
 
@@ -1961,6 +1962,7 @@ async function launchTokenOnPump(){
   const name=document.querySelector('#launchName')?.value.trim()||'';
   const symbol=document.querySelector('#launchTicker')?.value.trim().toUpperCase()||'';
   const description=document.querySelector('#launchDescription')?.value.trim()||'';
+  const website=document.querySelector('#launchWebsite')?.value.trim()||'';
   const twitter=document.querySelector('#launchX')?.value.trim()||'';
   const telegram=document.querySelector('#launchTelegram')?.value.trim()||'';
   const file=document.querySelector('#launchImage')?.files?.[0];
@@ -1984,6 +1986,7 @@ async function launchTokenOnPump(){
       name,
       symbol,
       description,
+      website,
       twitter,
       telegram,
       image_base64:imageBase64,
