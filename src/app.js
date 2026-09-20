@@ -1142,6 +1142,93 @@ async function lookupLaunchXAccount(raw){
   }
 }
 
+let launchPreviewImageUrl='';
+
+function updateLaunchImagePreview(input){
+  const file=input?.files?.[0]||null;
+  const shell=input?.closest('.launch-file-shell');
+  const label=shell?.querySelector('span');
+  const preview=document.querySelector('#launchPreviewImage');
+
+  if(launchPreviewImageUrl){
+    URL.revokeObjectURL(launchPreviewImageUrl);
+    launchPreviewImageUrl='';
+  }
+
+  if(!file){
+    if(label)label.textContent='Choose image';
+    if(preview){
+      preview.replaceChildren(document.createTextNode('P'));
+      preview.classList.remove('has-image');
+    }
+    return;
+  }
+
+  if(file.size>5_000_000){
+    input.value='';
+    if(label)label.textContent='Choose image';
+    if(preview){
+      preview.replaceChildren(document.createTextNode('P'));
+      preview.classList.remove('has-image');
+    }
+    setLaunchStatus('Token image must be 5 MB or smaller');
+    return;
+  }
+
+  if(!/^image\/(png|jpeg|gif|webp)$/i.test(file.type||'')){
+    input.value='';
+    if(label)label.textContent='Choose image';
+    if(preview){
+      preview.replaceChildren(document.createTextNode('P'));
+      preview.classList.remove('has-image');
+    }
+    setLaunchStatus('Use PNG, JPG, GIF, or WEBP');
+    return;
+  }
+
+  launchPreviewImageUrl=URL.createObjectURL(file);
+  if(label)label.textContent=file.name||'Image selected';
+  if(preview){
+    const img=document.createElement('img');
+    img.src=launchPreviewImageUrl;
+    img.alt='Token image preview';
+    preview.replaceChildren(img);
+    preview.classList.add('has-image');
+  }
+}
+
+
+function updateLaunchMiniImage(input){
+  const shell=input?.closest('.launch-file-shell');
+  if(!shell)return;
+
+  let mini=shell.querySelector('.launch-file-mini');
+  if(!mini){
+    mini=document.createElement('div');
+    mini.className='launch-file-mini';
+
+    const img=document.createElement('img');
+    img.alt='Selected token image';
+
+    const text=document.createElement('span');
+    text.textContent='Change image';
+
+    mini.append(img,text);
+    shell.appendChild(mini);
+  }
+
+  const file=input?.files?.[0]||null;
+  if(!file){
+    shell.classList.remove('has-selected-image');
+    mini.hidden=true;
+    return;
+  }
+
+  const img=mini.querySelector('img');
+  if(img && launchPreviewImageUrl)img.src=launchPreviewImageUrl;
+  mini.hidden=false;
+  shell.classList.add('has-selected-image');
+}
 function updateLaunchPreview(){
   const name=document.querySelector('#launchName')?.value.trim()||'Token name';
   const ticker=document.querySelector('#launchTicker')?.value.trim().toUpperCase()||'TICKER';
@@ -1260,7 +1347,7 @@ function launchPage(){
 
       <aside class="launch-preview-card">
         <p>Preview</p>
-        <div class="launch-preview-image">P</div>
+        <div class="launch-preview-image" id="launchPreviewImage">P</div>
         <div class="launch-preview-title"><div><strong id="launchPreviewName">Token name</strong><span id="launchPreviewTicker">TICKER</span></div><span>$0 MC</span></div>
         <div class="launch-preview-stat"><span>$0 Sent</span><span>X Money sent to <b id="launchPreviewHandle">—</b></span></div>
         <div class="launch-preview-split">
@@ -1999,5 +2086,11 @@ app.addEventListener('click',async e=>{
 });
 let searchTimer;
 app.addEventListener('input',e=>{if(e.target.id==='tokenSearch'){clearTimeout(searchTimer);state.explore.query=e.target.value;searchTimer=setTimeout(async()=>{try{await refreshTokens();const grid=document.querySelector('#launchGrid');if(grid)grid.innerHTML=state.tokens.map(exploreTokenCard).join('')||'<div class="explore-empty"><span>No launches match this search.</span></div>';}catch{}},180);}if(e.target.id==='launchHandle'){clearTimeout(launchXLookupTimer);launchXLookupTimer=setTimeout(()=>lookupLaunchXAccount(e.target.value),350);}if(['launchName','launchTicker','launchHandle'].includes(e.target.id))updateLaunchPreview();});
+app.addEventListener('change',e=>{
+  if(e.target.id==='launchImage')updateLaunchImagePreview(e.target);
+});
+app.addEventListener('change',e=>{
+  if(e.target.id==='launchImage')setTimeout(()=>updateLaunchMiniImage(e.target),0);
+});
 app.addEventListener('submit',async e=>{if(e.target.id==='launchForm'){e.preventDefault();try{const handle=document.querySelector('#launchHandle').value.trim();const creator=document.querySelector('#creatorPubkey').value.trim();const mint=document.querySelector('#launchMint').value.trim();const out=await api('/api/launch/intents',{method:'POST',body:JSON.stringify({recipient_handle:handle,creator_pubkey:creator,mint})});currentLaunch={...out,handle:handle.replace(/^@/,'')};const mintSuccess=document.querySelector('#launchMintSuccess');const creatorSuccess=document.querySelector('#creatorPubkeySuccess');if(mintSuccess)mintSuccess.value=mint;if(creatorSuccess)creatorSuccess.value=creator;e.target.classList.add('hidden');document.querySelector('#launchSuccess').classList.remove('hidden');document.querySelector('#descriptionLine').textContent=out.descriptionLine;setLaunchStatus(out.treasuryAddress?'Intent created. Launch token, then route fee sharing.':'Set TREASURY_ADDRESS on the server before routing.');}catch(err){alert(err.message);}}});
 window.addEventListener('hashchange',render);render();
