@@ -18,7 +18,8 @@ function requireUserSignedLaunch(){ if(!config.userSignedLaunchEnabled)throw Obj
 
 
 
-/* home-explore-token-image-v5 */
+
+/* home-explore-token-image-v6 */
 function normalizePumpTokenImage(raw,mint=''){
   let value=String(raw||'').trim();
   if(!value) return '';
