@@ -2204,21 +2204,24 @@ function launchDemoEscapeHtml(value){
 function getLaunchDemoRecipient(){
   if(typeof launchSelectedXProfile!=='undefined' && launchSelectedXProfile && (launchSelectedXProfile.name || launchSelectedXProfile.username)){
     return {
-      name: launchSelectedXProfile.name || launchSelectedXProfile.username || 'GG',
-      username: launchSelectedXProfile.username || 'GG',
+      name: launchSelectedXProfile.name || launchSelectedXProfile.username,
+      username: launchSelectedXProfile.username || '',
       verified: !!launchSelectedXProfile.verified,
-      initial: String(launchSelectedXProfile.name || launchSelectedXProfile.username || 'G').trim().charAt(0).toUpperCase() || 'G',
+      initial: String(launchSelectedXProfile.name || launchSelectedXProfile.username || '').trim().charAt(0).toUpperCase(),
       avatarUrl: launchSelectedXProfile.profileImageUrl || ''
     };
   }
-  return {name:'GG',username:'GG',verified:true,initial:'G',avatarUrl:''};
+  return null;
 }
 
 function launchDemoAvatar(profile, extraClass=''){
+  if(!profile){
+    return `<span class="launch-demo-avatar ${extraClass}" aria-hidden="true"></span>`;
+  }
   if(profile.avatarUrl){
     return `<span class="launch-demo-avatar ${extraClass}"><img src="${launchDemoEscapeHtml(profile.avatarUrl)}" alt="" referrerpolicy="no-referrer"></span>`;
   }
-  return `<span class="launch-demo-avatar ${extraClass}">${launchDemoEscapeHtml(profile.initial||'G')}</span>`;
+  return `<span class="launch-demo-avatar ${extraClass}">${launchDemoEscapeHtml(profile.initial||'')}</span>`;
 }
 
 function launchDemoVerified(show){
@@ -2231,8 +2234,8 @@ function launchDemoContent(scene){
   if(scene.kind==='paid'){
     return `
       <div class="launch-demo-card-icons">
-        <span class="launch-demo-brand">P</span>
-        ${launchDemoAvatar(recipient)}
+        <span class="launch-demo-brand">$</span>
+        <span class="launch-demo-avatar" aria-hidden="true">P</span>
       </div>
       <div class="launch-demo-card-copy">
         <div class="launch-demo-card-line launch-demo-card-line-main"><strong>Paid</strong> sent you <strong>${amount}</strong></div>
@@ -2243,13 +2246,15 @@ function launchDemoContent(scene){
       </div>
     `;
   }
+
+  const recipientName=recipient ? recipient.name : 'Recipient';
   return `
     <div class="launch-demo-card-icons">
       <span class="launch-demo-brand">P</span>
       ${launchDemoAvatar(recipient)}
     </div>
     <div class="launch-demo-card-copy">
-      <div class="launch-demo-card-line launch-demo-card-line-main"><strong>$${Number(scene.amount).toFixed(0)}</strong> sent to <strong>${launchDemoEscapeHtml(recipient.name)}</strong> ${launchDemoVerified(recipient.verified)}</div>
+      <div class="launch-demo-card-line launch-demo-card-line-main"><strong>$${Number(scene.amount).toFixed(0)}</strong> sent to <strong>${launchDemoEscapeHtml(recipientName)}</strong> ${launchDemoVerified(!!recipient?.verified)}</div>
       <div class="launch-demo-card-line launch-demo-card-line-sub">Creator fees via <strong>@UsePaid</strong> · now</div>
     </div>
     <div class="launch-demo-card-end"></div>
@@ -2334,3 +2339,5 @@ window.addEventListener('load',()=>setTimeout(ensureLaunchDemoBlock,40));
 /* launch-demo-rotator-fix-v1 */
 
 /* launch-demo-rotator-loop-fix-v2 */
+
+/* launch-demo-recipient-logic-v1 */
