@@ -5202,3 +5202,99 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   }
 }
 
+
+
+/* explore-metrics-and-vignette-v15-3-1 */
+
+/* MC number = Sent number. MC/Sent labels = ticker size. */
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-stats[data-explore-metrics="v15-3-1"]{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:12px;
+  min-width:0;
+}
+
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-stats[data-explore-metrics="v15-3-1"] > span,
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-stats[data-explore-metrics="v15-3-1"] > b{
+  display:flex;
+  align-items:baseline;
+  gap:4px;
+  min-width:0;
+  color:#e8e8e8;
+  font-size:12px;
+  line-height:1.15;
+  font-weight:650;
+}
+
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-stats[data-explore-metrics="v15-3-1"] > span{
+  flex:1 1 auto;
+  justify-content:flex-start;
+}
+
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-stats[data-explore-metrics="v15-3-1"] > b{
+  flex:0 0 auto;
+  justify-content:flex-end;
+}
+
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-stats[data-explore-metrics="v15-3-1"] strong{
+  color:inherit;
+  font:inherit;
+}
+
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-stats[data-explore-metrics="v15-3-1"] small{
+  color:#6f6f6f;
+  font-size:9px;
+  line-height:1.15;
+  font-weight:450;
+  letter-spacing:0;
+}
+
+/* Soft vignette around the entire image, not only bottom. */
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] > .home-explore-v8-media{
+  position:relative;
+  isolation:isolate;
+}
+
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] > .home-explore-v8-media::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  pointer-events:none;
+  z-index:2;
+  background:
+    radial-gradient(118% 96% at 50% 48%,
+      rgba(0,0,0,0) 54%,
+      rgba(0,0,0,.10) 72%,
+      rgba(0,0,0,.26) 88%,
+      rgba(0,0,0,.40) 100%),
+    linear-gradient(180deg,
+      rgba(0,0,0,.16) 0%,
+      rgba(0,0,0,.02) 22%,
+      rgba(0,0,0,.02) 68%,
+      rgba(0,0,0,.46) 100%);
+  box-shadow:
+    inset 28px 0 34px -26px rgba(0,0,0,.20),
+    inset -28px 0 34px -26px rgba(0,0,0,.20),
+    inset 0 26px 36px -30px rgba(0,0,0,.26),
+    inset 0 -58px 72px -34px rgba(0,0,0,.56);
+}
+
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-top-token-age,
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-recipient{
+  z-index:4;
+}
+
+@media (max-width:640px){
+  .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-stats[data-explore-metrics="v15-3-1"] > span,
+  .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-stats[data-explore-metrics="v15-3-1"] > b{
+    gap:3px;
+    font-size:10px;
+  }
+
+  .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] .home-explore-v8-stats[data-explore-metrics="v15-3-1"] small{
+    font-size:7px;
+  }
+}
+

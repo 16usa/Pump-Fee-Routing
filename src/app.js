@@ -374,9 +374,15 @@ function homePreviewDeck(h,top){
                   <strong>${esc(token.name || 'Token')}</strong>
                   <span>${esc(token.symbol || '')}</span>
                 </div>
-                <div class="home-explore-v8-stats">
-                  <span>${fmtMc(token.mc ?? token.market_cap_usd)} MC</span>
-                  <b><strong>${fmtMoney(token.sent || 0)}</strong><small>Sent</small></b>
+                <div class="home-explore-v8-stats" data-explore-metrics="v15-3-1">
+                  <span>
+                    <strong>${fmtMc(token.mc ?? token.market_cap_usd)}</strong>
+                    <small>MC</small>
+                  </span>
+                  <b>
+                    <strong>${fmtMoney(token.sent || 0)}</strong>
+                    <small>Sent</small>
+                  </b>
                 </div>
               </div>
             </div>`;
