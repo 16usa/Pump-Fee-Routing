@@ -1564,14 +1564,13 @@ function launchPage(){
             <aside class="launch-walletless-pump-card">
               <h3>Launch on Pump</h3>
               <p>pump.fun · Share creator rewards</p>
-              <div class="launch-walletless-pump-ui">
-                <div class="launch-walletless-pump-head"><span>Share creator rewards</span><b>×</b></div>
-                <small>Creators can percentage rewards on all transaction fees. You may invite wallets or charities to receive a portion of it.</small>
-                <div class="launch-walletless-allocation"><span>Allocated</span><strong>100%</strong></div>
-                <div class="launch-walletless-pump-row"><i>●</i><span>${brandName}</span><b>100%</b></div>
-                <button type="button" disabled>Add more recipients</button>
-                <button type="button" disabled>Done</button>
-              </div>
+              <img
+                class="launch-walletless-pump-reference"
+                src="/assets/walletless-share-creator-rewards.webp"
+                alt="Pump Share creator rewards setup showing one recipient with 100 percent allocation"
+                loading="lazy"
+                decoding="async"
+              >
               <p>Add our treasury as the only recipient, at 100%, before you create the coin.</p>
             </aside>
           </div>
@@ -2512,3 +2511,5 @@ window.addEventListener('load',()=>setTimeout(ensureLaunchDemoBlock,40));
 /* launch-demo-bell-v1 */
 
 /* launch-modes-register-walletless-v1 */
+
+/* launch-walletless-reference-image-v1 */

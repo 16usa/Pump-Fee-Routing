@@ -4269,3 +4269,14 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   .launch-mode-context{margin-bottom:14px}
   .launch-register-setup{padding:12px}
 }
+
+/* launch-walletless-reference-image-v1 */
+.launch-walletless-pump-reference{
+  width:100%;
+  height:auto;
+  display:block;
+  margin-top:12px;
+  border-radius:11px;
+  object-fit:contain;
+  background:#0c0c0c;
+}
