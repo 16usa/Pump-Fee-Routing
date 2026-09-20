@@ -1235,6 +1235,7 @@ function updateLaunchPreview(){
   const handle=document.querySelector('#launchHandle')?.value.trim().replace(/^@/,'')||'—';
   document.querySelector('#launchPreviewName')?.replaceChildren(document.createTextNode(name));
   document.querySelector('#launchPreviewTicker')?.replaceChildren(document.createTextNode(ticker));
+  document.querySelector('#launchPreviewBadgeTicker')?.replaceChildren(document.createTextNode(ticker));
   document.querySelector('#launchPreviewHandle')?.replaceChildren(document.createTextNode(handle==='—'?'—':`@${handle}`));
 }
 
@@ -1309,18 +1310,37 @@ function launchPage(){
           <button class="btn-light full launch-submit" id="launchSubmitButton" type="submit">${currentWallet?'Launch token':'Connect wallet'}</button>
           <div id="launchStatus" class="status-box hidden" aria-live="polite"></div>
         </form>
-      </div>
 
-      <aside class="launch-preview-card">
-        <p>Preview</p>
-        <div class="launch-preview-image" id="launchPreviewImage">P</div>
-        <div class="launch-preview-title"><div><strong id="launchPreviewName">Token name</strong><span id="launchPreviewTicker">TICKER</span></div><span>$0 MC</span></div>
-        <div class="launch-preview-stat"><span>$0 Sent</span><span>X Money sent to <b id="launchPreviewHandle">—</b></span></div>
-        <div class="launch-preview-split">
-          <div><span>Recipient share</span><b>${recipientPct}%</b></div>
-          <div><span>$PAID buybacks and burn</span><b>${protocolPct}%</b></div>
+        <div class="launch-preview-stack">
+          <aside class="launch-preview-card launch-preview-usepaid">
+            <div class="launch-preview-media">
+              <div class="launch-preview-image" id="launchPreviewImage">P</div>
+              <div class="launch-preview-badge" aria-hidden="true">
+                <span class="launch-preview-badge-mark">P</span>
+                <span id="launchPreviewBadgeTicker">TICKER</span>
+              </div>
+            </div>
+
+            <div class="launch-preview-title">
+              <div>
+                <strong id="launchPreviewName">Token name</strong>
+                <span id="launchPreviewTicker">TICKER</span>
+              </div>
+              <span>$0 MC</span>
+            </div>
+
+            <div class="launch-preview-stat">
+              <span><b>$0</b> Sent</span>
+              <span>X Money sent to <b id="launchPreviewHandle">—</b></span>
+            </div>
+
+            <div class="launch-preview-split">
+              <div><span>Recipient share</span><b>${recipientPct}%</b></div>
+              <div><span>$PAID buybacks and burn</span><b>${protocolPct}%</b></div>
+            </div>
+          </aside>
         </div>
-      </aside>
+      </div>
     </section>
     ${moneyFooter()}
   </main>`;
