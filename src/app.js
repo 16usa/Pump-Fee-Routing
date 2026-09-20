@@ -475,21 +475,22 @@ function homePreviewDeck(h,top){
         </div>
       </a>
 
-      <a class="home-preview-card home-ref-card home-v2-docs-card" href="#/docs">
-        <div class="home-preview-label"><b>Docs</b><span>Open →</span></div>
-        <small class="home-v2-docs-eyebrow">Sharing config</small>
-        <strong class="home-v2-docs-title">Attribution is per-mint</strong>
-        <p>One config account per token mint. The treasury appears in its shareholders array, so a single wallet gets clean per-token attribution.</p>
-        <div class="home-v2-docs-fields">
-          <span><small>Off</small><small>Len</small><small>Field</small></span>
-          <b><i>0</i><i>8</i><em>discriminator</em></b>
-          <b><i>11</i><i>32</i><em>token mint</em></b>
-          <b><i>43</i><i>32</i><em>admin</em></b>
-          <b><i>75</i><i>1</i><em>revoke flag</em></b>
-        </div>
-        <div class="home-v2-docs-bottom">
-          <span><small>Detection</small><b>On-chain</b></span>
-          <span><small>Claiming</small><b>Creator fees</b></span>
+      <a class="home-preview-card home-ref-card home-v2-docs-card" data-docs-reference="v19" href="#/docs">
+        <div class="home-v2-docs-stage">
+          <div class="home-v2-docs-preview">
+            <strong class="home-v2-docs-title">Attribution is per-mint</strong>
+            <p>One 1024-byte config account per token mint. The treasury appears in its shareholders array, so a single wallet gets clean per-token attribution.</p>
+            <div class="home-v2-docs-fields">
+              <span><small>OFF</small><small>LEN</small><small>FIELD</small></span>
+              <b><i>0</i><i>8</i><em>discriminator</em></b>
+              <b><i>11</i><i>32</i><em>token mint</em></b>
+              <b><i>43</i><i>32</i><em>admin</em></b>
+              <b><i>75</i><i>1</i><em>revoke flag</em></b>
+              <b class="home-v2-docs-soft-row"><i>76</i><i>4</i><em>shareholder count</em></b>
+            </div>
+          </div>
+          <div class="home-v2-docs-bottom-shade" aria-hidden="true"></div>
+          <div class="home-v2-docs-footer"><strong>Docs</strong><span>Open →</span></div>
         </div>
       </a>
 
