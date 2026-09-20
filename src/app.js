@@ -276,44 +276,45 @@ function homePreviewDeck(h,top){
   return `<section class="home-preview-shell home-ref-previews home-reference-v2-previews">
     <div class="wrap home-preview-stack">
 
-      <a class="home-preview-card home-ref-card home-ref-explore-card" href="#/explore">
-        <div class="home-preview-label"><b>Explore</b><span>Open →</span></div>
+      <a class="home-preview-card home-ref-card home-ref-explore-card home-explore-reference-v2" href="#/explore">
         ${(()=>{
           const primary=tokens[0]||null;
           const secondary=tokens[1]||primary;
-          const primaryName=primary?.name||'Waiting for token';
-          const primarySymbol=primary?.symbol||'';
-          const primaryHandle=primary?.profile||primary?.recipient_handle||'';
-          const secondaryName=secondary?.name||primaryName;
-          const secondarySymbol=secondary?.symbol||primarySymbol;
 
-          const primaryMedia=primary?.image_url
-            ? `<img class="home-ref-main-art" src="${esc(primary.image_url)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><span class="home-ref-token-fallback" style="display:none">${esc(initials(primarySymbol||primaryName||'P'))}</span>`
-            : `<span class="home-ref-token-fallback">${esc(initials(primarySymbol||primaryName||'P'))}</span>`;
+          const imageUrl=(token)=>{
+            let value=String(token?.image_url||'').trim();
+            if(!value)return '';
+            if(/^ipfs:\/\//i.test(value)){
+              value='https://ipfs.io/ipfs/'+value.replace(/^ipfs:\/\//i,'').replace(/^ipfs\//i,'');
+            }else if(/^ar:\/\//i.test(value)){
+              value='https://arweave.net/'+value.replace(/^ar:\/\//i,'');
+            }
+            return value;
+          };
 
-          const secondaryMedia=secondary?.image_url
-            ? `<img class="home-ref-side-art" src="${esc(secondary.image_url)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><span class="home-ref-token-fallback" style="display:none">${esc(initials(secondarySymbol||secondaryName||'P'))}</span>`
-            : `<span class="home-ref-token-fallback">${esc(initials(secondarySymbol||secondaryName||'P'))}</span>`;
+          const media=(token,klass)=>{
+            const url=imageUrl(token);
+            if(!url)return `<span class="home-explore-reference-fallback ${klass}"></span>`;
+            return `<img class="home-explore-reference-art ${klass}" src="${esc(url)}" alt="" loading="eager" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="home-explore-reference-fallback ${klass}" style="display:none"></span>`;
+          };
 
-          return `<div class="home-ref-explore-stage">
-            <div class="home-ref-explore-primary">
-              ${primaryMedia}
-              <span class="home-ref-floating-badge">${platformBadge(primary?.platform||'Pump')}</span>
-              ${primaryHandle?`<span class="home-ref-floating-profile">@${esc(primaryHandle)}</span>`:''}
+          const handle=primary?.profile||primary?.recipient_handle||'';
+          return `<div class="home-explore-reference-stage">
+            <div class="home-explore-reference-panel home-explore-reference-primary">
+              ${media(primary,'primary')}
+              ${primary?`<div class="home-explore-reference-chip">
+                ${platformBadge(primary.platform||'Pump')}
+                ${handle?`<span>@${esc(handle)}</span>`:''}
+              </div>`:''}
             </div>
-            <div class="home-ref-explore-secondary">
-              ${secondaryMedia}
-              <small>${secondary?.platform?esc(secondary.platform):'Pump'}</small>
-              <b>${secondary?fmtNum(secondary.sent||0):'$0.00'}</b>
+            <div class="home-explore-reference-panel home-explore-reference-secondary">
+              ${media(secondary,'secondary')}
             </div>
-          </div>
-          <div class="home-ref-explore-foot">
-            <div>
-              <small>${primary?.platform?esc(primary.platform):'Pump'}${primary?.created_at?` · ${esc(ago(primary.created_at))}`:''}</small>
-              <strong>${esc(primaryName)}</strong>
-              <span>${esc(primarySymbol)}${primary?` · ${fmtMc(primary.mc??primary.market_cap_usd)} MC`:''}</span>
+            <div class="home-explore-reference-shade" aria-hidden="true"></div>
+            <div class="home-explore-reference-footer">
+              <strong>Explore</strong>
+              <span>Open →</span>
             </div>
-            <b>${primary?fmtMoney(primary.sent||0):'$0.00'}</b>
           </div>`;
         })()}
       </a>
