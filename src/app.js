@@ -278,7 +278,12 @@ function homePreviewDeck(h,top){
 
 
 
-      <a class="home-preview-card home-ref-card home-ref-explore-card home-explore-reference-v6" href="#/explore">
+
+      <a class="home-preview-card home-ref-card home-ref-explore-card home-explore-reference-v7" href="#/explore">
+        <div class="home-explore-v7-head">
+          <strong>Explore</strong>
+          <span>Open →</span>
+        </div>
         ${(() => {
           const withVisual = tokens.filter(t => String(t?.mint || t?.contract || t?.image_url || '').trim());
           const primary = withVisual[0] || tokens[0] || null;
@@ -292,19 +297,19 @@ function homePreviewDeck(h,top){
 
           const renderTokenArt = (token, className) => {
             const initial = esc(initials(token?.symbol || token?.name || 'P'));
-            if (!token) return `<span class="home-explore-v6-fallback ${className}">${initial}</span>`;
+            if (!token) return `<span class="home-explore-v7-fallback ${className}">${initial}</span>`;
             const mint = String(token.mint || token.contract || '').trim();
             const direct = String(token.image_url || '').trim();
             const fallbackAction = direct
               ? `this.onerror=function(){this.style.display='none';this.nextElementSibling.style.display='grid'};this.src='${esc(direct)}'`
               : `this.style.display='none';this.nextElementSibling.style.display='grid'`;
             if (mint) {
-              return `<img class="home-explore-v6-art ${className}" src="/api/token-image/${encodeURIComponent(mint)}" alt="" loading="eager" decoding="async" onerror="${fallbackAction}"><span class="home-explore-v6-fallback ${className}" style="display:none">${initial}</span>`;
+              return `<img class="home-explore-v7-art ${className}" src="/api/token-image/${encodeURIComponent(mint)}" alt="" loading="eager" decoding="async" onerror="${fallbackAction}"><span class="home-explore-v7-fallback ${className}" style="display:none">${initial}</span>`;
             }
             if (direct) {
-              return `<img class="home-explore-v6-art ${className}" src="${esc(direct)}" alt="" loading="eager" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><span class="home-explore-v6-fallback ${className}" style="display:none">${initial}</span>`;
+              return `<img class="home-explore-v7-art ${className}" src="${esc(direct)}" alt="" loading="eager" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><span class="home-explore-v7-fallback ${className}" style="display:none">${initial}</span>`;
             }
-            return `<span class="home-explore-v6-fallback ${className}">${initial}</span>`;
+            return `<span class="home-explore-v7-fallback ${className}">${initial}</span>`;
           };
 
           const renderRecipient = (token) => {
@@ -312,38 +317,36 @@ function homePreviewDeck(h,top){
             const handle = String(token?.profile || token?.recipient_handle || token?.recipient_handles || '').replace(/^@/, '').trim();
             const label = profile?.display_name || handle || 'Recipient';
             const avatarUrl = String(profile?.avatar_url || '').trim();
-            return `<div class="home-explore-v6-recipient"><i>$</i>${avatar(label, false, avatarUrl)}<b>${esc(label)}</b></div>`;
+            return `<div class="home-explore-v7-recipient"><i>$</i>${avatar(label, false, avatarUrl)}<b>${esc(label)}</b></div>`;
           };
 
           const renderPrimary = (token) => {
             if (!token) {
-              return `<div class="home-explore-v6-token-card is-empty"><div class="home-explore-v6-media">${renderTokenArt(null, 'primary')}</div><div class="home-explore-v6-copy"><div class="home-explore-v6-title"><strong>Token</strong><span>TICKER</span></div><div class="home-explore-v6-stats"><span>$0 MC</span><b>$0.00</b></div></div></div>`;
+              return `<div class="home-explore-v7-primary-card is-empty"><div class="home-explore-v7-media">${renderTokenArt(null, 'primary')}</div></div>`;
             }
-            return `<div class="home-explore-v6-token-card">
-              <div class="home-explore-v6-media">
+            return `<div class="home-explore-v7-primary-card">
+              <div class="home-explore-v7-media">
                 ${renderTokenArt(token, 'primary')}
-                <div class="home-explore-v6-venue">${platformBadge(token.platform || 'Pump')}</div>
+                <div class="home-explore-v7-venue">${platformBadge(token.platform || 'Pump')}</div>
                 ${renderRecipient(token)}
-                <div class="home-explore-v6-copy">
-                  <div class="home-explore-v6-title"><strong>${esc(token.name || 'Token')}</strong><span>${esc(token.symbol || '')}</span></div>
-                  <div class="home-explore-v6-stats"><span>${fmtMc(token.mc ?? token.market_cap_usd)} MC</span><b>${fmtMoney(token.sent || 0)}</b></div>
+                <div class="home-explore-v7-copy">
+                  <div class="home-explore-v7-title"><strong>${esc(token.name || 'Token')}</strong><span>${esc(token.symbol || '')}</span></div>
+                  <div class="home-explore-v7-stats"><span>${fmtMc(token.mc ?? token.market_cap_usd)} MC</span><b>${fmtMoney(token.sent || 0)}</b></div>
                 </div>
               </div>
             </div>`;
           };
 
           const renderSecondary = (token) => {
-            return `<div class="home-explore-v6-open-card${token ? '' : ' is-empty'}">
-              <div class="home-explore-v6-open-media">${renderTokenArt(token, 'secondary')}</div>
-              <div class="home-explore-v6-open-fade" aria-hidden="true"></div>
-              <div class="home-explore-v6-open-label">Open →</div>
+            return `<div class="home-explore-v7-secondary-card${token ? '' : ' is-empty'}">
+              <div class="home-explore-v7-media">${renderTokenArt(token, 'secondary')}</div>
+              <div class="home-explore-v7-secondary-shade" aria-hidden="true"></div>
             </div>`;
           };
 
-          return `<div class="home-explore-v6-stage">
-            <div class="home-explore-v6-primary-slot">${renderPrimary(primary)}</div>
-            <div class="home-explore-v6-secondary-slot">${renderSecondary(secondary)}</div>
-            <div class="home-explore-v6-section-label">Explore</div>
+          return `<div class="home-explore-v7-stage">
+            <div class="home-explore-v7-primary-slot">${renderPrimary(primary)}</div>
+            <div class="home-explore-v7-secondary-slot">${renderSecondary(secondary)}</div>
           </div>`;
         })()}
       </a>
