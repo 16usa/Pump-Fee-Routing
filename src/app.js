@@ -2257,6 +2257,25 @@ function showLaunchWalletPicker(){
       <p class="launch-wallet-picker-note">For security, iOS does not transfer a selected local image file between Safari and a wallet browser. If you already chose an image, select it once more after the wallet app opens.</p>
     </section>
   `;
+
+  modal.addEventListener('click',e=>{
+    const close=e.target.closest('[data-wallet-close]');
+    if(close){
+      e.preventDefault();
+      closeLaunchWalletPicker();
+      return;
+    }
+
+    const walletOpen=e.target.closest('[data-wallet-open]');
+    if(walletOpen){
+      e.preventDefault();
+      const target=walletBrowseUrl(walletOpen.dataset.walletOpen);
+      if(!target)return;
+      walletOpen.disabled=true;
+      location.href=target;
+    }
+  });
+
   document.body.appendChild(modal);
 }
 
@@ -2717,3 +2736,5 @@ window.addEventListener('load',()=>setTimeout(()=>{syncLaunchWalletUi();restoreL
 
 
 /* launch-mobile-wallet-loading-hotfix-v1 */
+
+/* launch-wallet-picker-click-fix-v1 */
