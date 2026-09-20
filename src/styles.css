@@ -5297,3 +5297,38 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     font-size:7px;
   }
 }
+
+
+/* explore-border-cleanup-v15-5 */
+
+/* Remove the inner card frames in the Explore preview block.
+   Keep only the main outer Explore container border. */
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"],
+.home-explore-reference-v8 .home-explore-v8-secondary-card{
+  border:0 !important;
+  box-shadow:none !important;
+  background:transparent !important;
+}
+
+/* Remove borders around the actual images/modules inside the Explore block. */
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] > .home-explore-v8-media,
+.home-explore-reference-v8 .home-explore-v8-secondary-card > .home-explore-v8-media{
+  border:0 !important;
+  box-shadow:none !important;
+  background:#0a0a0a;
+}
+
+/* Keep the info area clean without extra divider lines. */
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] > .home-explore-v8-copy{
+  border-top:0 !important;
+}
+
+@media (max-width:640px){
+  .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"],
+  .home-explore-reference-v8 .home-explore-v8-secondary-card,
+  .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] > .home-explore-v8-media,
+  .home-explore-reference-v8 .home-explore-v8-secondary-card > .home-explore-v8-media{
+    box-shadow:none !important;
+  }
+}
+
