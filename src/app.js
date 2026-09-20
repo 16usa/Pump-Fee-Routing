@@ -252,70 +252,99 @@ function homeHeroCard(h,top){
 }
 
 function homePreviewDeck(h,top){
-  const t=top[0]||null;
-  const pay=(h.payments||[])[0]||null;
+  const tokens=(top||[]).slice(0,3);
+  const t=tokens[0]||null;
+  const t2=tokens[1]||null;
+  const payments=(h.payments||[]).slice(0,2);
   const money=h.money||{};
   const profile=(h.profiles||[])[0]||null;
   const total=Number(money.totalPaid||0);
-  return `<section class="home-preview-shell">
+  const handle=t?.profile||t?.recipient_handle||profile?.handle||'';
+  const display=profile?.display_name||handle||'Recipient';
+
+  const tokenVisual=(x,cls='')=>x?.image_url
+    ? `<img class="${cls}" src="${esc(x.image_url)}" alt="">`
+    : `<div class="home-ref-token-fallback ${cls}">${esc(initials(x?.symbol||x?.name||'P'))}</div>`;
+
+  const paymentRows=payments.length
+    ? payments.map((p,i)=>{
+        const amount=p.amount_usd??p.amount??0;
+        const to=p.display_name||p.recipient_handle||p.to||'recipient';
+        return `<div class="home-ref-pay-row">
+          <span class="home-ref-pay-coin">$</span>
+          <div><strong>${fmtMoney(amount)}</strong><small>sent to <b>${esc(to)}</b></small></div>
+          <time>${esc(ago(p.sent_at||p.created_at))}</time>
+        </div>`;
+      }).join('')
+    : `<div class="home-ref-empty-route"><i></i><b>$</b><i></i><span>No payouts recorded yet.</span></div>`;
+
+  return `<section class="home-preview-shell home-ref-previews">
     <div class="wrap home-preview-stack">
-      <a class="home-preview-card home-preview-token-card" href="#/explore">
-        <div class="home-preview-label"><b>Explore</b><span>View all →</span></div>
-        <div class="home-preview-token-row">
-          ${t?avatar(t.symbol||t.name,true,t.image_url):'<div class="home-preview-placeholder">P</div>'}
-          <div>
-            <small>${t?`@${esc(t.profile||t.recipient_handle||'')}`:'Token routing'}</small>
-            <strong>${t?esc(t.name):'No routed token yet'}</strong>
-            <span>${t?`${fmtMc(t.mc??t.market_cap_usd)} MC · ${fmtMoney(t.sent)} Sent`:'Tokens appear here after on-chain verification'}</span>
+
+      <a class="home-preview-card home-preview-token-card home-ref-card" href="#/explore">
+        <div class="home-preview-label"><b>Explore</b><span>Open →</span></div>
+        <div class="home-ref-explore-stage">
+          <div class="home-ref-explore-primary">
+            ${tokenVisual(t,'home-ref-main-art')}
+            <div class="home-ref-floating-badge">${platformBadge(t?.platform||'Pump')}</div>
+            <div class="home-ref-floating-profile">${handle?`@${esc(handle)}`:'Recipient'}</div>
           </div>
-          <em>→</em>
+          <div class="home-ref-explore-secondary">
+            ${tokenVisual(t2,'home-ref-side-art')}
+            <small>${t2?esc(t2.symbol||''):'Route'}</small>
+            <b>${t2?fmtMoney(t2.sent||0):'100%'}</b>
+          </div>
+        </div>
+        <div class="home-ref-explore-foot">
+          <div><small>${handle?`@${esc(handle)}`:'Token routing'}</small><strong>${t?esc(t.name):'No routed token yet'}</strong><span>${t?`${esc(t.symbol||'')} · ${fmtMc(t.mc??t.market_cap_usd)} MC`:'Verified tokens appear here'}</span></div>
+          <b>${t?fmtMoney(t.sent||0):'$0.00'}</b>
         </div>
       </a>
 
-      <a class="home-preview-card home-preview-payment-card" href="#/money">
-        <div class="home-preview-label"><b>Payments</b><span>View all →</span></div>
-        <div class="home-preview-payment">
-          <small>${pay?'Latest confirmed payment':'Confirmed payouts'}</small>
-          <strong>${pay?fmtMoney(pay.amount_usd??pay.amount??0):'$0.00'}</strong>
-          <span>${pay?`sent to ${esc(pay.display_name||pay.recipient_handle||'recipient')}`:'No confirmed payments yet'}</span>
-          <time>${pay?esc(ago(pay.sent_at||pay.created_at)):'—'}</time>
-        </div>
+      <a class="home-preview-card home-preview-payment-card home-ref-card" href="#/money">
+        <div class="home-preview-label"><b>Payments</b><span>Open →</span></div>
+        <div class="home-ref-payment-stage">${paymentRows}</div>
+        <div class="home-ref-card-bottom"><span>Confirmed payouts</span><b>${payments.length?fmtMoney(payments.reduce((s,p)=>s+Number(p.amount_usd??p.amount??0),0)):'$0.00'}</b></div>
       </a>
 
-      <a class="home-preview-card home-preview-analytics-card" href="#/money">
-        <div class="home-preview-label"><b>Analytics</b><span>View all →</span></div>
-        <div class="home-preview-analytics">
-          <small>Total paid</small>
-          <strong>${fmtMoney(total)}</strong>
-          <div class="home-mini-chart">${Array.from({length:22},(_,i)=>`<i style="height:${12+((i*23)%68)}%"></i>`).join('')}</div>
-          <span>Confirmed ledger activity</span>
-        </div>
+      <a class="home-preview-card home-preview-analytics-card home-ref-card" href="#/money">
+        <div class="home-preview-label"><b>Analytics</b><span>Open →</span></div>
+        <div class="home-ref-analytics-tabs"><b>Fees</b><span>1D</span><span>30D</span><span>All time</span></div>
+        <strong class="home-ref-analytics-total">${fmtMoney(total)}</strong>
+        <div class="home-ref-chart">${Array.from({length:28},(_,i)=>`<i style="height:${14+((i*31)%72)}%"></i>`).join('')}</div>
+        <div class="home-ref-card-bottom"><span>Confirmed ledger activity</span><b>Live</b></div>
       </a>
 
-      <a class="home-preview-card home-preview-launch-card" href="#/launch">
+      <a class="home-preview-card home-preview-launch-card home-ref-card" href="#/launch">
         <div class="home-preview-label"><b>Launch</b><span>Open →</span></div>
-        <div class="home-preview-launch">
-          <small>Recipient X handle</small>
-          <div class="home-preview-input">@${profile?esc(profile.handle):'recipient'}</div>
-          <div class="home-preview-launch-meta">
-            <span>Creator fees</span><b>100%</b>
-            <span>Treasury route</span><b>Permanent</b>
-          </div>
+        <div class="home-ref-launch-label">Recipient X handle</div>
+        <div class="home-ref-launch-input">@${profile?esc(profile.handle):'recipient'}</div>
+        <div class="home-ref-launch-pay">
+          <div>${avatar(display,true,profile?.avatar_url||'')}</div>
+          <span><small>Paying out</small><b>${esc(display)}</b>${profile?.handle?`<em>@${esc(profile.handle)}</em>`:''}</span>
+          <strong>${fmtMoney(payments[0]?.amount_usd??payments[0]?.amount??0)}</strong>
+        </div>
+        <div class="home-ref-launch-meta">
+          <span>Creator fees</span><b>100%</b>
+          <span>Treasury route</span><b>Permanent</b>
         </div>
       </a>
 
-      <a class="home-preview-card home-preview-doc-card" href="#/docs">
+      <a class="home-preview-card home-preview-doc-card home-ref-card" href="#/docs">
         <div class="home-preview-label"><b>How it works</b><span>Read →</span></div>
-        <div class="home-preview-doc-lines">
-          <span><i>1</i><b>Launch token</b><small>pump.fun / supported venue</small></span>
-          <span><i>2</i><b>Route creator fees</b><small>100% to treasury</small></span>
-          <span><i>3</i><b>Pay recipient</b><small>public ledger confirmation</small></span>
+        <div class="home-ref-doc-head"><small>Sharing config</small><strong>Attribution is per-mint</strong></div>
+        <p class="home-ref-doc-copy">One config account per token mint. The treasury is stored in its shareholders array so every token keeps clean attribution.</p>
+        <div class="home-ref-doc-grid">
+          <span><small>Detection</small><b>On-chain</b></span>
+          <span><small>Claiming</small><b>Creator fees</b></span>
+          <span><small>Route</small><b>100%</b></span>
+          <span><small>Recipient</small><b>X handle</b></span>
         </div>
       </a>
+
     </div>
   </section>`;
 }
-
 function homeTopTokenCard(t){
   const handle=t.profile||t.recipient_handle||'';
   const mint=t.mint||t.contract||'';
@@ -641,7 +670,7 @@ function homeOnRamp(h){
 function homePage(){
   const h=state.home||{tokens:[],profiles:[],payments:[],money:{}};
   const top=h.tokens||[];
-  return `<main class="home-page">
+  return `<main class="home-page home-reference-v1">
     <section class="hero wrap home-hero">
       <div class="hero-copy">
         <h1>Route token fees<br>through X Money</h1>
@@ -651,19 +680,12 @@ function homePage(){
           <a class="text-link" href="#/docs">Read the docs <span>→</span></a>
         </div>
       </div>
-      ${homeHeroCard(h,top)}
     </section>
 
-    ${top.length?`<section class="marquee home-marquee"><div class="marquee-track">${top.slice(0,16).concat(top.slice(0,16)).map(t=>`<a class="marquee-item" href="#/token/${encodeURIComponent(t.mint||t.contract)}">${avatar(t.symbol)}<div><small>@${esc(t.profile)} · ${esc(t.age)}</small><b>${esc(t.name)} <i>${esc(t.symbol)}</i></b><span>${fmtMc(t.mc)} MC · ${fmtMoney(t.sent)} Sent</span></div></a>`).join('')}</div></section>`:''}
-
     ${homePreviewDeck(h,top)}
-
     ${homeTopTokens(top)}
-
     ${homeTopProfiles(h.profiles||[])}
-
     ${homeRecentPayments(h)}
-
     ${homeMostPayments(h)}
     ${homeOffRamp(h)}
     ${homeOnRamp(h)}

@@ -4381,3 +4381,255 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 }
 .launch-wallet-choice:disabled{opacity:.55}
 
+
+
+
+/* home-reference-match-v1
+   Match the supplied UsePaid home-page composition while keeping PROJECT data/colors.
+   UI only: launch, wallet, routing, payout, claims and indexer logic are untouched. */
+.home-reference-v1{
+  --home-ref-card:#171717;
+  --home-ref-border:#2a2a2a;
+  --home-ref-muted:#767676;
+}
+.home-reference-v1 .home-hero{
+  display:block;
+  width:min(100% - 32px,1080px);
+  padding:72px 0 34px;
+  text-align:left;
+}
+.home-reference-v1 .home-hero .hero-copy{
+  width:min(100%,680px);
+  max-width:none;
+  margin:0;
+}
+.home-reference-v1 .home-hero .hero-copy h1{
+  margin:0;
+  font-size:clamp(48px,6.6vw,82px);
+  line-height:.91;
+  letter-spacing:-.065em;
+  text-align:left;
+  font-weight:650;
+}
+.home-reference-v1 .home-hero .hero-copy>p{
+  max-width:650px;
+  margin:24px 0 26px;
+  color:#858585;
+  font-size:15px;
+  line-height:1.55;
+  text-align:left;
+}
+.home-reference-v1 .home-hero .hero-buttons{
+  justify-content:flex-start;
+  margin:0;
+  gap:16px;
+}
+.home-reference-v1 .home-preview-shell{padding:18px 0 38px}
+.home-reference-v1 .home-preview-stack{
+  width:min(100% - 32px,1080px);
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+.home-reference-v1 .home-preview-card.home-ref-card{
+  min-height:320px;
+  padding:18px;
+  color:#fff;
+  background:var(--home-ref-card);
+  border:1px solid var(--home-ref-border);
+  border-radius:20px;
+  text-decoration:none;
+  overflow:hidden;
+  box-shadow:none;
+}
+.home-reference-v1 .home-preview-label{
+  margin-bottom:16px;
+  font-size:13px;
+}
+.home-reference-v1 .home-preview-label b{font-weight:650}
+.home-reference-v1 .home-preview-label span{color:#747474;font-size:11px}
+.home-ref-explore-stage{
+  min-height:190px;
+  display:grid;
+  grid-template-columns:minmax(0,1.65fr) minmax(92px,.75fr);
+  gap:10px;
+}
+.home-ref-explore-primary,.home-ref-explore-secondary{
+  position:relative;
+  min-width:0;
+  overflow:hidden;
+  border:1px solid #292929;
+  border-radius:14px;
+  background:#080808;
+}
+.home-ref-main-art,.home-ref-side-art,.home-ref-token-fallback{
+  width:100%;height:100%;object-fit:cover;
+}
+.home-ref-token-fallback{
+  display:grid;place-items:center;
+  background:radial-gradient(circle at 50% 45%,#343434 0,#151515 48%,#090909 78%);
+  color:#777;font-size:36px;font-weight:800;
+}
+.home-ref-floating-badge{position:absolute;left:9px;bottom:9px}
+.home-ref-floating-profile{
+  position:absolute;right:9px;bottom:9px;max-width:55%;
+  padding:6px 9px;border:1px solid #333;border-radius:999px;
+  background:rgba(0,0,0,.78);color:#ddd;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;
+}
+.home-ref-explore-secondary{
+  display:grid;grid-template-rows:1fr auto auto;align-items:end;
+}
+.home-ref-explore-secondary .home-ref-side-art{min-height:0}
+.home-ref-explore-secondary small{padding:7px 9px 1px;color:#717171;font-size:8px}
+.home-ref-explore-secondary>b{padding:0 9px 9px;font-size:17px}
+.home-ref-explore-foot{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:14px;padding-top:13px;
+}
+.home-ref-explore-foot>div{display:grid;min-width:0}
+.home-ref-explore-foot small,.home-ref-explore-foot span{color:#707070;font-size:9px}
+.home-ref-explore-foot strong{
+  margin:2px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px;
+}
+.home-ref-explore-foot>b{font-size:22px;letter-spacing:-.04em}
+
+.home-ref-payment-stage{flex:1;display:grid;align-content:center;gap:10px}
+.home-ref-pay-row{
+  display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:10px;
+  padding:11px 12px;border:1px solid #2d2d2d;border-radius:13px;background:#101010;
+}
+.home-ref-pay-coin{
+  width:40px;height:40px;display:grid;place-items:center;border:1px solid #333;
+  border-radius:50%;background:#050505;font-size:18px;font-weight:800;
+}
+.home-ref-pay-row>div{display:grid;min-width:0}
+.home-ref-pay-row strong{font-size:18px;letter-spacing:-.03em}
+.home-ref-pay-row small{color:#787878;font-size:9px}
+.home-ref-pay-row small b{color:#bbb}
+.home-ref-pay-row time{color:#666;font-size:8px}
+.home-ref-empty-route{margin:auto;display:flex;align-items:center;justify-content:center;gap:8px;color:#666}
+.home-ref-empty-route i{width:36px;height:36px;border-radius:50%;border:1px solid #2a2a2a;background:#101010}
+.home-ref-empty-route>b{font-size:19px;color:#696969}
+.home-ref-empty-route>span{margin-left:8px;font-size:9px}
+.home-ref-card-bottom{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding-top:13px;margin-top:13px;border-top:1px solid #292929;color:#777;font-size:9px;
+}
+.home-ref-card-bottom b{color:#d6d6d6;font-weight:600}
+
+.home-ref-analytics-tabs{display:flex;align-items:center;gap:12px;color:#777;font-size:9px}
+.home-ref-analytics-tabs b{color:#e6e6e6;font-size:10px}
+.home-ref-analytics-total{display:block;margin:16px 0 12px;font-size:40px;line-height:1;letter-spacing:-.055em}
+.home-ref-chart{height:112px;display:flex;align-items:flex-end;gap:4px;margin-top:auto}
+.home-ref-chart i{min-width:2px;flex:1;display:block;background:#353535;border-radius:2px 2px 0 0}
+
+.home-ref-launch-label{color:#727272;font-size:9px}
+.home-ref-launch-input{
+  margin:8px 0 14px;padding:11px 14px;border:1px solid #3a3a3a;border-radius:999px;
+  background:#080808;color:#d7d7d7;font-size:11px;
+}
+.home-ref-launch-pay{
+  display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:10px;
+  padding:12px;border:1px solid #2b2b2b;border-radius:14px;background:#101010;
+}
+.home-ref-launch-pay .avatar{width:40px;height:40px}
+.home-ref-launch-pay>span{display:grid;min-width:0}
+.home-ref-launch-pay small,.home-ref-launch-pay em{color:#707070;font-size:8px;font-style:normal}
+.home-ref-launch-pay b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+.home-ref-launch-pay>strong{font-size:17px}
+.home-ref-launch-meta{
+  margin-top:auto;display:grid;grid-template-columns:1fr auto;gap:7px 12px;padding-top:15px;
+}
+.home-ref-launch-meta span{color:#717171;font-size:9px}
+.home-ref-launch-meta b{font-size:9px;font-weight:650}
+
+.home-ref-doc-head{display:grid;margin-top:2px}
+.home-ref-doc-head small{color:#707070;font-size:9px}
+.home-ref-doc-head strong{margin-top:3px;font-size:17px}
+.home-ref-doc-copy{margin:13px 0 16px;color:#777;font-size:10px;line-height:1.55}
+.home-ref-doc-grid{margin-top:auto;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.home-ref-doc-grid>span{
+  min-width:0;display:grid;gap:3px;padding:10px;border:1px solid #292929;border-radius:11px;background:#101010;
+}
+.home-ref-doc-grid small{color:#666;font-size:7px}
+.home-ref-doc-grid b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;font-weight:600}
+
+.home-reference-v1 .home-top-tokens,
+.home-reference-v1 .home-top-profiles,
+.home-reference-v1 .home-recent-payments,
+.home-reference-v1 .home-most-payments,
+.home-reference-v1 .home-off-ramp,
+.home-reference-v1 .home-on-ramp{width:min(100% - 32px,1080px)}
+
+@media(max-width:640px){
+  .home-reference-v1 .home-hero{
+    width:calc(100% - 32px);padding:44px 0 24px;text-align:left;
+  }
+  .home-reference-v1 .home-hero .hero-copy{width:100%;margin:0}
+  .home-reference-v1 .home-hero .hero-copy h1{
+    font-size:42px;line-height:.92;text-align:left;
+  }
+  .home-reference-v1 .home-hero .hero-copy>p{
+    max-width:none;margin:17px 0 21px;font-size:11px;line-height:1.58;text-align:left;
+  }
+  .home-reference-v1 .home-hero .hero-buttons{justify-content:flex-start;gap:17px}
+  .home-reference-v1 .home-hero .btn-light{padding:10px 16px;font-size:10px}
+  .home-reference-v1 .home-hero .text-link{font-size:9px}
+  .home-reference-v1 .home-preview-shell{padding:20px 0 28px}
+  .home-reference-v1 .home-preview-stack{
+    width:calc(100% - 32px);grid-template-columns:1fr;gap:10px;
+  }
+  .home-reference-v1 .home-preview-card.home-ref-card{
+    min-height:0;padding:12px;border-radius:14px;
+  }
+  .home-reference-v1 .home-preview-label{margin-bottom:11px;font-size:9px}
+  .home-reference-v1 .home-preview-label span{font-size:8px}
+  .home-ref-explore-stage{
+    min-height:195px;grid-template-columns:minmax(0,1.7fr) minmax(76px,.65fr);gap:7px;
+  }
+  .home-ref-explore-primary,.home-ref-explore-secondary{border-radius:10px}
+  .home-ref-floating-badge{left:6px;bottom:6px}
+  .home-ref-floating-profile{right:6px;bottom:6px;padding:4px 7px;font-size:7px}
+  .home-ref-explore-secondary small{padding:5px 6px 1px;font-size:6px}
+  .home-ref-explore-secondary>b{padding:0 6px 6px;font-size:13px}
+  .home-ref-explore-foot{padding-top:9px}
+  .home-ref-explore-foot small,.home-ref-explore-foot span{font-size:7px}
+  .home-ref-explore-foot strong{font-size:12px}
+  .home-ref-explore-foot>b{font-size:16px}
+
+  .home-ref-payment-stage{gap:7px}
+  .home-ref-pay-row{
+    grid-template-columns:32px minmax(0,1fr) auto;padding:8px 9px;gap:8px;border-radius:10px;
+  }
+  .home-ref-pay-coin{width:30px;height:30px;font-size:13px}
+  .home-ref-pay-row strong{font-size:14px}
+  .home-ref-pay-row small{font-size:7px}
+  .home-ref-pay-row time{font-size:6.5px}
+  .home-ref-card-bottom{padding-top:9px;margin-top:9px;font-size:7px}
+
+  .home-ref-analytics-tabs{gap:9px;font-size:7px}
+  .home-ref-analytics-tabs b{font-size:8px}
+  .home-ref-analytics-total{margin:11px 0 8px;font-size:31px}
+  .home-ref-chart{height:72px;gap:2px}
+
+  .home-ref-launch-label{font-size:7px}
+  .home-ref-launch-input{margin:6px 0 9px;padding:8px 10px;font-size:8px}
+  .home-ref-launch-pay{
+    grid-template-columns:32px 1fr auto;gap:7px;padding:8px;border-radius:10px;
+  }
+  .home-ref-launch-pay .avatar{width:30px;height:30px}
+  .home-ref-launch-pay small,.home-ref-launch-pay em{font-size:6px}
+  .home-ref-launch-pay b{font-size:8px}
+  .home-ref-launch-pay>strong{font-size:13px}
+  .home-ref-launch-meta{padding-top:10px;gap:5px 9px}
+  .home-ref-launch-meta span,.home-ref-launch-meta b{font-size:7px}
+
+  .home-ref-doc-head small{font-size:7px}
+  .home-ref-doc-head strong{font-size:13px}
+  .home-ref-doc-copy{margin:9px 0 11px;font-size:7px}
+  .home-ref-doc-grid{gap:6px}
+  .home-ref-doc-grid>span{padding:7px;border-radius:8px}
+  .home-ref-doc-grid small{font-size:6px}
+  .home-ref-doc-grid b{font-size:7px}
+}
+
