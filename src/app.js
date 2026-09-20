@@ -1282,19 +1282,21 @@ function launchPage(){
 
           <div class="launch-field"><label for="launchDescription">Description</label><textarea id="launchDescription" rows="4" placeholder="Describe the token"></textarea></div>
 
-          <div class="launch-field">
-            <label>Social links <small>(optional)</small></label>
-            <p class="launch-help">You can use the registered token page as the website link.</p>
-            <input id="launchWebsite" type="url" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" placeholder="https://yoursite.com">
-            <div class="launch-two"><input id="launchTelegram" placeholder="Telegram"><input id="launchX" placeholder="X"></div>
-          </div>
+          <details class="launch-social-details" open>
+            <summary>Social links <small>(optional)</small><span class="launch-social-chevron" aria-hidden="true">⌃</span></summary>
+            <div class="launch-social-body">
+              <p class="launch-help">You can use the registered token page as the website link.</p>
+              <input id="launchWebsite" type="url" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" placeholder="https://yoursite.com">
+              <div class="launch-two"><input id="launchTelegram" placeholder="Telegram"><input id="launchX" placeholder="X"></div>
+            </div>
+          </details>
 
           <div class="launch-divider"></div>
 
-          <div class="launch-field">
+          <div class="launch-field launch-payment-note-field">
             <label for="launchPaymentNote">Payment note</label>
-            <input id="launchPaymentNote" maxlength="250" value="Creator fees via ${esc(state.brand.name)}">
-            <p class="launch-help">Memo attached to the recipient payout record.</p>
+            <textarea id="launchPaymentNote" maxlength="250" rows="3">Creator fees via ${esc(state.brand.name)}</textarea>
+            <p class="launch-help"><span id="launchPaymentNoteCount">${`Creator fees via ${state.brand.name}`.length}</span>/250 · the message the recipient sees with every payout</p>
           </div>
 
           <div class="launch-field">
@@ -1305,7 +1307,7 @@ function launchPage(){
 
           <label class="launch-terms"><input type="checkbox" required><span>I agree to the <a href="#/legal">Terms</a> and have read the disclosures.</span></label>
           <button class="btn-light full launch-submit" id="launchSubmitButton" type="submit">${currentWallet?'Launch token':'Connect wallet'}</button>
-          <div id="launchStatus" class="status-box"></div>
+          <div id="launchStatus" class="status-box hidden" aria-live="polite"></div>
         </form>
       </div>
 
@@ -1902,7 +1904,7 @@ async function refreshTokens(){const q=new URLSearchParams({search:state.explore
 async function render(){const path=(location.hash||'#/').slice(2).split('?')[0];app.innerHTML=header()+loadingPage()+launchModal();try{if(!state.home)await loadBase();let page;if(path===''||path==='/')page=homePage();else if(path==='explore'){await refreshTokens();page=explorePage();}else if(path==='money'){state.money=await api('/api/money');page=moneyPage();}else if(path==='docs')page=docsPage();else if(path==='legal')page=legalPage();else if(path==='launch')page=launchPage();else if(path==='capital-flow'){state.money=await api('/api/money');page=capitalFlowPage();}else if(path==='paid'){state.money=await api('/api/money');page=paidPage();}else if(path==='opt-out')page=optOutPage();else if(path==='admin')page=adminPage();else if(path.startsWith('token/'))page=await tokenPage(decodeURIComponent(path.slice(6)));else if(path.startsWith('profile/'))page=await profilePage(decodeURIComponent(path.slice(8)));else page=homePage();app.innerHTML=header()+page+launchModal();window.scrollTo(0,0);}catch(e){app.innerHTML=header()+errorPage(e)+launchModal();}}
 let currentLaunch=null,currentWallet=null;
 async function connectWallet(){const provider=window.phantom?.solana||window.solana;if(!provider?.connect)throw new Error('No Solana wallet found in this browser');const out=await provider.connect();currentWallet=provider;const pub=out.publicKey?.toString?.()||provider.publicKey?.toString?.();for(const id of ['creatorPubkey','creatorPubkeySuccess']){const el=document.querySelector(`#${id}`);if(el)el.value=pub||'';}return pub;}
-function setLaunchStatus(text,good=false){const el=document.querySelector('#launchStatus');if(el){el.textContent=text;el.classList.toggle('good',good);}}
+function setLaunchStatus(text,good=false){const el=document.querySelector('#launchStatus');if(el){const message=String(text||'');el.textContent=message;el.classList.toggle('good',good);el.classList.toggle('hidden',!message);}}
 
 async function launchImageBase64(file){
   if(!file)throw new Error('Choose a token image first');
@@ -2050,7 +2052,7 @@ app.addEventListener('click',async e=>{
   }catch(err){setLaunchStatus(err.message);const out=document.querySelector('#adminOutput');if(out)out.textContent=err.message;}
 });
 let searchTimer;
-app.addEventListener('input',e=>{if(e.target.id==='tokenSearch'){clearTimeout(searchTimer);state.explore.query=e.target.value;searchTimer=setTimeout(async()=>{try{await refreshTokens();const grid=document.querySelector('#launchGrid');if(grid)grid.innerHTML=state.tokens.map(exploreTokenCard).join('')||'<div class="explore-empty"><span>No launches match this search.</span></div>';}catch{}},180);}if(e.target.id==='launchHandle'){clearTimeout(launchXLookupTimer);launchXLookupTimer=setTimeout(()=>lookupLaunchXAccount(e.target.value),350);}if(['launchName','launchTicker','launchHandle'].includes(e.target.id))updateLaunchPreview();});
+app.addEventListener('input',e=>{if(e.target.id==='tokenSearch'){clearTimeout(searchTimer);state.explore.query=e.target.value;searchTimer=setTimeout(async()=>{try{await refreshTokens();const grid=document.querySelector('#launchGrid');if(grid)grid.innerHTML=state.tokens.map(exploreTokenCard).join('')||'<div class="explore-empty"><span>No launches match this search.</span></div>';}catch{}},180);}if(e.target.id==='launchHandle'){clearTimeout(launchXLookupTimer);launchXLookupTimer=setTimeout(()=>lookupLaunchXAccount(e.target.value),350);}if(e.target.id==='launchPaymentNote'){const count=document.querySelector('#launchPaymentNoteCount');if(count)count.textContent=String(e.target.value.length);}if(['launchName','launchTicker','launchHandle'].includes(e.target.id))updateLaunchPreview();});
 app.addEventListener('change',e=>{
   if(e.target.id==='launchImage')updateLaunchImagePreview(e.target);
 });

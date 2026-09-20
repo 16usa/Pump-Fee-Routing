@@ -3328,3 +3328,41 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   font-size:12px;
   font-weight:500;
 }
+
+/* launch-form-polish-v1 */
+.launch-social-details{
+  display:grid;
+  gap:9px;
+}
+.launch-social-details summary{
+  list-style:none;
+  display:flex;
+  align-items:center;
+  gap:5px;
+  cursor:pointer;
+  color:#cfcfcf;
+  font-size:12px;
+  font-weight:600;
+  text-transform:none;
+}
+.launch-social-details summary::-webkit-details-marker{display:none}
+.launch-social-details summary small{
+  color:#666;
+  font-weight:500;
+}
+.launch-social-chevron{
+  margin-left:auto;
+  color:#707070;
+  font-size:12px;
+  transition:transform .16s ease;
+}
+.launch-social-details:not([open]) .launch-social-chevron{
+  transform:rotate(180deg);
+}
+.launch-social-body{
+  display:grid;
+  gap:9px;
+}
+.launch-payment-note-field textarea{
+  min-height:88px;
+}
