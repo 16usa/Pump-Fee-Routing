@@ -5045,7 +5045,7 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   width:100%;
   min-width:0;
   padding:9px 13px 10px;
-  border-top:1px solid #272727;
+  border-top:0;
   background:#0b0b0b;
 }
 
@@ -5159,7 +5159,7 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 
 /* Image becomes an inset module inside the card. */
 .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] > .home-explore-v8-media{
-  border:1px solid #2b2b2b;
+  border:0;
   border-radius:14px;
   overflow:hidden;
   background:#0a0a0a;
@@ -5299,106 +5299,54 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 }
 
 
-/* explore-border-cleanup-v15-5 */
+/* explore-style-final-v15-8 */
 
-/* Remove the inner card frames in the Explore preview block.
-   Keep only the main outer Explore container border. */
-.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"],
-.home-explore-reference-v8 .home-explore-v8-secondary-card{
-  border:0 !important;
-  box-shadow:none !important;
-  background:transparent !important;
-}
+/* FINAL Explore border state.
+   Outer Explore container stays unchanged.
+   Left image: no frame.
+   Line below left image: removed.
+   Left card right divider: removed.
+   Right image/tile frame: removed.
+   No duplicate border overrides below this block. */
 
-/* Remove borders around the actual images/modules inside the Explore block. */
-.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] > .home-explore-v8-media,
-.home-explore-reference-v8 .home-explore-v8-secondary-card > .home-explore-v8-media{
-  border:0 !important;
-  box-shadow:none !important;
-  background:#0a0a0a;
-}
-
-/* Keep the info area clean without extra divider lines. */
-.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] > .home-explore-v8-copy{
-  border-top:0 !important;
-}
-
-@media (max-width:640px){
-  .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"],
-  .home-explore-reference-v8 .home-explore-v8-secondary-card,
-  .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] > .home-explore-v8-media,
-  .home-explore-reference-v8 .home-explore-v8-secondary-card > .home-explore-v8-media{
-    box-shadow:none !important;
-  }
-}
-
-
-/* explore-border-scope-fix-v15-6 */
-
-/* Restore the INNER CARD construction that v15.5 removed.
-   Only the image/media frames stay borderless. */
-.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"],
-.home-explore-reference-v8 .home-explore-v8-secondary-card{
-  background:#0b0b0b !important;
-  box-shadow:0 8px 22px rgba(0,0,0,.22) !important;
-}
-
-/* Restore original card edges from the reference geometry. */
 .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"]{
-  border:1px solid #2b2b2b !important;
-  border-left:0 !important;
-  border-top:0 !important;
-  border-bottom:0 !important;
-  border-radius:0 15px 15px 0 !important;
-}
-.home-explore-reference-v8 .home-explore-v8-secondary-card{
-  border:1px solid #2b2b2b !important;
-  border-right:0 !important;
-  border-bottom:0 !important;
-  border-radius:15px 0 0 0 !important;
+  background:#0b0b0b;
+  border:0;
+  border-radius:0 15px 15px 0;
+  box-shadow:0 8px 22px rgba(0,0,0,.22);
 }
 
-/* Restore the information-section divider under the image. */
+.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] > .home-explore-v8-media{
+  border:0;
+  outline:0;
+  box-shadow:none;
+}
+
 .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] > .home-explore-v8-copy{
-  border-top:1px solid #272727 !important;
+  border-top:0;
+  box-shadow:none;
 }
 
-/* THIS is the only thing that remains borderless: the images/media themselves. */
-.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] > .home-explore-v8-media,
+.home-explore-reference-v8 .home-explore-v8-secondary-card{
+  background:#0b0b0b;
+  border:0;
+  outline:0;
+  border-radius:15px 0 0 0;
+  box-shadow:none;
+}
+
 .home-explore-reference-v8 .home-explore-v8-secondary-card > .home-explore-v8-media{
-  border:0 !important;
-  box-shadow:none !important;
+  border:0;
+  outline:0;
+  box-shadow:none;
 }
 
 @media (max-width:640px){
   .home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"]{
-    border-radius:0 12px 12px 0 !important;
+    border-radius:0 12px 12px 0;
   }
   .home-explore-reference-v8 .home-explore-v8-secondary-card{
-    border-radius:12px 0 0 0 !important;
+    border-radius:12px 0 0 0;
   }
-}
-
-
-/* explore-image-frame-cleanup-v15-7 */
-
-/* Remove the line directly under the LEFT image. */
-.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] > .home-explore-v8-copy{
-  border-top:0 !important;
-  box-shadow:none !important;
-}
-
-/* Remove the inner right-side divider on the LEFT card. */
-.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"]{
-  border-right:0 !important;
-}
-
-/* Keep the overall Explore block/card construction, but remove frames only around the media/images. */
-.home-explore-reference-v8 .home-explore-v8-primary-card[data-explore-card-info="v15"] > .home-explore-v8-media,
-.home-explore-reference-v8 .home-explore-v8-secondary-card,
-.home-explore-reference-v8 .home-explore-v8-secondary-card > .home-explore-v8-media{
-  border:0 !important;
-  outline:0 !important;
-  box-shadow:none !important;
 }
 
