@@ -6099,3 +6099,85 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   .home-v2-docs-card[data-docs-reference="v19"] .home-v2-docs-footer span{font-size:12px}
 }
 
+
+/* preview-text-unify-v20-1 */
+
+/*
+  Footer text reference = Docs -> Open.
+  IMPORTANT:
+  FEES ROUTE TO in Launch is NOT changed.
+  Analytics Fees / 1D are matched to FEES ROUTE TO.
+*/
+
+/* Footer labels only: Explore, Payments, Analytics, Launch, Docs. */
+.home-explore-reference-v8 .home-explore-v8-footer strong,
+.home-explore-reference-v8 .home-explore-v8-footer span,
+.home-v2-payments-card[data-payments-reference="v16"] .home-v2-payments-footer strong,
+.home-v2-payments-card[data-payments-reference="v16"] .home-v2-payments-footer span,
+.home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-footer strong,
+.home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-footer span,
+.home-v2-launch-card[data-launch-reference="v18"] .home-v2-launch-footer strong,
+.home-v2-launch-card[data-launch-reference="v18"] .home-v2-launch-footer span,
+.home-v2-docs-card[data-docs-reference="v19"] .home-v2-docs-footer strong,
+.home-v2-docs-card[data-docs-reference="v19"] .home-v2-docs-footer span{
+  color:#888 !important;
+  font-size:13px !important;
+  line-height:1 !important;
+  font-weight:430 !important;
+  letter-spacing:0 !important;
+  white-space:nowrap;
+}
+
+/* Restore/preserve FEES ROUTE TO exactly as Launch v18 defined it.
+   This also neutralizes the old v20 patch if it was installed earlier. */
+.home-v2-launch-card[data-launch-reference="v18"] .home-v2-launch-eyebrow{
+  color:#777 !important;
+  font-size:11px !important;
+  line-height:1 !important;
+  font-weight:520 !important;
+  letter-spacing:.13em !important;
+}
+
+/* Analytics Fees + 1D use the SAME visual typography as FEES ROUTE TO. */
+.home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-topline strong,
+.home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-topline span{
+  color:#777 !important;
+  font-size:11px !important;
+  line-height:1 !important;
+  font-weight:520 !important;
+  letter-spacing:.13em !important;
+}
+
+@media(max-width:640px){
+  .home-explore-reference-v8 .home-explore-v8-footer strong,
+  .home-explore-reference-v8 .home-explore-v8-footer span,
+  .home-v2-payments-card[data-payments-reference="v16"] .home-v2-payments-footer strong,
+  .home-v2-payments-card[data-payments-reference="v16"] .home-v2-payments-footer span,
+  .home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-footer strong,
+  .home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-footer span,
+  .home-v2-launch-card[data-launch-reference="v18"] .home-v2-launch-footer strong,
+  .home-v2-launch-card[data-launch-reference="v18"] .home-v2-launch-footer span,
+  .home-v2-docs-card[data-docs-reference="v19"] .home-v2-docs-footer strong,
+  .home-v2-docs-card[data-docs-reference="v19"] .home-v2-docs-footer span{
+    color:#888 !important;
+    font-size:12px !important;
+  }
+
+  .home-v2-launch-card[data-launch-reference="v18"] .home-v2-launch-eyebrow{
+    color:#777 !important;
+    font-size:9px !important;
+    line-height:1 !important;
+    font-weight:520 !important;
+    letter-spacing:.14em !important;
+  }
+
+  .home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-topline strong,
+  .home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-topline span{
+    color:#777 !important;
+    font-size:9px !important;
+    line-height:1 !important;
+    font-weight:520 !important;
+    letter-spacing:.14em !important;
+  }
+}
+
