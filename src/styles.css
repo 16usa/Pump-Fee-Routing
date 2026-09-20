@@ -4280,3 +4280,104 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   object-fit:contain;
   background:#0c0c0c;
 }
+
+
+/* launch-mobile-wallet-connect-v1 */
+.launch-wallet-picker{
+  position:fixed;
+  inset:0;
+  z-index:10000;
+  display:grid;
+  align-items:end;
+}
+.launch-wallet-picker-backdrop{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,.72);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+.launch-wallet-picker-card{
+  position:relative;
+  width:min(100%,520px);
+  margin:0 auto;
+  padding:20px 18px calc(20px + env(safe-area-inset-bottom));
+  border:1px solid #2b2b2b;
+  border-bottom:0;
+  border-radius:24px 24px 0 0;
+  background:#111;
+  box-shadow:0 -20px 60px rgba(0,0,0,.45);
+}
+.launch-wallet-picker-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:8px;
+}
+.launch-wallet-picker-head h3{
+  margin:0;
+  color:#fff;
+  font-size:20px;
+  line-height:1.2;
+}
+.launch-wallet-picker-head button{
+  width:36px;
+  height:36px;
+  border:0;
+  background:transparent;
+  color:#8a8a8a;
+  font-size:28px;
+  line-height:1;
+}
+.launch-wallet-picker-copy,
+.launch-wallet-picker-note{
+  margin:0;
+  color:#888;
+  font-size:13px;
+  line-height:1.45;
+}
+.launch-wallet-picker-copy{margin-bottom:16px}
+.launch-wallet-picker-note{margin-top:14px;font-size:11px}
+.launch-wallet-choice{
+  width:100%;
+  display:grid;
+  grid-template-columns:46px 1fr 24px;
+  align-items:center;
+  gap:12px;
+  min-height:66px;
+  margin-top:10px;
+  padding:9px 12px;
+  border:1px solid #2f2f2f;
+  border-radius:16px;
+  background:#181818;
+  color:#fff;
+  text-align:left;
+}
+.launch-wallet-choice-mark{
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  border-radius:13px;
+  background:#050505;
+  font-weight:800;
+  font-size:18px;
+}
+.launch-wallet-choice>span:nth-child(2){
+  display:grid;
+  gap:3px;
+}
+.launch-wallet-choice strong{font-size:15px}
+.launch-wallet-choice small{
+  color:#777;
+  font-size:11px;
+}
+.launch-wallet-choice>b{
+  color:#777;
+  font-size:24px;
+  font-weight:400;
+  text-align:center;
+}
+.launch-wallet-choice:disabled{opacity:.55}
+

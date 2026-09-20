@@ -2158,7 +2158,175 @@ async function loadBase(){const [cfg,home,money,tokens]=await Promise.all([api('
 async function refreshTokens(){const q=new URLSearchParams({search:state.explore.query,sort:state.explore.sort,venue:state.explore.venue,limit:'200'});const j=await api(`/api/tokens?${q}`);state.tokens=j.tokens||[];}
 async function render(){const path=(location.hash||'#/').slice(2).split('?')[0];app.innerHTML=header()+loadingPage()+launchModal();try{if(!state.home)await loadBase();let page;if(path===''||path==='/')page=homePage();else if(path==='explore'){await refreshTokens();page=explorePage();}else if(path==='money'){state.money=await api('/api/money');page=moneyPage();}else if(path==='docs')page=docsPage();else if(path==='legal')page=legalPage();else if(path==='launch')page=launchPage();else if(path==='capital-flow'){state.money=await api('/api/money');page=capitalFlowPage();}else if(path==='paid'){state.money=await api('/api/money');page=paidPage();}else if(path==='opt-out')page=optOutPage();else if(path==='admin')page=adminPage();else if(path.startsWith('token/'))page=await tokenPage(decodeURIComponent(path.slice(6)));else if(path.startsWith('profile/'))page=await profilePage(decodeURIComponent(path.slice(8)));else page=homePage();app.innerHTML=header()+page+launchModal();window.scrollTo(0,0);}catch(e){app.innerHTML=header()+errorPage(e)+launchModal();}}
 let currentLaunch=null,currentWallet=null;
-async function connectWallet(){const provider=window.phantom?.solana||window.solana;if(!provider?.connect)throw new Error('No Solana wallet found in this browser');const out=await provider.connect();currentWallet=provider;const pub=out.publicKey?.toString?.()||provider.publicKey?.toString?.();for(const id of ['creatorPubkey','creatorPubkeySuccess']){const el=document.querySelector(`#${id}`);if(el)el.value=pub||'';}return pub;}
+
+function solanaWalletProvider(){
+  const candidates=[
+    window.phantom?.solana,
+    window.solflare,
+    window.backpack?.solana,
+    window.solana
+  ].filter(Boolean);
+
+  return candidates.find(p=>p?.isPhantom)
+    || candidates.find(p=>p?.isSolflare)
+    || candidates.find(p=>p?.isBackpack)
+    || candidates.find(p=>typeof p?.connect==='function')
+    || null;
+}
+
+function mobileBrowserWithoutWallet(){
+  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent||'') && !solanaWalletProvider();
+}
+
+function encodeLaunchWalletDraft(){
+  const ids=[
+    'launchHandle','launchName','launchTicker','launchDescription',
+    'launchWebsite','launchTelegram','launchX','launchPaymentNote','launchDevBuy'
+  ];
+  const draft={};
+  for(const id of ids){
+    const el=document.querySelector(`#${id}`);
+    if(el && typeof el.value==='string')draft[id]=el.value;
+  }
+  try{
+    const bytes=new TextEncoder().encode(JSON.stringify(draft));
+    let binary='';
+    for(const b of bytes)binary+=String.fromCharCode(b);
+    return btoa(binary).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');
+  }catch{
+    return '';
+  }
+}
+
+function decodeLaunchWalletDraft(value){
+  if(!value)return null;
+  try{
+    const normalized=value.replaceAll('-','+').replaceAll('_','/');
+    const padded=normalized+'='.repeat((4-normalized.length%4)%4);
+    const binary=atob(padded);
+    const bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }catch{
+    return null;
+  }
+}
+
+function launchWalletReturnUrl(){
+  const target=new URL(location.href);
+  target.hash='#/launch';
+  const draft=encodeLaunchWalletDraft();
+  if(draft)target.searchParams.set('launchWalletDraft',draft);
+  return target.toString();
+}
+
+function walletBrowseUrl(wallet){
+  const url=encodeURIComponent(launchWalletReturnUrl());
+  const ref=encodeURIComponent(location.origin);
+  if(wallet==='phantom')return `https://phantom.app/ul/browse/${url}?ref=${ref}`;
+  if(wallet==='solflare')return `https://solflare.com/ul/v1/browse/${url}?ref=${ref}`;
+  return '';
+}
+
+function closeLaunchWalletPicker(){
+  document.querySelector('#launchWalletPicker')?.remove();
+}
+
+function showLaunchWalletPicker(){
+  closeLaunchWalletPicker();
+  const modal=document.createElement('div');
+  modal.id='launchWalletPicker';
+  modal.className='launch-wallet-picker';
+  modal.innerHTML=`
+    <div class="launch-wallet-picker-backdrop" data-wallet-close></div>
+    <section class="launch-wallet-picker-card" role="dialog" aria-modal="true" aria-labelledby="launchWalletPickerTitle">
+      <div class="launch-wallet-picker-head">
+        <h3 id="launchWalletPickerTitle">Connect Solana wallet</h3>
+        <button type="button" data-wallet-close aria-label="Close">×</button>
+      </div>
+      <p class="launch-wallet-picker-copy">On iPhone, open this Launch page inside your wallet app. The text fields will carry over automatically.</p>
+      <button type="button" class="launch-wallet-choice" data-wallet-open="phantom">
+        <span class="launch-wallet-choice-mark">P</span>
+        <span><strong>Phantom</strong><small>Open in Phantom</small></span>
+        <b>›</b>
+      </button>
+      <button type="button" class="launch-wallet-choice" data-wallet-open="solflare">
+        <span class="launch-wallet-choice-mark">S</span>
+        <span><strong>Solflare</strong><small>Open in Solflare</small></span>
+        <b>›</b>
+      </button>
+      <p class="launch-wallet-picker-note">For security, iOS does not transfer a selected local image file between Safari and a wallet browser. If you already chose an image, select it once more after the wallet app opens.</p>
+    </section>
+  `;
+  document.body.appendChild(modal);
+}
+
+function restoreLaunchWalletDraft(){
+  const url=new URL(location.href);
+  const raw=url.searchParams.get('launchWalletDraft');
+  const draft=decodeLaunchWalletDraft(raw);
+  if(!draft)return false;
+  const form=document.querySelector('#launchForm');
+  if(!form)return false;
+
+  for(const [id,value] of Object.entries(draft)){
+    const el=document.querySelector(`#${id}`);
+    if(el && typeof value==='string')el.value=value;
+  }
+
+  url.searchParams.delete('launchWalletDraft');
+  history.replaceState(null,'',`${url.pathname}${url.search}${url.hash}`);
+  updateLaunchPreview();
+  const note=document.querySelector('#launchPaymentNoteCount');
+  const noteInput=document.querySelector('#launchPaymentNote');
+  if(note&&noteInput)note.textContent=String(noteInput.value.length);
+  const handle=document.querySelector('#launchHandle')?.value||'';
+  if(handle)lookupLaunchXAccount(handle);
+  setLaunchStatus('Launch details restored. Connect your wallet and re-select the token image if needed.',true);
+  return true;
+}
+
+function syncLaunchWalletUi(){
+  const provider=solanaWalletProvider();
+  if(provider && provider.publicKey){
+    currentWallet=provider;
+    const button=document.querySelector('#launchSubmitButton');
+    if(button && !button.disabled)button.textContent='Launch token';
+  }else if(mobileBrowserWithoutWallet()){
+    const button=document.querySelector('#launchSubmitButton');
+    if(button && !button.disabled)button.textContent='Connect wallet';
+  }
+}
+
+async function connectWallet(){
+  const provider=solanaWalletProvider();
+
+  if(!provider?.connect){
+    showLaunchWalletPicker();
+    return null;
+  }
+
+  const out=await provider.connect();
+  const pub=out?.publicKey?.toString?.()||provider.publicKey?.toString?.()||'';
+  if(!pub)throw new Error('Wallet connected but did not return a Solana public key');
+
+  currentWallet=provider;
+
+  if(typeof provider.on==='function' && !provider.__projectWalletEventsBound){
+    provider.__projectWalletEventsBound=true;
+    provider.on('disconnect',()=>{
+      currentWallet=null;
+      currentLaunch=null;
+      const button=document.querySelector('#launchSubmitButton');
+      if(button){button.disabled=false;button.textContent='Connect wallet';}
+    });
+  }
+
+  for(const id of ['creatorPubkey','creatorPubkeySuccess']){
+    const el=document.querySelector(`#${id}`);
+    if(el)el.value=pub;
+  }
+  return pub;
+}
 function setLaunchStatus(text,good=false){const el=document.querySelector('#launchStatus');if(el){const message=String(text||'');el.textContent=message;el.classList.toggle('good',good);el.classList.toggle('hidden',!message);}}
 
 async function launchImageBase64(file){
@@ -2288,6 +2456,20 @@ async function routeFees(){if(!currentLaunch)throw new Error('Create the launch 
 
 app.addEventListener('click',async e=>{
   try{
+    const walletClose=e.target.closest('[data-wallet-close]');
+    if(walletClose){e.preventDefault();closeLaunchWalletPicker();return;}
+
+    const walletOpen=e.target.closest('[data-wallet-open]');
+    if(walletOpen){
+      e.preventDefault();
+      const target=walletBrowseUrl(walletOpen.dataset.walletOpen);
+      if(target){
+        walletOpen.disabled=true;
+        location.href=target;
+      }
+      return;
+    }
+
     const scrollControl=e.target.closest('[data-scroll-to]');
     if(scrollControl){
       e.preventDefault();
@@ -2299,7 +2481,7 @@ app.addEventListener('click',async e=>{
       return;
     }
     const launchModeButton=e.target.closest('[data-launch-mode]');if(launchModeButton){e.preventDefault();switchLaunchMode(launchModeButton.dataset.launchMode);return;}
-    const a=e.target.closest('[data-action]');if(a){const action=a.dataset.action;if(action==='open-launch')document.querySelector('#launchModal')?.classList.remove('hidden');if(action==='close-launch')document.querySelector('#launchModal')?.classList.add('hidden');if(action==='menu')document.querySelector('#mobileMenu')?.classList.toggle('hidden');if(action==='go-launch')location.hash='#/launch';if(action==='reload'){state.home=null;render();}if(action==='connect-wallet'){const pub=await connectWallet();setLaunchStatus(`Wallet connected: ${pub}`,true);}if(action==='launch-token')await launchTokenOnPump();if(action==='route-fees')await routeFees();if(action==='verify-mint'){const mint=(document.querySelector('#launchMintSuccess')?.value||document.querySelector('#launchMint')?.value||'').trim();if(!mint)throw new Error('Paste the mint first');const out=await api('/api/tokens/register',{method:'POST',body:JSON.stringify({mint,recipient_handle:currentLaunch?.handle||''})});setLaunchStatus(out.ok?`Registered for @${out.recipient}`:`Not ready: ${out.reason}`,out.ok);}if(action==='copy-fee-address'){const value=String(a.dataset.copyValue||'').trim();if(value&&navigator.clipboard?.writeText){await navigator.clipboard.writeText(value);a.textContent='✓';setTimeout(()=>{a.textContent='⌑';},900);}}}
+    const a=e.target.closest('[data-action]');if(a){const action=a.dataset.action;if(action==='open-launch')document.querySelector('#launchModal')?.classList.remove('hidden');if(action==='close-launch')document.querySelector('#launchModal')?.classList.add('hidden');if(action==='menu')document.querySelector('#mobileMenu')?.classList.toggle('hidden');if(action==='go-launch')location.hash='#/launch';if(action==='reload'){state.home=null;render();}if(action==='connect-wallet'){const pub=await connectWallet();if(pub)setLaunchStatus(`Wallet connected: ${pub}`,true);}if(action==='launch-token')await launchTokenOnPump();if(action==='route-fees')await routeFees();if(action==='verify-mint'){const mint=(document.querySelector('#launchMintSuccess')?.value||document.querySelector('#launchMint')?.value||'').trim();if(!mint)throw new Error('Paste the mint first');const out=await api('/api/tokens/register',{method:'POST',body:JSON.stringify({mint,recipient_handle:currentLaunch?.handle||''})});setLaunchStatus(out.ok?`Registered for @${out.recipient}`:`Not ready: ${out.reason}`,out.ok);}if(action==='copy-fee-address'){const value=String(a.dataset.copyValue||'').trim();if(value&&navigator.clipboard?.writeText){await navigator.clipboard.writeText(value);a.textContent='✓';setTimeout(()=>{a.textContent='⌑';},900);}}}
     const exp=e.target.closest('.expandable');if(exp){exp.classList.toggle('open');exp.querySelector('.details,.tx-details')?.classList.toggle('hidden');}
     const sort=e.target.closest('[data-sort]');if(sort){state.explore.sort=sort.dataset.sort;await refreshTokens();document.querySelector('#launchGrid').innerHTML=state.tokens.map(exploreTokenCard).join('')||'<div class="explore-empty"><span>No launches.</span></div>';document.querySelectorAll('[data-sort]').forEach(b=>b.classList.toggle('active',b.dataset.sort===state.explore.sort));}
     const venue=e.target.closest('[data-venue]');if(venue){state.explore.venue=state.explore.venue===venue.dataset.venue?'':venue.dataset.venue;await refreshTokens();document.querySelector('#launchGrid').innerHTML=state.tokens.map(exploreTokenCard).join('')||'<div class="explore-empty"><span>No launches.</span></div>';document.querySelectorAll('[data-venue]').forEach(b=>b.classList.toggle('active',b.dataset.venue===state.explore.venue));}
@@ -2320,6 +2502,11 @@ app.addEventListener('submit',async e=>{if(e.target.id==='launchForm'){e.prevent
     if(button){button.disabled=true;button.textContent='Connecting wallet…';}
     const creator=await connectWallet();
     currentLaunch=null;
+    if(!creator){
+      if(button){button.disabled=false;button.textContent='Connect wallet';}
+      setLaunchStatus('');
+      return;
+    }
     if(button){button.disabled=false;button.textContent='Launch token';}
     setLaunchStatus(`Wallet connected: ${creator}`,true);
     return;
@@ -2513,3 +2700,18 @@ window.addEventListener('load',()=>setTimeout(ensureLaunchDemoBlock,40));
 /* launch-modes-register-walletless-v1 */
 
 /* launch-walletless-reference-image-v1 */
+
+
+/* launch-mobile-wallet-connect-v1 */
+let launchWalletRestoreTimer=null;
+const launchWalletRestoreObserver=new MutationObserver(()=>{
+  if(!document.querySelector('#launchForm'))return;
+  syncLaunchWalletUi();
+  if(new URL(location.href).searchParams.has('launchWalletDraft')){
+    clearTimeout(launchWalletRestoreTimer);
+    launchWalletRestoreTimer=setTimeout(restoreLaunchWalletDraft,20);
+  }
+});
+if(document.body)launchWalletRestoreObserver.observe(document.body,{childList:true,subtree:true});
+window.addEventListener('load',()=>setTimeout(()=>{syncLaunchWalletUi();restoreLaunchWalletDraft();},60));
+
