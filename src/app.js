@@ -1058,6 +1058,7 @@ function legalPage(){
 
 let launchXLookupTimer=null;
 let launchXLookupSeq=0;
+let launchSelectedXProfile=null;
 
 function clearLaunchXLookup(){
   const box=document.querySelector('#launchXLookup');
@@ -1120,11 +1121,15 @@ async function lookupLaunchXAccount(raw){
   const username=String(raw||'').replace(/^@/,'').trim();
   const seq=++launchXLookupSeq;
   if(!username){
+    launchSelectedXProfile=null;
     clearLaunchXLookup();
+    updateLaunchPreview();
     return;
   }
   if(!/^[A-Za-z0-9_]{1,15}$/.test(username)){
+    launchSelectedXProfile=null;
     renderLaunchXLookupMessage('Enter a valid X username');
+    updateLaunchPreview();
     return;
   }
   renderLaunchXLookupMessage('Searching X…');
@@ -1133,9 +1138,19 @@ async function lookupLaunchXAccount(raw){
     if(seq!==launchXLookupSeq)return;
     const current=String(document.querySelector('#launchHandle')?.value||'').replace(/^@/,'').trim();
     if(current.toLowerCase()!==username.toLowerCase())return;
+    launchSelectedXProfile={
+      name:profile.name||profile.username||username,
+      username:profile.username||username,
+      profileImageUrl:profile.profileImageUrl||'',
+      verified:Boolean(profile.verified),
+      verifiedType:profile.verifiedType||''
+    };
     renderLaunchXLookup(profile);
+    updateLaunchPreview();
   }catch(err){
     if(seq!==launchXLookupSeq)return;
+    launchSelectedXProfile=null;
+    updateLaunchPreview();
     renderLaunchXLookupMessage(err.message==='X lookup is not configured'
       ? 'X lookup is not configured on the server'
       : err.message);
@@ -1229,14 +1244,68 @@ function updateLaunchMiniImage(input){
   mini.hidden=false;
   shell.classList.add('has-selected-image');
 }
+function launchPreviewProfileNode(profile,mode='row'){
+  const wrap=document.createElement('span');
+  wrap.className=`launch-preview-profile launch-preview-profile-${mode}`;
+
+  if(!profile){
+    wrap.textContent='—';
+    wrap.classList.add('is-empty');
+    return wrap;
+  }
+
+  if(mode==='badge'){
+    const pay=document.createElement('span');
+    pay.className='launch-preview-pay-mark';
+    pay.textContent='P';
+    wrap.appendChild(pay);
+  }
+
+  const avatar=document.createElement('span');
+  avatar.className='launch-preview-profile-avatar';
+  if(profile.profileImageUrl){
+    const img=document.createElement('img');
+    img.src=profile.profileImageUrl;
+    img.alt='';
+    img.referrerPolicy='no-referrer';
+    avatar.appendChild(img);
+  }else{
+    avatar.textContent=(profile.name||profile.username||'X').trim().charAt(0).toUpperCase()||'X';
+  }
+
+  const name=document.createElement('strong');
+  name.textContent=profile.name||profile.username||'X';
+
+  wrap.append(avatar,name);
+
+  if(profile.verified){
+    const verified=document.createElement('span');
+    verified.className='launch-preview-profile-verified';
+    verified.textContent='✓';
+    verified.title=profile.verifiedType?`Verified: ${profile.verifiedType}`:'Verified';
+    wrap.appendChild(verified);
+  }
+
+  return wrap;
+}
+
 function updateLaunchPreview(){
   const name=document.querySelector('#launchName')?.value.trim()||'Token name';
   const ticker=document.querySelector('#launchTicker')?.value.trim().toUpperCase()||'TICKER';
-  const handle=document.querySelector('#launchHandle')?.value.trim().replace(/^@/,'')||'—';
+  const typedHandle=document.querySelector('#launchHandle')?.value.trim().replace(/^@/,'')||'';
+  const profile=launchSelectedXProfile &&
+    String(launchSelectedXProfile.username||'').toLowerCase()===typedHandle.toLowerCase()
+      ? launchSelectedXProfile
+      : null;
+
   document.querySelector('#launchPreviewName')?.replaceChildren(document.createTextNode(name));
   document.querySelector('#launchPreviewTicker')?.replaceChildren(document.createTextNode(ticker));
-  document.querySelector('#launchPreviewBadgeTicker')?.replaceChildren(document.createTextNode(ticker));
-  document.querySelector('#launchPreviewHandle')?.replaceChildren(document.createTextNode(handle==='—'?'—':`@${handle}`));
+
+  const badge=document.querySelector('#launchPreviewBadge');
+  if(badge)badge.replaceChildren(...(profile?[launchPreviewProfileNode(profile,'badge')]:[]));
+
+  const recipient=document.querySelector('#launchPreviewRecipient');
+  if(recipient)recipient.replaceChildren(launchPreviewProfileNode(profile,'row'));
 }
 
 function launchPage(){
@@ -1315,10 +1384,7 @@ function launchPage(){
           <aside class="launch-preview-card launch-preview-usepaid">
             <div class="launch-preview-media">
               <div class="launch-preview-image" id="launchPreviewImage">P</div>
-              <div class="launch-preview-badge" aria-hidden="true">
-                <span class="launch-preview-badge-mark">P</span>
-                <span id="launchPreviewBadgeTicker">TICKER</span>
-              </div>
+              <div class="launch-preview-badge" id="launchPreviewBadge" aria-hidden="true"></div>
             </div>
 
             <div class="launch-preview-title">
@@ -1326,12 +1392,16 @@ function launchPage(){
                 <strong id="launchPreviewName">Token name</strong>
                 <span id="launchPreviewTicker">TICKER</span>
               </div>
-              <span>$0 MC</span>
             </div>
 
-            <div class="launch-preview-stat">
+            <div class="launch-preview-metrics">
+              <span><b>$0</b> MC</span>
               <span><b>$0</b> Sent</span>
-              <span>X Money sent to <b id="launchPreviewHandle">—</b></span>
+            </div>
+
+            <div class="launch-preview-recipient-line">
+              <span>X Money sent to</span>
+              <span id="launchPreviewRecipient" class="launch-preview-recipient">—</span>
             </div>
 
             <div class="launch-preview-split">
@@ -2072,7 +2142,7 @@ app.addEventListener('click',async e=>{
   }catch(err){setLaunchStatus(err.message);const out=document.querySelector('#adminOutput');if(out)out.textContent=err.message;}
 });
 let searchTimer;
-app.addEventListener('input',e=>{if(e.target.id==='tokenSearch'){clearTimeout(searchTimer);state.explore.query=e.target.value;searchTimer=setTimeout(async()=>{try{await refreshTokens();const grid=document.querySelector('#launchGrid');if(grid)grid.innerHTML=state.tokens.map(exploreTokenCard).join('')||'<div class="explore-empty"><span>No launches match this search.</span></div>';}catch{}},180);}if(e.target.id==='launchHandle'){clearTimeout(launchXLookupTimer);launchXLookupTimer=setTimeout(()=>lookupLaunchXAccount(e.target.value),350);}if(e.target.id==='launchPaymentNote'){const count=document.querySelector('#launchPaymentNoteCount');if(count)count.textContent=String(e.target.value.length);}if(['launchName','launchTicker','launchHandle'].includes(e.target.id))updateLaunchPreview();});
+app.addEventListener('input',e=>{if(e.target.id==='tokenSearch'){clearTimeout(searchTimer);state.explore.query=e.target.value;searchTimer=setTimeout(async()=>{try{await refreshTokens();const grid=document.querySelector('#launchGrid');if(grid)grid.innerHTML=state.tokens.map(exploreTokenCard).join('')||'<div class="explore-empty"><span>No launches match this search.</span></div>';}catch{}},180);}if(e.target.id==='launchHandle'){clearTimeout(launchXLookupTimer);const typed=String(e.target.value||'').replace(/^@/,'').trim().toLowerCase();if(launchSelectedXProfile&&String(launchSelectedXProfile.username||'').toLowerCase()!==typed)launchSelectedXProfile=null;launchXLookupTimer=setTimeout(()=>lookupLaunchXAccount(e.target.value),350);}if(e.target.id==='launchPaymentNote'){const count=document.querySelector('#launchPaymentNoteCount');if(count)count.textContent=String(e.target.value.length);}if(['launchName','launchTicker','launchHandle'].includes(e.target.id))updateLaunchPreview();});
 app.addEventListener('change',e=>{
   if(e.target.id==='launchImage')updateLaunchImagePreview(e.target);
 });
