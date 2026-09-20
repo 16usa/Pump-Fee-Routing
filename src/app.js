@@ -1308,10 +1308,72 @@ function updateLaunchPreview(){
   if(recipient)recipient.replaceChildren(launchPreviewProfileNode(profile,'row'));
 }
 
+
+let launchMode='launch';
+
+function launchModeTabs(active='launch'){
+  return `<div class="launch-mode-tabs">
+    <button type="button" data-launch-mode="launch" class="${active==='launch'?'active':''}">Launch</button>
+    <button type="button" data-launch-mode="register" class="${active==='register'?'active':''}">Register</button>
+    <button type="button" data-launch-mode="walletless" class="${active==='walletless'?'active':''}">Walletless</button>
+  </div>`;
+}
+
+function launchStaticPreview(recipientPct,protocolPct){
+  return `<div class="launch-preview-stack">
+    <aside class="launch-preview-card launch-preview-usepaid">
+      <div class="launch-preview-media">
+        <div class="launch-preview-image">−</div>
+      </div>
+      <div class="launch-preview-title">
+        <div><strong>Token name</strong><span>TICKER</span></div>
+      </div>
+      <div class="launch-preview-metrics">
+        <span><b>$0</b> MC</span>
+        <span><b>$0</b> Sent</span>
+      </div>
+      <div class="launch-preview-recipient-line">
+        <span>X Money sent to</span><span class="launch-preview-recipient">—</span>
+      </div>
+      <div class="launch-preview-split">
+        <div><span>Recipient share</span><b>${recipientPct}%</b></div>
+        <div><span>$PAID buybacks and burn</span><b>${protocolPct}%</b></div>
+      </div>
+    </aside>
+  </div>`;
+}
+
+function launchFeeAddressBox(treasury){
+  return `<div class="launch-fee-address-box">
+    <div><span>Pump fee-sharing address</span><strong>${esc(treasury||'Configured treasury')}</strong></div>
+    <button type="button" data-action="copy-fee-address" data-copy-value="${esc(treasury)}" aria-label="Copy fee-sharing address">⌑</button>
+  </div>`;
+}
+
+function switchLaunchMode(mode){
+  if(!['launch','register','walletless'].includes(mode))return;
+  launchMode=mode;
+  document.querySelectorAll('[data-launch-panel]').forEach(panel=>{
+    panel.hidden=panel.dataset.launchPanel!==mode;
+  });
+
+  const panel=document.querySelector(`[data-launch-panel="${mode}"]`);
+  if(!panel)return;
+
+  if(typeof ensureLaunchDemoBlock==='function')ensureLaunchDemoBlock();
+  requestAnimationFrame(()=>{
+    const stack=panel.querySelector('.launch-preview-stack');
+    const demo=document.querySelector('#launchDemoBlock');
+    if(demo&&stack)stack.before(demo);
+  });
+}
+
 function launchPage(){
   const treasury=state.brand.treasuryAddress||'';
   const recipientPct=fmtNum((state.brand.recipientShareBps||8000)/100);
   const protocolPct=fmtNum((state.brand.protocolShareBps||2000)/100);
+  const brandName=esc(state.brand.name||'PROJECT');
+
   return `<main class="launch-page-v1">
     <section class="wrap launch-v1-hero">
       <h1>Launch and direct fees through X Money</h1>
@@ -1319,96 +1381,200 @@ function launchPage(){
     </section>
 
     <section class="wrap launch-v1-grid">
-      <div class="launch-v1-form-card">
-        <div class="launch-mode-tabs">
-          <button type="button" class="active">Launch</button>
-          <button type="button" disabled>Register</button>
-          <button type="button" disabled>Walletless</button>
-        </div>
+      <div class="launch-mode-panel" data-launch-panel="launch" ${launchMode==='launch'?'':'hidden'}>
+        <div class="launch-v1-form-card">
+          <h2 class="launch-mode-heading">Launch token</h2>
+          ${launchModeTabs('launch')}
 
-        <div class="launch-venue-row">
-          <button type="button" class="active">● Pump</button>
-          <button type="button" disabled>■ Pons <small>Soon</small></button>
-        </div>
-
-        <form class="launch-form launch-form-v1" id="launchForm">
-          <div class="launch-field">
-            <label for="launchHandle">X Money sent to</label>
-            <input id="launchHandle" placeholder="Search X for an account" required autocomplete="off" autocapitalize="none" spellcheck="false">
-            <div id="launchXLookup" class="launch-x-lookup" aria-live="polite"></div>
+          <div class="launch-venue-row">
+            <button type="button" class="active">● Pump</button>
+            <button type="button" disabled>■ Pons <small>Soon</small></button>
           </div>
 
-          <div class="launch-divider"></div>
-
-          <div class="launch-two">
-            <div class="launch-field"><label for="launchName">Name</label><input id="launchName" placeholder="Ledger Cat" maxlength="32"></div>
-            <div class="launch-field"><label for="launchTicker">Ticker</label><input id="launchTicker" placeholder="LCAT" maxlength="10" autocapitalize="characters"></div>
-          </div>
-
-          <div class="launch-field">
-            <label for="launchImage">Token image</label>
-            <div class="launch-file-shell"><input id="launchImage" type="file" accept="image/png,image/jpeg,image/gif,image/webp"><span>Choose image</span></div>
-          </div>
-
-          <div class="launch-field"><label for="launchDescription">Description</label><textarea id="launchDescription" rows="4" placeholder="Describe the token"></textarea></div>
-
-          <details class="launch-social-details" open>
-            <summary>Social links <small>(optional)</small><span class="launch-social-chevron" aria-hidden="true">⌃</span></summary>
-            <div class="launch-social-body">
-              <p class="launch-help">You can use the registered token page as the website link.</p>
-              <input id="launchWebsite" type="url" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" placeholder="https://yoursite.com">
-              <div class="launch-two"><input id="launchTelegram" placeholder="Telegram"><input id="launchX" placeholder="X"></div>
-            </div>
-          </details>
-
-          <div class="launch-divider"></div>
-
-          <div class="launch-field launch-payment-note-field">
-            <label for="launchPaymentNote">Payment note</label>
-            <textarea id="launchPaymentNote" maxlength="250" rows="3">Creator fees via ${esc(state.brand.name)}</textarea>
-            <p class="launch-help"><span id="launchPaymentNoteCount">${`Creator fees via ${state.brand.name}`.length}</span>/250 · the message the recipient sees with every payout</p>
-          </div>
-
-          <div class="launch-field">
-            <label for="launchDevBuy">Dev Buy <small>(optional)</small></label>
-            <div class="launch-money-input"><span>SOL</span><input id="launchDevBuy" inputmode="decimal" placeholder="0.00"></div>
-            <p class="launch-help">0 SOL creates the token without an initial buy. Any amount above 0 is included in the Pump launch transaction and still requires your wallet approval.</p>
-          </div>
-
-          <label class="launch-terms"><input type="checkbox" required><span>I agree to the <a href="#/legal">Terms</a> and have read the disclosures.</span></label>
-          <button class="btn-light full launch-submit" id="launchSubmitButton" type="submit">${currentWallet?'Launch token':'Connect wallet'}</button>
-          <div id="launchStatus" class="status-box hidden" aria-live="polite"></div>
-        </form>
-
-        <div class="launch-preview-stack">
-          <aside class="launch-preview-card launch-preview-usepaid">
-            <div class="launch-preview-media">
-              <div class="launch-preview-image" id="launchPreviewImage">P</div>
-              <div class="launch-preview-badge" id="launchPreviewBadge" aria-hidden="true"></div>
+          <form class="launch-form launch-form-v1" id="launchForm">
+            <div class="launch-field">
+              <label for="launchHandle">X Money sent to</label>
+              <input id="launchHandle" placeholder="Search X for an account" required autocomplete="off" autocapitalize="none" spellcheck="false">
+              <div id="launchXLookup" class="launch-x-lookup" aria-live="polite"></div>
             </div>
 
-            <div class="launch-preview-title">
-              <div>
-                <strong id="launchPreviewName">Token name</strong>
-                <span id="launchPreviewTicker">TICKER</span>
+            <div class="launch-divider"></div>
+
+            <div class="launch-two">
+              <div class="launch-field"><label for="launchName">Name</label><input id="launchName" placeholder="Ledger Cat" maxlength="32"></div>
+              <div class="launch-field"><label for="launchTicker">Ticker</label><input id="launchTicker" placeholder="LCAT" maxlength="10" autocapitalize="characters"></div>
+            </div>
+
+            <div class="launch-field">
+              <label for="launchImage">Token image</label>
+              <div class="launch-file-shell"><input id="launchImage" type="file" accept="image/png,image/jpeg,image/gif,image/webp"><span>Choose image</span></div>
+            </div>
+
+            <div class="launch-field"><label for="launchDescription">Description</label><textarea id="launchDescription" rows="4" placeholder="Describe the token"></textarea></div>
+
+            <details class="launch-social-details" open>
+              <summary>Social links <small>(optional)</small><span class="launch-social-chevron" aria-hidden="true">⌃</span></summary>
+              <div class="launch-social-body">
+                <p class="launch-help">You can use the registered token page as the website link.</p>
+                <input id="launchWebsite" type="url" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" placeholder="https://yoursite.com">
+                <div class="launch-two"><input id="launchTelegram" placeholder="Telegram"><input id="launchX" placeholder="X"></div>
               </div>
+            </details>
+
+            <div class="launch-divider"></div>
+
+            <div class="launch-field launch-payment-note-field">
+              <label for="launchPaymentNote">Payment note</label>
+              <textarea id="launchPaymentNote" maxlength="250" rows="3">Creator fees via ${brandName}</textarea>
+              <p class="launch-help"><span id="launchPaymentNoteCount">${`Creator fees via ${state.brand.name}`.length}</span>/250 · the message the recipient sees with every payout</p>
             </div>
 
-            <div class="launch-preview-metrics">
-              <span><b>$0</b> MC</span>
-              <span><b>$0</b> Sent</span>
+            <div class="launch-field">
+              <label for="launchDevBuy">Dev Buy <small>(optional)</small></label>
+              <div class="launch-money-input"><span>SOL</span><input id="launchDevBuy" inputmode="decimal" placeholder="0.00"></div>
+              <p class="launch-help">0 SOL creates the token without an initial buy. Any amount above 0 is included in the Pump launch transaction and still requires your wallet approval.</p>
             </div>
 
-            <div class="launch-preview-recipient-line">
-              <span>X Money sent to</span>
-              <span id="launchPreviewRecipient" class="launch-preview-recipient">—</span>
+            <label class="launch-terms"><input type="checkbox" required><span>I agree to the <a href="#/legal">Terms</a> and have read the disclosures.</span></label>
+            <button class="btn-light full launch-submit" id="launchSubmitButton" type="submit">${currentWallet?'Launch token':'Connect wallet'}</button>
+            <div id="launchStatus" class="status-box hidden" aria-live="polite"></div>
+          </form>
+
+          <div class="launch-preview-stack">
+            <aside class="launch-preview-card launch-preview-usepaid">
+              <div class="launch-preview-media">
+                <div class="launch-preview-image" id="launchPreviewImage">P</div>
+                <div class="launch-preview-badge" id="launchPreviewBadge" aria-hidden="true"></div>
+              </div>
+
+              <div class="launch-preview-title">
+                <div>
+                  <strong id="launchPreviewName">Token name</strong>
+                  <span id="launchPreviewTicker">TICKER</span>
+                </div>
+              </div>
+
+              <div class="launch-preview-metrics">
+                <span><b>$0</b> MC</span>
+                <span><b>$0</b> Sent</span>
+              </div>
+
+              <div class="launch-preview-recipient-line">
+                <span>X Money sent to</span>
+                <span id="launchPreviewRecipient" class="launch-preview-recipient">—</span>
+              </div>
+
+              <div class="launch-preview-split">
+                <div><span>Recipient share</span><b>${recipientPct}%</b></div>
+                <div><span>$PAID buybacks and burn</span><b>${protocolPct}%</b></div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+
+      <div class="launch-mode-panel" data-launch-panel="register" ${launchMode==='register'?'':'hidden'}>
+        <p class="launch-mode-context">These fee-sharing instructions are for Pump. To create a Pons token, use the Launch tab. Existing Pons tokens pointed at PAID are indexed automatically.</p>
+
+        <div class="launch-v1-form-card">
+          <h2 class="launch-mode-heading">Register a token</h2>
+          ${launchModeTabs('register')}
+
+          <div class="launch-venue-row">
+            <button type="button" class="active">● Pump</button>
+          </div>
+
+          <form class="launch-form launch-form-v1 launch-register-form" id="launchRegisterForm">
+            <div class="launch-field">
+              <label for="launchRegisterHandle">X Money sent to</label>
+              <input id="launchRegisterHandle" placeholder="Search X for an account" autocomplete="off" autocapitalize="none" spellcheck="false">
             </div>
 
-            <div class="launch-preview-split">
-              <div><span>Recipient share</span><b>${recipientPct}%</b></div>
-              <div><span>$PAID buybacks and burn</span><b>${protocolPct}%</b></div>
+            <div class="launch-field launch-payment-note-field">
+              <label for="launchRegisterPaymentNote">Payment note</label>
+              <textarea id="launchRegisterPaymentNote" maxlength="250" rows="3">Creator fees via ${brandName}</textarea>
+              <p class="launch-help">${`Creator fees via ${state.brand.name}`.length}/250 · the message the recipient sees with every payout</p>
             </div>
-          </aside>
+
+            <div class="launch-divider"></div>
+
+            <div class="launch-field">
+              <label for="launchRegisterMint">Contract address</label>
+              <input id="launchRegisterMint" placeholder="Mint address" autocomplete="off" autocapitalize="none" spellcheck="false">
+              <p class="launch-help">The address of the token you already launched on pump.fun.</p>
+            </div>
+
+            <div class="launch-register-setup">
+              <h3>Set up fee sharing</h3>
+              <p>On pump.fun, open the token's fee sharing, send 100% of the creator fees to the ${brandName} fee-sharing address, and revoke the config. That handover is what proves the token is yours, so there is no wallet to connect.</p>
+              ${launchFeeAddressBox(treasury)}
+              <div class="launch-register-check"><button type="button" class="launch-text-button">Check</button><span>Not checked yet.</span></div>
+            </div>
+
+            <div class="launch-divider"></div>
+            <p class="launch-register-note">No sign-in and no wallet. Handing us the fee authority is the proof the token is yours.</p>
+            <button type="button" class="btn-light full launch-submit" disabled>Choose who gets paid</button>
+            <p class="launch-register-terms">By registering, you agree to the <a href="#/legal">Terms of Use</a>.</p>
+          </form>
+
+          ${launchStaticPreview(recipientPct,protocolPct)}
+        </div>
+      </div>
+
+      <div class="launch-mode-panel" data-launch-panel="walletless" ${launchMode==='walletless'?'':'hidden'}>
+        <p class="launch-mode-context">These fee-sharing instructions are for Pump. To create a Pons token, use the Launch tab. Existing Pons tokens pointed at PAID are indexed automatically.</p>
+
+        <div class="launch-v1-form-card launch-walletless-card">
+          <h2 class="launch-mode-heading">Walletless launch</h2>
+          ${launchModeTabs('walletless')}
+
+          <div class="launch-venue-row">
+            <button type="button" class="active">● Pump</button>
+          </div>
+
+          <div class="launch-walletless-steps">
+            <section class="launch-walletless-step">
+              <span class="launch-walletless-number">1</span>
+              <div>
+                <h3>Put the recipient's @handle in the description</h3>
+                <p>When you create the coin on pump.fun, write the X handle of who gets paid anywhere in its description — @elonmusk, for example. We read it from there when the token registers.</p>
+              </div>
+            </section>
+
+            <section class="launch-walletless-step">
+              <span class="launch-walletless-number">2</span>
+              <div>
+                <h3>Set up fee sharing</h3>
+                <p>Once the coin exists, open its fee sharing on pump.fun and send 100% of the creator fees to this address.</p>
+                ${launchFeeAddressBox(treasury)}
+              </div>
+            </section>
+
+            <section class="launch-walletless-step">
+              <span class="launch-walletless-number">3</span>
+              <div>
+                <h3>Payouts start on their own</h3>
+                <p>Nothing to submit. The token appears on Explore and the first payout lands shortly, confirmed publicly by ${brandName}.</p>
+                <p class="launch-walletless-tip">Launched already, and the description names nobody? Register the token instead — you choose the recipient there.</p>
+              </div>
+            </section>
+          </div>
+
+          <div class="launch-preview-stack launch-walletless-preview">
+            <aside class="launch-walletless-pump-card">
+              <h3>Launch on Pump</h3>
+              <p>pump.fun · Share creator rewards</p>
+              <div class="launch-walletless-pump-ui">
+                <div class="launch-walletless-pump-head"><span>Share creator rewards</span><b>×</b></div>
+                <small>Creators can percentage rewards on all transaction fees. You may invite wallets or charities to receive a portion of it.</small>
+                <div class="launch-walletless-allocation"><span>Allocated</span><strong>100%</strong></div>
+                <div class="launch-walletless-pump-row"><i>●</i><span>${brandName}</span><b>100%</b></div>
+                <button type="button" disabled>Add more recipients</button>
+                <button type="button" disabled>Done</button>
+              </div>
+              <p>Add our treasury as the only recipient, at 100%, before you create the coin.</p>
+            </aside>
+          </div>
         </div>
       </div>
     </section>
@@ -2133,7 +2299,8 @@ app.addEventListener('click',async e=>{
       }
       return;
     }
-    const a=e.target.closest('[data-action]');if(a){const action=a.dataset.action;if(action==='open-launch')document.querySelector('#launchModal')?.classList.remove('hidden');if(action==='close-launch')document.querySelector('#launchModal')?.classList.add('hidden');if(action==='menu')document.querySelector('#mobileMenu')?.classList.toggle('hidden');if(action==='go-launch')location.hash='#/launch';if(action==='reload'){state.home=null;render();}if(action==='connect-wallet'){const pub=await connectWallet();setLaunchStatus(`Wallet connected: ${pub}`,true);}if(action==='launch-token')await launchTokenOnPump();if(action==='route-fees')await routeFees();if(action==='verify-mint'){const mint=(document.querySelector('#launchMintSuccess')?.value||document.querySelector('#launchMint')?.value||'').trim();if(!mint)throw new Error('Paste the mint first');const out=await api('/api/tokens/register',{method:'POST',body:JSON.stringify({mint,recipient_handle:currentLaunch?.handle||''})});setLaunchStatus(out.ok?`Registered for @${out.recipient}`:`Not ready: ${out.reason}`,out.ok);}}
+    const launchModeButton=e.target.closest('[data-launch-mode]');if(launchModeButton){e.preventDefault();switchLaunchMode(launchModeButton.dataset.launchMode);return;}
+    const a=e.target.closest('[data-action]');if(a){const action=a.dataset.action;if(action==='open-launch')document.querySelector('#launchModal')?.classList.remove('hidden');if(action==='close-launch')document.querySelector('#launchModal')?.classList.add('hidden');if(action==='menu')document.querySelector('#mobileMenu')?.classList.toggle('hidden');if(action==='go-launch')location.hash='#/launch';if(action==='reload'){state.home=null;render();}if(action==='connect-wallet'){const pub=await connectWallet();setLaunchStatus(`Wallet connected: ${pub}`,true);}if(action==='launch-token')await launchTokenOnPump();if(action==='route-fees')await routeFees();if(action==='verify-mint'){const mint=(document.querySelector('#launchMintSuccess')?.value||document.querySelector('#launchMint')?.value||'').trim();if(!mint)throw new Error('Paste the mint first');const out=await api('/api/tokens/register',{method:'POST',body:JSON.stringify({mint,recipient_handle:currentLaunch?.handle||''})});setLaunchStatus(out.ok?`Registered for @${out.recipient}`:`Not ready: ${out.reason}`,out.ok);}if(action==='copy-fee-address'){const value=String(a.dataset.copyValue||'').trim();if(value&&navigator.clipboard?.writeText){await navigator.clipboard.writeText(value);a.textContent='✓';setTimeout(()=>{a.textContent='⌑';},900);}}}
     const exp=e.target.closest('.expandable');if(exp){exp.classList.toggle('open');exp.querySelector('.details,.tx-details')?.classList.toggle('hidden');}
     const sort=e.target.closest('[data-sort]');if(sort){state.explore.sort=sort.dataset.sort;await refreshTokens();document.querySelector('#launchGrid').innerHTML=state.tokens.map(exploreTokenCard).join('')||'<div class="explore-empty"><span>No launches.</span></div>';document.querySelectorAll('[data-sort]').forEach(b=>b.classList.toggle('active',b.dataset.sort===state.explore.sort));}
     const venue=e.target.closest('[data-venue]');if(venue){state.explore.venue=state.explore.venue===venue.dataset.venue?'':venue.dataset.venue;await refreshTokens();document.querySelector('#launchGrid').innerHTML=state.tokens.map(exploreTokenCard).join('')||'<div class="explore-empty"><span>No launches.</span></div>';document.querySelectorAll('[data-venue]').forEach(b=>b.classList.toggle('active',b.dataset.venue===state.explore.venue));}
@@ -2343,3 +2510,5 @@ window.addEventListener('load',()=>setTimeout(ensureLaunchDemoBlock,40));
 /* launch-demo-recipient-logic-v1 */
 
 /* launch-demo-bell-v1 */
+
+/* launch-modes-register-walletless-v1 */

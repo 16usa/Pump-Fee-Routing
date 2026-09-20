@@ -4085,3 +4085,187 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   display:block;
   fill:currentColor;
 }
+
+/* launch-modes-register-walletless-v1 */
+.launch-mode-panel[hidden]{display:none!important}
+.launch-mode-panel{min-width:0}
+.launch-mode-heading{
+  margin:0 0 14px;
+  font-size:20px;
+  line-height:1.15;
+  font-weight:560;
+  letter-spacing:-.025em;
+}
+.launch-mode-context{
+  margin:0 0 16px;
+  color:#777;
+  font-size:10px;
+  line-height:1.5;
+}
+.launch-mode-tabs button:not(:disabled){cursor:pointer}
+.launch-register-form{gap:17px}
+.launch-register-setup{
+  display:grid;
+  gap:10px;
+  padding:14px;
+  border:1px solid #2a2a2a;
+  border-radius:13px;
+  background:#111;
+}
+.launch-register-setup h3,
+.launch-walletless-step h3,
+.launch-walletless-pump-card h3{
+  margin:0;
+  color:#fff;
+  font-size:12px;
+  font-weight:600;
+}
+.launch-register-setup>p,
+.launch-register-note,
+.launch-register-terms,
+.launch-walletless-step p,
+.launch-walletless-pump-card>p{
+  margin:0;
+  color:#777;
+  font-size:9px;
+  line-height:1.5;
+}
+.launch-fee-address-box{
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 11px;
+  border:1px solid #303030;
+  border-radius:10px;
+  background:#171717;
+}
+.launch-fee-address-box>div{
+  min-width:0;
+  flex:1;
+  display:grid;
+  gap:4px;
+}
+.launch-fee-address-box span{
+  color:#777;
+  font-size:8px;
+}
+.launch-fee-address-box strong{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#fff;
+  font:9px ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-weight:550;
+}
+.launch-fee-address-box button{
+  width:28px;
+  height:28px;
+  flex:0 0 28px;
+  display:grid;
+  place-items:center;
+  border:0;
+  background:transparent;
+  color:#777;
+  cursor:pointer;
+}
+.launch-register-check{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  color:#777;
+  font-size:9px;
+}
+.launch-text-button{
+  padding:0;
+  border:0;
+  background:transparent;
+  color:#bdbdbd;
+  font-size:9px;
+}
+.launch-register-terms a{color:#fff;text-decoration:underline}
+.launch-walletless-card{padding-bottom:18px}
+.launch-walletless-steps{display:grid}
+.launch-walletless-step{
+  display:grid;
+  grid-template-columns:22px 1fr;
+  gap:9px;
+  padding:17px 0;
+  border-top:1px solid #272727;
+}
+.launch-walletless-step:first-child{border-top:0;padding-top:4px}
+.launch-walletless-step>div{display:grid;gap:8px}
+.launch-walletless-number{
+  width:20px;
+  height:20px;
+  display:grid;
+  place-items:center;
+  border:1px solid #333;
+  border-radius:50%;
+  color:#777;
+  font-size:8px;
+}
+.launch-walletless-tip{
+  padding:9px 10px;
+  border-left:1px solid #343434;
+  background:#151515;
+}
+.launch-walletless-preview{
+  margin-top:2px!important;
+}
+.launch-walletless-pump-card{
+  padding:14px;
+  border:1px solid #303030;
+  border-radius:14px;
+  background:#171717;
+}
+.launch-walletless-pump-card>p{margin-top:8px}
+.launch-walletless-pump-ui{
+  display:grid;
+  gap:8px;
+  margin-top:12px;
+  padding:12px;
+  border:1px solid #303030;
+  border-radius:11px;
+  background:#0c0c0c;
+}
+.launch-walletless-pump-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  color:#fff;
+  font-size:9px;
+}
+.launch-walletless-pump-ui small{
+  color:#777;
+  font-size:7px;
+  line-height:1.35;
+}
+.launch-walletless-allocation,
+.launch-walletless-pump-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  font-size:8px;
+}
+.launch-walletless-allocation{color:#777;border-bottom:2px solid #6fe59b;padding-bottom:4px}
+.launch-walletless-pump-row{color:#ddd}
+.launch-walletless-pump-row i{color:#6fe59b}
+.launch-walletless-pump-ui button{
+  height:24px;
+  border:0;
+  border-radius:999px;
+  background:#252525;
+  color:#bdbdbd;
+  font-size:7px;
+}
+.launch-walletless-pump-ui button:last-child{
+  background:#6fe59b;
+  color:#08110b;
+}
+@media(max-width:760px){
+  .launch-mode-heading{font-size:18px}
+  .launch-mode-context{margin-bottom:14px}
+  .launch-register-setup{padding:12px}
+}
