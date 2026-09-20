@@ -2276,9 +2276,9 @@ function renderLaunchDemoScene(force=false){
 function startLaunchDemoRotation(){
   const card=document.querySelector('#launchDemoRotator');
   if(!card)return;
+  if(launchDemoTimer)return;
   renderLaunchDemoScene(true);
   card.classList.add('is-active');
-  if(launchDemoTimer)return;
   launchDemoTimer=setInterval(()=>{
     if(!document.querySelector('#launchDemoRotator')){
       clearInterval(launchDemoTimer);
@@ -2304,7 +2304,7 @@ function ensureLaunchDemoBlock(){
     return;
   }
   if(document.querySelector('#launchDemoBlock')){
-    startLaunchDemoRotation();
+    if(!launchDemoTimer)startLaunchDemoRotation();
     return;
   }
   const wrap=document.createElement('div');
@@ -2332,3 +2332,5 @@ window.addEventListener('hashchange',()=>setTimeout(ensureLaunchDemoBlock,40));
 window.addEventListener('load',()=>setTimeout(ensureLaunchDemoBlock,40));
 
 /* launch-demo-rotator-fix-v1 */
+
+/* launch-demo-rotator-loop-fix-v2 */
