@@ -1303,47 +1303,10 @@ function launchPage(){
             <p class="launch-help">0 SOL creates the token without an initial buy. Any amount above 0 is included in the Pump launch transaction and still requires your wallet approval.</p>
           </div>
 
-          <div class="launch-routing-block">
-            <h2>Routing setup</h2>
-            <p>Used by the existing on-chain registration flow after the token exists.</p>
-            <div class="launch-field"><label for="creatorPubkey">Creator wallet</label><input id="creatorPubkey" placeholder="Connect wallet or paste public key"></div>
-            <div class="launch-field"><label for="launchMint">Token mint</label><input id="launchMint" placeholder="Paste mint after the token exists"></div>
-            <div class="launch-config-grid">
-              <div><span>Treasury</span><b class="mono-small">${esc(treasury||'Configure TREASURY_ADDRESS')}</b></div>
-              <div><span>Fee route</span><b>100% permanent</b></div>
-              <div><span>Recipient share</span><b>${recipientPct}%</b></div>
-              <div><span>Protocol share</span><b>${protocolPct}%</b></div>
-            </div>
-          </div>
-
           <label class="launch-terms"><input type="checkbox" required><span>I agree to the <a href="#/legal">Terms</a> and have read the disclosures.</span></label>
-          <button class="btn-light full launch-submit" type="submit">Create launch intent</button>
-        </form>
-
-        <div class="success-card launch-success-v1 hidden" id="launchSuccess">
-          <div class="success-icon">✓</div>
-          <h2>Ready to launch</h2>
-          <p>The recipient line below will be added to the Pump metadata automatically.</p>
-          <code id="descriptionLine"></code>
-
-          <div class="launch-live-note">
-            <b>Two wallet approvals</b>
-            <span>1. Create the Pump token</span>
-            <span>2. Permanently route 100% of creator fees to the treasury</span>
-          </div>
-
-          <button class="btn-light full launch-live-button" data-action="launch-token">Launch token on Pump</button>
-          <a class="launch-pump-link launch-fallback-link" href="https://pump.fun/create" target="_blank" rel="noopener">Or use pump.fun manually ↗</a>
-
-          <div class="launch-field"><label for="launchMintSuccess">Token mint</label><input id="launchMintSuccess" placeholder="Filled automatically after launch"></div>
-          <div class="launch-field"><label for="creatorPubkeySuccess">Creator wallet</label><input id="creatorPubkeySuccess" placeholder="Connect wallet or paste public key"></div>
-          <div class="launch-actions launch-manual-actions">
-            <button class="btn-light" data-action="connect-wallet">Connect Solana wallet</button>
-            <button class="text-button" data-action="route-fees">Route existing mint</button>
-            <button class="text-button" data-action="verify-mint">Verify registration</button>
-          </div>
+          <button class="btn-light full launch-submit" id="launchSubmitButton" type="submit">${currentWallet?'Launch token':'Connect wallet'}</button>
           <div id="launchStatus" class="status-box"></div>
-        </div>
+        </form>
       </div>
 
       <aside class="launch-preview-card">
@@ -1956,8 +1919,8 @@ async function launchTokenOnPump(){
   if(!currentLaunch)throw new Error('Create the launch intent first');
   if(!window.solanaWeb3?.VersionedTransaction||!window.solanaWeb3?.Keypair)throw new Error('Solana web3 browser bundle did not load');
 
-  let creator=(document.querySelector('#creatorPubkeySuccess')?.value||document.querySelector('#creatorPubkey')?.value||'').trim();
-  if(!currentWallet||!creator)creator=await connectWallet();
+  let creator=currentLaunch?.creatorPubkey||currentWallet?.publicKey?.toString?.()||'';
+  if(!creator)creator=await connectWallet();
 
   const name=document.querySelector('#launchName')?.value.trim()||'';
   const symbol=document.querySelector('#launchTicker')?.value.trim().toUpperCase()||'';
@@ -2040,11 +2003,7 @@ async function launchTokenOnPump(){
   }
 
   const mint=built.mint;
-  const mintSuccess=document.querySelector('#launchMintSuccess');
-  const mintOriginal=document.querySelector('#launchMint');
-  if(mintSuccess)mintSuccess.value=mint;
-  if(mintOriginal)mintOriginal.value=mint;
-  currentLaunch={...currentLaunch,mint,createSignature:String(sig),metadataUri:metadata.metadataUri};
+  currentLaunch={...currentLaunch,mint,creatorPubkey:creator,createSignature:String(sig),metadataUri:metadata.metadataUri};
 
   setLaunchStatus(`Token submitted: ${mint.slice(0,6)}…${mint.slice(-6)}. Waiting for confirmation…`);
   await api('/api/launch/created',{
@@ -2060,12 +2019,15 @@ async function launchTokenOnPump(){
   setLaunchStatus('Token confirmed. One more wallet approval will permanently route 100% of creator fees to the treasury.');
   const routed=await routeFees();
   if(routed?.ok){
+    const submitButton=document.querySelector('#launchSubmitButton');
+    if(submitButton){submitButton.disabled=true;submitButton.textContent='Launched';}
     setLaunchStatus(`Launch complete. ${symbol} is registered and live in Explore.`,true);
     setTimeout(()=>{location.hash=`#/token/${encodeURIComponent(mint)}`;},900);
   }
+  return routed;
 }
 
-async function routeFees(){if(!currentLaunch)throw new Error('Create the launch intent first');const mint=(document.querySelector('#launchMintSuccess')?.value||document.querySelector('#launchMint')?.value||'').trim();let creator=(document.querySelector('#creatorPubkeySuccess')?.value||document.querySelector('#creatorPubkey')?.value||'').trim();if(!creator)creator=await connectWallet();if(!mint)throw new Error('Paste the token mint first');if(!currentWallet)await connectWallet();setLaunchStatus('Building fee-sharing transaction…');const p=await api('/api/launch/prepare-routing',{method:'POST',body:JSON.stringify({intent_id:currentLaunch.id,mint,creator_pubkey:creator})});if(!window.solanaWeb3?.VersionedTransaction)throw new Error('Solana web3 browser bundle did not load');const bytes=Uint8Array.from(atob(p.transactionBase64),c=>c.charCodeAt(0));const tx=window.solanaWeb3.VersionedTransaction.deserialize(bytes);setLaunchStatus('Approve the transaction in your wallet…');let sig;if(currentWallet.signAndSendTransaction){const out=await currentWallet.signAndSendTransaction(tx);sig=out.signature||out;}else{const signed=await currentWallet.signTransaction(tx);sig=await currentWallet.sendTransaction(signed);}setLaunchStatus(`Submitted ${sig}. Waiting for confirmation and verifying on-chain…`);const out=await api('/api/launch/confirm',{method:'POST',body:JSON.stringify({intent_id:currentLaunch.id,mint,recipient_handle:currentLaunch.handle,tx_signature:String(sig)})});setLaunchStatus(out.ok?`Registered. Fees are permanently routed to treasury for @${out.recipient}.`:`Not registered yet: ${out.reason}`,out.ok);if(out.ok){state.home=null;await loadBase();}return out;}
+async function routeFees(){if(!currentLaunch)throw new Error('Create the launch intent first');const mint=String(currentLaunch.mint||'').trim();let creator=String(currentLaunch.creatorPubkey||currentWallet?.publicKey?.toString?.()||'').trim();if(!creator)creator=await connectWallet();if(!mint)throw new Error('Token mint is not available yet');if(!currentWallet)await connectWallet();setLaunchStatus('Building fee-sharing transaction…');const p=await api('/api/launch/prepare-routing',{method:'POST',body:JSON.stringify({intent_id:currentLaunch.id,mint,creator_pubkey:creator})});if(!window.solanaWeb3?.VersionedTransaction)throw new Error('Solana web3 browser bundle did not load');const bytes=Uint8Array.from(atob(p.transactionBase64),c=>c.charCodeAt(0));const tx=window.solanaWeb3.VersionedTransaction.deserialize(bytes);setLaunchStatus('Approve the transaction in your wallet…');let sig;if(currentWallet.signAndSendTransaction){const out=await currentWallet.signAndSendTransaction(tx);sig=out.signature||out;}else{const signed=await currentWallet.signTransaction(tx);sig=await currentWallet.sendTransaction(signed);}setLaunchStatus(`Submitted ${sig}. Waiting for confirmation and verifying on-chain…`);const out=await api('/api/launch/confirm',{method:'POST',body:JSON.stringify({intent_id:currentLaunch.id,mint,recipient_handle:currentLaunch.handle,tx_signature:String(sig)})});setLaunchStatus(out.ok?`Registered. Fees are permanently routed to treasury for @${out.recipient}.`:`Not registered yet: ${out.reason}`,out.ok);if(out.ok){state.home=null;await loadBase();}return out;}
 
 app.addEventListener('click',async e=>{
   try{
@@ -2095,5 +2057,34 @@ app.addEventListener('change',e=>{
 app.addEventListener('change',e=>{
   if(e.target.id==='launchImage')setTimeout(()=>updateLaunchMiniImage(e.target),0);
 });
-app.addEventListener('submit',async e=>{if(e.target.id==='launchForm'){e.preventDefault();try{const handle=document.querySelector('#launchHandle').value.trim();const creator=document.querySelector('#creatorPubkey').value.trim();const mint=document.querySelector('#launchMint').value.trim();const out=await api('/api/launch/intents',{method:'POST',body:JSON.stringify({recipient_handle:handle,creator_pubkey:creator,mint})});currentLaunch={...out,handle:handle.replace(/^@/,'')};const mintSuccess=document.querySelector('#launchMintSuccess');const creatorSuccess=document.querySelector('#creatorPubkeySuccess');if(mintSuccess)mintSuccess.value=mint;if(creatorSuccess)creatorSuccess.value=creator;e.target.classList.add('hidden');document.querySelector('#launchSuccess').classList.remove('hidden');document.querySelector('#descriptionLine').textContent=out.descriptionLine;setLaunchStatus(out.treasuryAddress?'Intent created. Launch token, then route fee sharing.':'Set TREASURY_ADDRESS on the server before routing.');}catch(err){alert(err.message);}}});
+app.addEventListener('submit',async e=>{if(e.target.id==='launchForm'){e.preventDefault();const button=document.querySelector('#launchSubmitButton');try{
+  if(!currentWallet){
+    if(button){button.disabled=true;button.textContent='Connecting wallet…';}
+    const creator=await connectWallet();
+    currentLaunch=null;
+    if(button){button.disabled=false;button.textContent='Launch token';}
+    setLaunchStatus(`Wallet connected: ${creator}`,true);
+    return;
+  }
+
+  const handle=document.querySelector('#launchHandle').value.trim();
+  const creator=currentWallet.publicKey?.toString?.()||await connectWallet();
+  if(button){button.disabled=true;button.textContent='Preparing launch…';}
+
+  const out=await api('/api/launch/intents',{
+    method:'POST',
+    body:JSON.stringify({recipient_handle:handle,creator_pubkey:creator,mint:null})
+  });
+  currentLaunch={...out,handle:handle.replace(/^@/,''),creatorPubkey:creator};
+
+  if(!out.treasuryAddress)throw new Error('Set TREASURY_ADDRESS on the server before launching');
+
+  setLaunchStatus('Launch intent created. Preparing token transaction…');
+  if(button)button.textContent='Launching…';
+  const routed=await launchTokenOnPump();
+  if(!routed?.ok&&button){button.disabled=false;button.textContent='Launch token';}
+}catch(err){
+  if(button){button.disabled=false;button.textContent=currentWallet?'Launch token':'Connect wallet';}
+  setLaunchStatus(err.message);
+}}});
 window.addEventListener('hashchange',render);render();
