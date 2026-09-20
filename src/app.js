@@ -276,42 +276,45 @@ function homePreviewDeck(h,top){
   return `<section class="home-preview-shell home-ref-previews home-reference-v2-previews">
     <div class="wrap home-preview-stack">
 
-      <a class="home-preview-card home-ref-card home-ref-explore-card home-explore-reference-v2" href="#/explore">
+      <a class="home-preview-card home-ref-card home-ref-explore-card home-explore-reference-v3" href="#/explore">
         ${(()=>{
           const primary=tokens[0]||null;
           const secondary=tokens[1]||primary;
-
-          const imageUrl=(token)=>{
-            let value=String(token?.image_url||'').trim();
-            if(!value)return '';
-            if(/^ipfs:\/\//i.test(value)){
-              value='https://ipfs.io/ipfs/'+value.replace(/^ipfs:\/\//i,'').replace(/^ipfs\//i,'');
-            }else if(/^ar:\/\//i.test(value)){
-              value='https://arweave.net/'+value.replace(/^ar:\/\//i,'');
-            }
-            return value;
-          };
+          const handle=primary?.profile||primary?.recipient_handle||'';
+          const profile=profiles.find(p=>String(p.handle||'').replace(/^@/,'').toLowerCase()===String(handle).replace(/^@/,'').toLowerCase())||null;
+          const recipientName=profile?.display_name||handle||'Recipient';
 
           const media=(token,klass)=>{
-            const url=imageUrl(token);
-            if(!url)return `<span class="home-explore-reference-fallback ${klass}"></span>`;
-            return `<img class="home-explore-reference-art ${klass}" src="${esc(url)}" alt="" loading="eager" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="home-explore-reference-fallback ${klass}" style="display:none"></span>`;
+            const mint=String(token?.mint||token?.contract||'').trim();
+            if(!mint)return `<span class="home-explore-v3-fallback ${klass}"></span>`;
+            const direct=String(token?.image_url||'').trim();
+            const fallback=direct
+              ? `this.onerror=function(){this.style.display='none';this.nextElementSibling.style.display='block'};this.src='${esc(direct)}'`
+              : `this.style.display='none';this.nextElementSibling.style.display='block'`;
+            return `<img class="home-explore-v3-art ${klass}" src="/api/token-image/${encodeURIComponent(mint)}" alt="" loading="eager" decoding="async" onerror="${fallback}"><span class="home-explore-v3-fallback ${klass}" style="display:none"></span>`;
           };
 
-          const handle=primary?.profile||primary?.recipient_handle||'';
-          return `<div class="home-explore-reference-stage">
-            <div class="home-explore-reference-panel home-explore-reference-primary">
-              ${media(primary,'primary')}
-              ${primary?`<div class="home-explore-reference-chip">
-                ${platformBadge(primary.platform||'Pump')}
-                ${handle?`<span>@${esc(handle)}</span>`:''}
+          return `<div class="home-explore-v3-stage">
+            <div class="home-explore-v3-primary">
+              <div class="home-explore-v3-primary-image">${media(primary,'primary')}</div>
+              ${primary?`<div class="home-explore-v3-recipient-pill">
+                <i>$</i>
+                ${avatar(recipientName,false,'')}
+                <b>${esc(recipientName)}</b>
+              </div>`:''}
+              ${primary?`<div class="home-explore-v3-token-copy">
+                <strong>${esc(primary.name||'')}</strong>
+                <span>${esc(primary.symbol||'')}</span>
+                <small>${fmtMoney(primary.sent||0)}</small>
               </div>`:''}
             </div>
-            <div class="home-explore-reference-panel home-explore-reference-secondary">
+
+            <div class="home-explore-v3-secondary">
               ${media(secondary,'secondary')}
             </div>
-            <div class="home-explore-reference-shade" aria-hidden="true"></div>
-            <div class="home-explore-reference-footer">
+
+            <div class="home-explore-v3-shade" aria-hidden="true"></div>
+            <div class="home-explore-v3-footer">
               <strong>Explore</strong>
               <span>Open →</span>
             </div>

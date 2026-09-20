@@ -16,8 +16,70 @@ function requireWebhook(req){ const token=req.headers['x-webhook-secret'] || (re
 function requireWritable(){ if(config.readOnlyMode)throw Object.assign(new Error('Read-only mode: money-moving and accounting mutation routes are disabled'),{statusCode:423}); }
 function requireUserSignedLaunch(){ if(!config.userSignedLaunchEnabled)throw Object.assign(new Error('User-signed launch is disabled'),{statusCode:423}); }
 
+
+/* home-explore-token-image-v3
+   Resolve only the Home Explore preview image through the backend so mobile Safari
+   does not depend on Pump metadata CORS and flaky public IPFS gateway URLs. */
+function normalizePumpTokenImage(raw,mint=''){
+  let value=String(raw||'').trim();
+  if(!value)return '';
+  let cid='';
+  if(/^ipfs:\/\//i.test(value)){
+    cid=value.replace(/^ipfs:\/\//i,'').replace(/^ipfs\//i,'').split(/[/?#]/)[0];
+  }else{
+    const m=value.match(/\/ipfs\/([^/?#]+)/i);
+    if(m)cid=m[1];
+  }
+  if(cid){
+    const src=`https://ipfs.io/ipfs/${cid}`;
+    return `https://images.pump.fun/coin-image/${encodeURIComponent(mint)}?variant=public&ipfs=${encodeURIComponent(cid)}&src=${encodeURIComponent(src)}`;
+  }
+  if(/^https:\/\//i.test(value))return value;
+  if(/^ar:\/\//i.test(value))return `https://arweave.net/${value.replace(/^ar:\/\//i,'')}`;
+  return '';
+}
+
+async function resolvePumpTokenImage(mint){
+  const stored=getToken(mint);
+  const storedImage=normalizePumpTokenImage(stored?.image_url||'',mint);
+  if(storedImage)return storedImage;
+
+  const urls=[...new Set([
+    config.pumpMetadataUrlTemplate.replace('{mint}',encodeURIComponent(mint)),
+    `https://frontend-api-v3.pump.fun/coins-v2/${encodeURIComponent(mint)}`,
+    `https://frontend-api-v3.pump.fun/coins/${encodeURIComponent(mint)}`
+  ])];
+
+  for(const target of urls){
+    try{
+      const r=await fetch(target,{headers:{accept:'application/json'},signal:AbortSignal.timeout(12000)});
+      if(!r.ok)continue;
+      const meta=await r.json();
+      const raw=
+        meta?.image_uri||
+        meta?.image||
+        meta?.metadata?.image_uri||
+        meta?.metadata?.image||
+        meta?.coin_metadata?.image_uri||
+        meta?.coin_metadata?.image||
+        '';
+      const image=normalizePumpTokenImage(raw,mint);
+      if(image)return image;
+    }catch{}
+  }
+  return '';
+}
+
 export async function handleApi(req,res,url){
   try{
+    if(req.method==='GET'&&url.pathname.startsWith('/api/token-image/')){
+      const mint=decodeURIComponent(url.pathname.slice('/api/token-image/'.length)).trim();
+      if(!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(mint))return json(res,400,{error:'Invalid mint'});
+      const image=await resolvePumpTokenImage(mint);
+      if(!image)return json(res,404,{error:'Token image not found'});
+      res.writeHead(302,{location:image,'cache-control':'public, max-age=300'});
+      return res.end();
+    }
     if(req.method==='GET'&&url.pathname==='/api/health') return json(res,200,{ok:true,name:config.appName,treasuryConfigured:!!config.treasuryAddress,readOnly:config.readOnlyMode,liveChain:config.liveChainTransactions,userSignedLaunch:config.userSignedLaunchEnabled,onchainDiscovery:config.onchainDiscoveryEnabled,claimWorker:!config.readOnlyMode&&config.claimWorkerEnabled&&config.liveChainTransactions,payoutWorker:!config.readOnlyMode&&config.payoutWorkerEnabled,payoutProvider:config.payoutProvider,exchangeProvider:config.exchangeProvider,indexer:getIndexerStatus()});
     if(req.method==='GET'&&url.pathname==='/api/indexer/status') return json(res,200,getIndexerStatus());
     if(req.method==='GET'&&url.pathname==='/api/config') return json(res,200,{name:config.appName,mark:config.appMark,treasuryAddress:config.treasuryAddress,recipientShareBps:config.recipientShareBps,protocolShareBps:config.protocolShareBps,readOnly:config.readOnlyMode,liveChain:config.liveChainTransactions,userSignedLaunch:config.userSignedLaunchEnabled,payoutProvider:config.payoutProvider});
