@@ -7830,3 +7830,18 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     font-size:12px !important;
   }
 }
+
+
+/* top-tokens-tabs-match-pager-v24-25
+   Match Pump / Pons / All typography to the pager number size. */
+.home-top-tokens .home-top-token-tabs button{
+  font-size:13px !important;
+  line-height:1 !important;
+}
+
+@media(max-width:640px){
+  .home-top-tokens .home-top-token-tabs button{
+    font-size:12px !important;
+    line-height:1 !important;
+  }
+}
