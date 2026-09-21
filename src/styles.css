@@ -9621,3 +9621,19 @@ body{
 .home-reference-v1 .home-hero .hero-copy h1 .hero-x-logo path{
   fill:currentColor !important;
 }
+
+
+/* hero-x-logo-align-v24-53
+   Size/position correction: make the X mark read like a normal capital glyph,
+   not a full em-square icon. */
+.home-reference-v1 .home-hero .hero-copy h1 .hero-x-logo{
+  width:.72em !important;
+  height:.74em !important;
+  vertical-align:-.10em !important;
+  margin:0 .025em !important;
+}
+
+.home-reference-v1 .home-hero .hero-copy h1 .hero-x-logo svg{
+  width:100% !important;
+  height:100% !important;
+}
