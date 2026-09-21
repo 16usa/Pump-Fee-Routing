@@ -7611,3 +7611,56 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     height:auto !important;
   }
 }
+
+
+/* home-pager-arrows-visual-match-v24-20
+   The ‹ › glyphs render visually smaller than the page number at the same
+   CSS font-size. Keep the number at Docs/Open size, but enlarge the arrow
+   glyphs until their visible height matches the number. */
+.home-top-token-pager,
+.home-top-profiles-pager,
+.home-recent-payments-pager,
+.home-most-payments-pager,
+.home-off-pager,
+.home-on-pager{
+  font-size:13px !important;
+  line-height:1 !important;
+}
+
+.home-top-token-pager button,
+.home-top-profiles-pager button,
+.home-recent-payments-pager button,
+.home-most-payments-pager button,
+.home-off-pager button,
+.home-on-pager button{
+  font-size:20px !important;
+  line-height:1 !important;
+  font-weight:430 !important;
+  width:auto !important;
+  height:auto !important;
+}
+
+@media(max-width:640px){
+  .home-top-token-pager,
+  .home-top-profiles-pager,
+  .home-recent-payments-pager,
+  .home-most-payments-pager,
+  .home-off-pager,
+  .home-on-pager{
+    font-size:12px !important;
+    line-height:1 !important;
+  }
+
+  .home-top-token-pager button,
+  .home-top-profiles-pager button,
+  .home-recent-payments-pager button,
+  .home-most-payments-pager button,
+  .home-off-pager button,
+  .home-on-pager button{
+    font-size:18px !important;
+    line-height:1 !important;
+    font-weight:430 !important;
+    width:auto !important;
+    height:auto !important;
+  }
+}
