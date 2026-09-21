@@ -7904,3 +7904,18 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     font-size: 16px !important;
   }
 }
+
+
+/* home-hero-subtitle-match-launch-v24-27
+   Match the Home hero description to the Launch hero description size. */
+.home-reference-v1 .home-hero .hero-copy>p{
+  font-size:15px !important;
+  line-height:1.55 !important;
+}
+
+@media(max-width:760px){
+  .home-reference-v1 .home-hero .hero-copy>p{
+    font-size:12px !important;
+    line-height:1.55 !important;
+  }
+}
