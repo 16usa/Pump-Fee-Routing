@@ -626,7 +626,7 @@ function homeTopTokens(top){
           <div class="home-top-token-skeleton"><i></i><span>No registered tokens yet.</span></div>
           <div class="home-top-token-skeleton"><i></i><span>Verified tokens will appear here.</span></div>
         </div>`}
-    <a class="home-top-tokens-view" href="#/explore">View all tokens →</a>
+    
   </section>`;
 }
 
