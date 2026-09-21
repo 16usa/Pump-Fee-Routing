@@ -7723,3 +7723,63 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     min-width:84px !important;
   }
 }
+
+
+/* home-pager-nowrap-layout-fix-v24-23
+   Fix 1 / 1 wrapping after v24.21.
+   Keep right arrow anchored, keep wide spacing, but reserve a max-content
+   middle column so current/total always stays on one line. */
+.home-top-token-pager,
+.home-top-profiles-pager,
+.home-recent-payments-pager,
+.home-most-payments-pager,
+.home-off-pager,
+.home-on-pager{
+  display:grid !important;
+  grid-template-columns:1fr max-content 1fr !important;
+  align-items:center !important;
+  justify-items:center !important;
+  width:132px !important;
+  min-width:132px !important;
+  margin-left:auto !important;
+}
+
+.home-top-token-pager > span,
+.home-top-profiles-pager > span,
+.home-recent-payments-pager > span,
+.home-most-payments-pager > span,
+.home-off-pager > span,
+.home-on-pager > span{
+  white-space:nowrap !important;
+  min-width:max-content !important;
+}
+
+.home-top-token-pager > :first-child,
+.home-top-profiles-pager > :first-child,
+.home-recent-payments-pager > :first-child,
+.home-most-payments-pager > :first-child,
+.home-off-pager > :first-child,
+.home-on-pager > :first-child{
+  justify-self:start !important;
+}
+
+.home-top-token-pager > :last-child,
+.home-top-profiles-pager > :last-child,
+.home-recent-payments-pager > :last-child,
+.home-most-payments-pager > :last-child,
+.home-off-pager > :last-child,
+.home-on-pager > :last-child{
+  justify-self:end !important;
+}
+
+@media(max-width:640px){
+  .home-top-token-pager,
+  .home-top-profiles-pager,
+  .home-recent-payments-pager,
+  .home-most-payments-pager,
+  .home-off-pager,
+  .home-on-pager{
+    width:118px !important;
+    min-width:118px !important;
+  }
+}
