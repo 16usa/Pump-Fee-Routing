@@ -9577,3 +9577,19 @@ body{
     font-weight:700 !important;
   }
 }
+
+
+/* hero-cta-match-subtitle-size-v24-51
+   Final source of truth: both hero CTA labels use the SAME font-size
+   as the subtitle directly above them. */
+.home-reference-v1 .home-hero .btn-light,
+.home-reference-v1 .home-hero .text-link{
+  font-size:15px !important;
+}
+
+@media(max-width:760px){
+  .home-reference-v1 .home-hero .btn-light,
+  .home-reference-v1 .home-hero .text-link{
+    font-size:12px !important;
+  }
+}
