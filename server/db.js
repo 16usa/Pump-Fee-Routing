@@ -184,7 +184,13 @@ function upsertRecipient(handle, displayName = null) {
   const h = String(handle || '').replace(/^@/, '').trim();
   if (!h) throw new Error('recipient handle required');
   db.prepare(`INSERT INTO recipients(handle, display_name) VALUES(?, ?)
-    ON CONFLICT(handle) DO UPDATE SET display_name=COALESCE(excluded.display_name, recipients.display_name), updated_at=CURRENT_TIMESTAMP`).run(h, displayName);
+    ON CONFLICT(handle) DO UPDATE SET
+      display_name=CASE
+        WHEN excluded.display_name IS NULL OR lower(excluded.display_name)=lower(excluded.handle)
+          THEN COALESCE(NULLIF(recipients.display_name,''),excluded.display_name)
+        ELSE excluded.display_name
+      END,
+      updated_at=CURRENT_TIMESTAMP`).run(h, displayName);
   return h;
 }
 

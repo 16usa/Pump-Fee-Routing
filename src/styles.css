@@ -7004,3 +7004,62 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     flex-basis:15px;
   }
 }
+
+
+/* sitewide-x-verified-badge-v23 */
+.x-recipient-name{min-width:0}
+
+.x-verified-badge{
+  width:16px;
+  height:16px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 16px;
+  margin-left:6px;
+  vertical-align:-2px;
+  line-height:1;
+}
+
+.x-verified-badge svg{
+  width:100%;
+  height:100%;
+  display:block;
+  overflow:visible;
+}
+
+.x-verified-badge .badge-bg{fill:#1d9bf0}
+.x-verified-badge .check{
+  fill:none;
+  stroke:#fff;
+  stroke-width:2.1;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+.x-verified-badge.x-verified-compact{
+  width:13px;
+  height:13px;
+  flex-basis:13px;
+  margin-left:4px;
+  vertical-align:-2px;
+}
+
+.home-profile-feature[data-profile-layout="v22"] .home-profile-verified{margin-left:0}
+.launch-x-verified,.launch-preview-profile-verified,.launch-demo-verified{margin-left:5px}
+
+@media(max-width:640px){
+  .x-verified-badge{
+    width:15px;
+    height:15px;
+    flex-basis:15px;
+    margin-left:5px;
+  }
+  .x-verified-badge.x-verified-compact{
+    width:12px;
+    height:12px;
+    flex-basis:12px;
+    margin-left:4px;
+  }
+  .home-profile-feature[data-profile-layout="v22"] .home-profile-verified{margin-left:0}
+}

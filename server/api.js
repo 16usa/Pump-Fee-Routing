@@ -353,6 +353,77 @@ async function proxyXBanner(res,handle){
 }
 
 
+
+/* x-identities-batch-v23 */
+async function resolveXIdentities(handles){
+  const usernames=[...new Set((handles||[])
+    .map(x=>String(x||'').replace(/^@/,'').trim())
+    .filter(x=>/^[A-Za-z0-9_]{1,15}$/.test(x))
+  )].slice(0,100);
+
+  if(!usernames.length) return [];
+
+  if(config.xBearerToken){
+    try{
+      const fields='id,name,username,profile_image_url,profile_banner_url,verified,verified_type';
+      const r=await fetch(
+        `https://api.x.com/2/users/by?usernames=${encodeURIComponent(usernames.join(','))}&user.fields=${encodeURIComponent(fields)}`,
+        {
+          headers:{authorization:`Bearer ${config.xBearerToken}`,accept:'application/json'},
+          signal:AbortSignal.timeout(15000)
+        }
+      );
+
+      if(r.ok){
+        const payload=await r.json().catch(()=>({}));
+        for(const u of (payload?.data||[])){
+          const username=String(u?.username||'').replace(/^@/,'').trim();
+          if(!username) continue;
+          const avatarUrl=largerXAvatar(u?.profile_image_url||'');
+          const bannerUrl=String(u?.profile_banner_url||'').trim();
+
+          db.prepare(`INSERT INTO recipients(
+            handle,x_user_id,display_name,avatar_url,banner_url,verified,verified_type
+          ) VALUES(?,?,?,?,?,?,?)
+          ON CONFLICT(handle) DO UPDATE SET
+            x_user_id=COALESCE(NULLIF(excluded.x_user_id,''),recipients.x_user_id),
+            display_name=COALESCE(NULLIF(excluded.display_name,''),recipients.display_name),
+            avatar_url=COALESCE(NULLIF(excluded.avatar_url,''),recipients.avatar_url),
+            banner_url=COALESCE(NULLIF(excluded.banner_url,''),recipients.banner_url),
+            verified=excluded.verified,
+            verified_type=excluded.verified_type,
+            updated_at=CURRENT_TIMESTAMP`)
+            .run(
+              username,
+              String(u?.id||''),
+              String(u?.name||username),
+              avatarUrl,
+              bannerUrl,
+              u?.verified?1:0,
+              String(u?.verified_type||'')
+            );
+        }
+      }
+    }catch{}
+  }
+
+  const get=db.prepare(`SELECT handle,display_name,avatar_url,banner_url,verified,verified_type
+    FROM recipients WHERE handle=? COLLATE NOCASE`);
+
+  return usernames.map(username=>{
+    const row=get.get(username)||{};
+    return {
+      username:String(row.handle||username),
+      name:String(row.display_name||username),
+      profileImageUrl:String(row.avatar_url||''),
+      profileBannerUrl:String(row.banner_url||''),
+      verified:Boolean(row.verified),
+      verifiedType:String(row.verified_type||'')
+    };
+  });
+}
+
+
 export async function handleApi(req,res,url){
   try{
 
@@ -386,6 +457,14 @@ export async function handleApi(req,res,url){
     if(req.method==='GET'&&url.pathname.startsWith('/api/profiles/')){ const row=profile(decodeURIComponent(url.pathname.slice('/api/profiles/'.length))); return row?json(res,200,row):json(res,404,{error:'Not found'}); }
     if(req.method==='GET'&&url.pathname==='/api/money') return json(res,200,moneySummary());
     if(req.method==='GET'&&url.pathname==='/api/payments') return json(res,200,{payments:listPayments(Number(url.searchParams.get('limit')||50))});
+    if(req.method==='GET'&&url.pathname==='/api/x/identities'){
+      const usernames=String(url.searchParams.get('usernames')||'')
+        .split(',')
+        .map(x=>x.trim())
+        .filter(Boolean)
+        .slice(0,100);
+      return json(res,200,{identities:await resolveXIdentities(usernames)});
+    }
     if(req.method==='GET'&&url.pathname==='/api/x/profile'){
       const username=String(url.searchParams.get('username')||'').replace(/^@/,'').trim();
       if(!/^[A-Za-z0-9_]{1,15}$/.test(username))throw Object.assign(new Error('Invalid X username'),{statusCode:400});

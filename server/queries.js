@@ -3,6 +3,11 @@ import { db, tokenFinancialsWhere, getIndexerStatus } from './db.js';
 const mapToken = (t) => ({
   mint:t.mint, contract:t.mint, venue:t.venue, platform:t.venue==='pump'?'Pump':'Pons', name:t.name, symbol:t.symbol,
   image_url:t.image_url || '', description:t.description || '', recipient_handle:t.recipient_handle,
+  recipient_display_name:t.recipient_display_name || '',
+  recipient_avatar_url:t.recipient_avatar_url || '',
+  recipient_verified:Number(t.recipient_verified||0),
+  recipient_verified_type:t.recipient_verified_type || '',
+  recipient_banner_url:t.recipient_banner_url || '',
   profile:t.recipient_handle, mc:Number(t.market_cap_usd||0), market_cap_usd:Number(t.market_cap_usd||0),
   sent:Number(t.sent_usd||0), owed:Number(t.owed_usd||0), earned:Number(t.earned_usd||0), permanent:!!t.permanent,
   fee_share_bps:Number(t.fee_share_bps||0), created_at:t.created_at, discovered_at:t.discovered_at,
@@ -27,15 +32,15 @@ export function listTokens({search='',sort='sent',venue='',limit=100}={}) {
   else rows.sort((a,b)=>b.sent-a.sent);
   return rows.slice(0, Math.min(500,Number(limit)||100));
 }
-export function getToken(mint){ const row=tokenFinancialsWhere('t.mint=? AND t.hidden=0',[mint])[0]; if(!row)return null; const token=mapToken(row); token.claims=db.prepare('SELECT * FROM claims WHERE mint=? ORDER BY created_at DESC LIMIT 100').all(mint); token.payouts=db.prepare(`SELECT p.*,pi.amount_usd item_amount_usd FROM payout_items pi JOIN payouts p ON p.id=pi.payout_id WHERE pi.mint=? ORDER BY p.created_at DESC`).all(mint); token.chain=db.prepare(`SELECT sharing_config_address,verified_slot,admin_revoked,sole_treasury,fee_share_bps,distributable_lamports,minimum_required_lamports,can_distribute,is_graduated,sol_usd,gross_unclaimed_usd,recipient_unclaimed_usd,protocol_unclaimed_usd,indexed_at FROM token_chain_state WHERE mint=? AND active=1`).get(mint)||null; return token; }
-export function listPayments(limit=50){ return db.prepare(`SELECT p.*,r.display_name,r.avatar_url, GROUP_CONCAT(pi.mint) mints FROM payouts p LEFT JOIN recipients r ON r.handle=p.recipient_handle LEFT JOIN payout_items pi ON pi.payout_id=p.id GROUP BY p.id ORDER BY p.created_at DESC LIMIT ?`).all(Number(limit)); }
+export function getToken(mint){ const row=tokenFinancialsWhere('t.mint=? AND t.hidden=0',[mint])[0]; if(!row)return null; const token=mapToken(row); token.claims=db.prepare('SELECT * FROM claims WHERE mint=? ORDER BY created_at DESC LIMIT 100').all(mint); token.payouts=db.prepare(`SELECT p.*,pi.amount_usd item_amount_usd,r.display_name,r.avatar_url,r.verified,r.verified_type FROM payout_items pi JOIN payouts p ON p.id=pi.payout_id LEFT JOIN recipients r ON r.handle=p.recipient_handle WHERE pi.mint=? ORDER BY p.created_at DESC`).all(mint); token.chain=db.prepare(`SELECT sharing_config_address,verified_slot,admin_revoked,sole_treasury,fee_share_bps,distributable_lamports,minimum_required_lamports,can_distribute,is_graduated,sol_usd,gross_unclaimed_usd,recipient_unclaimed_usd,protocol_unclaimed_usd,indexed_at FROM token_chain_state WHERE mint=? AND active=1`).get(mint)||null; return token; }
+export function listPayments(limit=50){ return db.prepare(`SELECT p.*,r.display_name,r.avatar_url,r.verified,r.verified_type, GROUP_CONCAT(pi.mint) mints FROM payouts p LEFT JOIN recipients r ON r.handle=p.recipient_handle LEFT JOIN payout_items pi ON pi.payout_id=p.id GROUP BY p.id ORDER BY p.created_at DESC LIMIT ?`).all(Number(limit)); }
 export function moneySummary(){
   const totalPaid=Number(db.prepare(`SELECT COALESCE(SUM(amount_usd),0) v FROM payouts WHERE status IN ('sent','claimed')`).get().v);
   const indexedOwed=Number(db.prepare(`SELECT COALESCE(SUM(recipient_unclaimed_usd),0) v FROM token_chain_state WHERE active=1`).get().v);
   const totalOwed=Number(db.prepare(`SELECT COALESCE(SUM(recipient_usd),0) v FROM claims WHERE status='confirmed'`).get().v)+indexedOwed-Number(db.prepare(`SELECT COALESCE(SUM(pi.amount_usd),0) v FROM payout_items pi JOIN payouts p ON p.id=pi.payout_id WHERE p.status IN ('sent','claimed')`).get().v);
   const protocolPending=Number(db.prepare(`SELECT COALESCE(SUM(amount_usd),0) v FROM buybacks WHERE status='pending'`).get().v)+Number(db.prepare(`SELECT COALESCE(SUM(protocol_unclaimed_usd),0) v FROM token_chain_state WHERE active=1`).get().v);
   const recent=listPayments(50);
-  const topPaid=db.prepare(`SELECT r.handle,r.display_name,r.avatar_url,COALESCE(SUM(p.amount_usd),0) received FROM recipients r JOIN payouts p ON p.recipient_handle=r.handle WHERE p.status IN ('sent','claimed') GROUP BY r.handle ORDER BY received DESC LIMIT 10`).all();
+  const topPaid=db.prepare(`SELECT r.handle,r.display_name,r.avatar_url,r.verified,r.verified_type,COALESCE(SUM(p.amount_usd),0) received FROM recipients r JOIN payouts p ON p.recipient_handle=r.handle WHERE p.status IN ('sent','claimed') GROUP BY r.handle ORDER BY received DESC LIMIT 10`).all();
   const exchange=db.prepare(`SELECT * FROM exchange_orders ORDER BY created_at DESC LIMIT 20`).all();
   return {totalPaid,totalOwed:Math.max(0,totalOwed),protocolPending,recent,topPaid,exchange,indexer:getIndexerStatus()};
 }

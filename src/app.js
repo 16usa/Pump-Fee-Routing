@@ -51,6 +51,77 @@ const tokenMedia=(t,fallbackClass='token-image-fallback',fallbackContent='',imag
   return `<img${imageClass?` class="${imageClass}"`:''} src="${esc(src)}" alt="" loading="lazy" decoding="async"${tokenImageErrorAttrs(t)}><div class="${fallbackClass}" style="display:none">${content}</div>`;
 };
 
+
+/* sitewide-x-identity-ui-v23 */
+function xIsVerified(value,type=''){
+  const kind=String(type||'').toLowerCase();
+  return value===true||
+    Number(value)===1||
+    String(value||'').toLowerCase()==='true'||
+    ['blue','business','government'].includes(kind);
+}
+
+function xVerifiedBadge(value,type='',extraClass=''){
+  if(!xIsVerified(value,type))return '';
+  const cls=['x-verified-badge',extraClass].filter(Boolean).join(' ');
+  return `<span class="${cls}" title="Verified" aria-label="Verified">
+    <svg viewBox="0 0 20 20" aria-hidden="true">
+      <circle class="badge-bg" cx="10" cy="10" r="9"/>
+      <path class="check" d="M6.3 10.2 8.7 12.6 13.9 7.4"/>
+    </svg>
+  </span>`;
+}
+
+function xIdentity(handle,source={}){
+  const clean=String(
+    handle||
+    source?.recipient_handle||
+    source?.profile||
+    source?.handle||
+    source?.username||
+    ''
+  ).replace(/^@/,'').trim();
+
+  const stored=typeof moneyProfile==='function'?moneyProfile(clean):null;
+  const isToken=!!(source?.mint||source?.contract||source?.symbol);
+
+  const name=String(
+    source?.recipient_display_name||
+    (!isToken?source?.display_name:'')||
+    stored?.display_name||
+    clean||
+    'Recipient'
+  );
+
+  const avatarUrl=String(
+    source?.recipient_avatar_url||
+    source?.avatar_url||
+    stored?.avatar_url||
+    ''
+  );
+
+  const verifiedValue=
+    source?.recipient_verified ??
+    source?.verified ??
+    stored?.verified ??
+    0;
+
+  const verifiedType=String(
+    source?.recipient_verified_type||
+    source?.verified_type||
+    stored?.verified_type||
+    ''
+  );
+
+  return {
+    handle:clean,
+    name,
+    avatarUrl,
+    verified:xIsVerified(verifiedValue,verifiedType),
+    verifiedType
+  };
+}
+
 const logo=()=>`<a class="logo" href="#/" aria-label="Home"><span>${esc(state.brand.mark||'P')}</span></a>`;
 const platformBadge=(name='Pump')=>`<span class="platform-badge">${String(name).toLowerCase()==='pons'?'◼':'◉'} ${esc(name)}</span>`;
 const sectionTitle=(title,link='')=>`<div class="section-title"><h2>${esc(title)}</h2>${link?`<a href="${link}">View all</a>`:''}</div>`;
@@ -85,8 +156,21 @@ function footer(){return `<footer class="site-footer">
     </div>
   </div>
 </footer>`;}
-function tokenCard(t,compact=false){return `<a class="token-card ${compact?'compact':''}" href="#/token/${encodeURIComponent(t.mint||t.contract)}"><div class="token-img">${tokenAvatar(t,true)}</div><div class="token-meta"><div class="meta-line">${platformBadge(t.platform||'Pump')}<span class="muted">@${esc(t.profile||t.recipient_handle||'')}</span><span class="muted">${esc(t.age||ago(t.created_at))}</span></div><div class="token-name"><strong>${esc(t.name)}</strong><span>${esc(t.symbol)}</span></div><div class="token-numbers"><span>${fmtMc(t.mc??t.market_cap_usd)} <small>MC</small></span><span>${fmtNum(t.sent)} <small>Sent</small></span>${compact?'':`<span>${fmtNum(t.owed)} <small>Owed</small></span>`}</div>${compact?'':`<div class="contract">${esc((t.mint||'').slice(0,6))}…${esc((t.mint||'').slice(-6))}</div>`}</div></a>`;}
-function paymentCard(p,i){const amount=p.amount_usd??p.amount??0;const to=p.display_name||p.recipient_handle||p.to||'recipient';const mints=String(p.mints||'').split(',').filter(Boolean);return `<button class="payment-card expandable" data-expand="payment-${i}"><div class="row"><div><strong>${fmtMoney(amount)}</strong><span>${['sent','claimed'].includes(p.status)?'sent':'scheduled'} to <b>${esc(to)}</b> ${['sent','claimed'].includes(p.status)?'<em>✓</em>':''}</span></div><span class="chev">⌄</span></div><div class="mini-tokens">${mints.slice(0,5).map((x,j)=>`${j?'<span class="arrow">→</span>':''}<span class="mini-icon">${esc(x[0]||'T')}</span>`).join('')}<time>${esc(ago(p.sent_at||p.created_at))}</time></div><div class="details hidden"><div><span>Status</span><b>${esc(p.status||'queued')}</b></div><div><span>Provider</span><b>${esc(p.provider||'')}</b></div><div><span>Reference</span><b>${esc(p.provider_ref||p.id||'')}</b></div>${p.public_confirmation_url?`<div><span>Confirmation</span><b>${esc(p.public_confirmation_url)}</b></div>`:''}</div></button>`;}
+/* x-identity-token-card-v23 */
+function tokenCard(t,compact=false){
+  const handle=t.profile||t.recipient_handle||'';
+  const identity=xIdentity(handle,t);
+  return `<a class="token-card ${compact?'compact':''}" href="#/token/${encodeURIComponent(t.mint||t.contract)}"><div class="token-img">${tokenAvatar(t,true)}</div><div class="token-meta"><div class="meta-line">${platformBadge(t.platform||'Pump')}<span class="muted x-recipient-name">${esc(identity.name)}${xVerifiedBadge(identity.verified,identity.verifiedType,'x-verified-compact')}</span><span class="muted">${esc(t.age||ago(t.created_at))}</span></div><div class="token-name"><strong>${esc(t.name)}</strong><span>${esc(t.symbol)}</span></div><div class="token-numbers"><span>${fmtMc(t.mc??t.market_cap_usd)} <small>MC</small></span><span>${fmtNum(t.sent)} <small>Sent</small></span>${compact?'':`<span>${fmtNum(t.owed)} <small>Owed</small></span>`}</div>${compact?'':`<div class="contract">${esc((t.mint||'').slice(0,6))}…${esc((t.mint||'').slice(-6))}</div>`}</div></a>`;
+}
+/* x-identity-payment-card-v23 */
+function paymentCard(p,i){
+  const amount=p.amount_usd??p.amount??0;
+  const handle=p.recipient_handle||p.to||'recipient';
+  const identity=xIdentity(handle,p);
+  const mints=String(p.mints||'').split(',').filter(Boolean);
+  const sent=['sent','claimed'].includes(p.status);
+  return `<button class="payment-card expandable" data-expand="payment-${i}"><div class="row"><div><strong>${fmtMoney(amount)}</strong><span>${sent?'sent':'scheduled'} to <b class="x-recipient-name">${esc(identity.name)}${xVerifiedBadge(identity.verified,identity.verifiedType,'x-verified-compact')}</b></span></div><span class="chev">⌄</span></div><div class="mini-tokens">${mints.slice(0,5).map((x,j)=>`${j?'<span class="arrow">→</span>':''}<span class="mini-icon">${esc(x[0]||'T')}</span>`).join('')}<time>${esc(ago(p.sent_at||p.created_at))}</time></div><div class="details hidden"><div><span>Status</span><b>${esc(p.status||'queued')}</b></div><div><span>Provider</span><b>${esc(p.provider||'')}</b></div><div><span>Reference</span><b>${esc(p.provider_ref||p.id||'')}</b></div>${p.public_confirmation_url?`<div><span>Confirmation</span><b>${esc(p.public_confirmation_url)}</b></div>`:''}</div></button>`;
+}
 function txCard(x,i){return `<button class="transfer-card expandable" data-expand="tx-${i}"><div class="tx-icon">≋</div><div class="tx-main"><strong>${x.received_usd?fmtMoney(x.received_usd):`${fmtNum(x.volume_native)} SOL`}</strong><span>${esc(x.pair||'SOLUSD')} · ${esc(x.side||'sell')}</span></div><div class="tx-side"><span class="tx-status">${esc(x.status||'queued')}</span><small>${esc(ago(x.filled_at||x.created_at))}</small></div><span class="chev">⌄</span><div class="tx-details hidden"><div><span>Provider</span><b>${esc(x.provider||'')}</b></div><div><span>Reference</span><b>${esc(x.provider_ref||x.id||'')}</b></div></div></button>`;}
 function moneyProfile(handle){
   const key=String(handle||'').replace(/^@/,'').toLowerCase();
@@ -101,29 +185,24 @@ function moneyRoundIcon(label,kind='dark'){
   return `<span class="money-round-icon ${kind}">${esc(label)}</span>`;
 }
 
+/* x-identity-money-recent-v23 */
 function moneyRecentCard(p,i){
   const amount=p.amount_usd??p.amount??0;
   const handle=p.recipient_handle||p.to||'recipient';
-  const profile=moneyProfile(handle);
+  const identity=xIdentity(handle,p);
   const mints=String(p.mints||'').split(',').filter(Boolean);
   const token=moneyTokenByMint(mints[0]||'');
   const confirmed=['sent','claimed'].includes(p.status);
   return `<button class="money-payment-card expandable" data-expand="money-payment-${i}">
     <div class="money-payment-copy">
       <strong>${fmtMoney(amount)}</strong>
-      <span>${confirmed?'sent':'scheduled'} to <b>${esc(p.display_name||handle)}</b>${confirmed?' <em>✓</em>':''}</span>
+      <span>${confirmed?'sent':'scheduled'} to <b class="x-recipient-name">${esc(identity.name)}${xVerifiedBadge(identity.verified,identity.verifiedType,'x-verified-compact')}</b></span>
     </div>
     <span class="chev">⌄</span>
     <div class="money-payment-route">
-      <div class="money-payment-avatar">
-        ${token?tokenAvatar(token,true):avatar(mints[0]||'T',true)}
-        <i>●</i>
-      </div>
+      <div class="money-payment-avatar">${token?tokenAvatar(token,true):avatar(mints[0]||'T',true)}<i>●</i></div>
       <b class="money-dollar">$</b>
-      <div class="money-payment-avatar">
-        ${recipientAvatar(handle,profile?.display_name||p.display_name||handle,true,profile?.avatar_url||p.avatar_url||'')}
-        <i class="x">X</i>
-      </div>
+      <div class="money-payment-avatar">${recipientAvatar(handle,identity.name,true,identity.avatarUrl)}<i class="x">X</i></div>
       <time>${esc(ago(p.sent_at||p.created_at))}</time>
     </div>
     <div class="details hidden">
@@ -162,19 +241,17 @@ function moneyOffRampCard(x,i){
   </button>`;
 }
 
+/* x-identity-money-top-token-v23 */
 function moneyTopTokenCard(t){
   const handle=t.recipient_handle||t.profile||'';
-  const profile=moneyProfile(handle);
+  const identity=xIdentity(handle,t);
   return `<a class="money-top-token-card" href="#/token/${encodeURIComponent(t.mint||t.contract||'')}">
     <div class="money-top-route">
       <div class="money-payment-avatar">${tokenAvatar(t,true)}<i>●</i></div>
       <b class="money-dollar">$</b>
-      <div class="money-payment-avatar">${recipientAvatar(handle,profile?.display_name||handle||'X',true,profile?.avatar_url||'')}<i class="x">X</i></div>
+      <div class="money-payment-avatar">${recipientAvatar(handle,identity.name,true,identity.avatarUrl)}<i class="x">X</i></div>
     </div>
-    <div class="money-top-values">
-      <strong>${fmtMoney(t.sent||0)}</strong>
-      <span>${fmtMoney(t.owed||0)} owed</span>
-    </div>
+    <div class="money-top-values"><strong>${fmtMoney(t.sent||0)}</strong><span>${fmtMoney(t.owed||0)} owed</span></div>
   </a>`;
 }
 
@@ -312,14 +389,15 @@ function homePreviewDeck(h,top){
     const tokenVisual=mint
       ? `<span class="home-v2-payment-route-token"><img src="/api/token-image/${encodeURIComponent(mint)}" alt="" loading="eager" decoding="async" onerror="${tokenDirect?`this.onerror=function(){this.style.display='none';this.nextElementSibling.style.display='grid'};this.src='${esc(tokenDirect)}'`:`this.style.display='none';this.nextElementSibling.style.display='grid'`}"><i style="display:none">${tokenInitial}</i></span>`
       : `<span class="home-v2-payment-route-token"><i>${tokenInitial}</i></span>`;
+    const identity=xIdentity(handle,{...p,...(profile||{})});
     const recipientVisual=handle
-      ? recipientAvatar(handle,to,false,profile?.avatar_url||'')
-      : avatar(to,false,'');
-    const verified=(p.verified||profile?.verified)?'<em class="home-v2-payment-verified">✓</em>':'';
+      ? recipientAvatar(handle,identity.name,false,identity.avatarUrl)
+      : avatar(identity.name,false,'');
+    const verified=xVerifiedBadge(identity.verified,identity.verifiedType,'x-verified-compact');
     return `<div class="home-v2-payment-mini home-v2-payment-ref-row">
       <div class="home-v2-payment-copy">
         <strong>${fmtMoney(amount)}</strong>
-        <span>sent to <b>${esc(to)}</b>${verified}</span>
+        <span>sent to <b class="x-recipient-name">${esc(identity.name)}${verified}</b></span>
       </div>
       <div class="home-v2-payment-route">
         ${tokenVisual}
@@ -373,9 +451,8 @@ function homePreviewDeck(h,top){
           const renderRecipient = (token) => {
             const profile = findProfile(token);
             const handle = String(token?.profile || token?.recipient_handle || token?.recipient_handles || '').replace(/^@/, '').trim();
-            const label = profile?.display_name || handle || 'Recipient';
-            const avatarUrl = String(profile?.avatar_url || '').trim();
-            return `<div class="home-explore-v8-recipient"><i>$</i>${recipientAvatar(handle,label,false,avatarUrl)}<b>${esc(label)}</b></div>`;
+            const identity=xIdentity(handle,{...token,...(profile||{})});
+            return `<div class="home-explore-v8-recipient"><i>$</i>${recipientAvatar(handle,identity.name,false,identity.avatarUrl)}<b class="x-recipient-name">${esc(identity.name)}${xVerifiedBadge(identity.verified,identity.verifiedType,'x-verified-compact')}</b></div>`;
           };
 
           const renderPrimary = (token) => {
@@ -466,7 +543,7 @@ function homePreviewDeck(h,top){
           <div class="home-v2-launch-result">
             <div class="home-v2-launch-result-avatar">${leadProfile?recipientAvatar(leadHandle,leadName,true,leadProfile?.avatar_url||''):avatar(leadName,true,'')}</div>
             <div class="home-v2-launch-result-copy">
-              <strong>${esc(leadName)}${leadProfile?.verified?'<em>✓</em>':''}</strong>
+              <strong class="x-recipient-name">${esc(leadName)}${xVerifiedBadge(leadProfile?.verified,leadProfile?.verified_type,'x-verified-compact')}</strong>
               <span>@${esc(leadHandle)}</span>
             </div>
           </div>
@@ -497,8 +574,10 @@ function homePreviewDeck(h,top){
     </div>
   </section>`;
 }
+/* x-identity-home-top-token-v23 */
 function homeTopTokenCard(t){
   const handle=t.profile||t.recipient_handle||'';
+  const identity=xIdentity(handle,t);
   const mint=t.mint||t.contract||'';
   const ageText=t.age||ago(t.created_at);
   const mc=t.mc??t.market_cap_usd;
@@ -507,32 +586,19 @@ function homeTopTokenCard(t){
       ${tokenMedia(t,'home-top-token-fallback')}
       <div class="home-top-token-platform" data-top-token-pump-logo="v21-1" aria-label="${esc(t.platform||'Pump')}">
         ${String(t.platform||'Pump').toLowerCase().includes('pump')
-          ? `<span class="home-top-token-pump-logo" aria-hidden="true">
-              <svg viewBox="0 0 24 24" role="presentation" focusable="false">
-                <g transform="rotate(-42 12 12)">
-                  <rect x="7" y="3" width="10" height="18" rx="5" fill="#f2f2f2"/>
-                  <path d="M7 12h10v4a5 5 0 0 1-5 5 5 5 0 0 1-5-5v-4Z" fill="#63d7a4"/>
-                </g>
-              </svg>
-            </span>`
+          ? `<span class="home-top-token-pump-logo" aria-hidden="true"><svg viewBox="0 0 24 24" role="presentation" focusable="false"><g transform="rotate(-42 12 12)"><rect x="7" y="3" width="10" height="18" rx="5" fill="#f2f2f2"/><path d="M7 12h10v4a5 5 0 0 1-5 5 5 5 0 0 1-5-5v-4Z" fill="#63d7a4"/></g></svg></span>`
           : platformBadge(t.platform||'Pump')}
       </div>
       <div class="home-top-token-age">${esc(ageText||'')}</div>
       <div class="home-top-token-recipient">
         <i class="home-top-token-money-mark">$</i>
-        ${handle?recipientAvatar(handle,handle,false,''):avatar(t.symbol||'T')}
-        <b>${handle?esc(handle.replace(/^@/,'')):'Recipient'}</b>
+        ${handle?recipientAvatar(handle,identity.name,false,identity.avatarUrl):avatar(t.symbol||'T')}
+        <b class="x-recipient-name">${handle?`${esc(identity.name)}${xVerifiedBadge(identity.verified,identity.verifiedType,'x-verified-compact')}`:'Recipient'}</b>
       </div>
     </div>
     <div class="home-top-token-body">
-      <div class="home-top-token-title">
-        <strong>${esc(t.name)}</strong>
-        <span>${esc(t.symbol||'')}</span>
-      </div>
-      <div class="home-top-token-market">
-        <strong>${fmtMc(mc)}</strong>
-        <span>MC</span>
-      </div>
+      <div class="home-top-token-title"><strong>${esc(t.name)}</strong><span>${esc(t.symbol||'')}</span></div>
+      <div class="home-top-token-market"><strong>${fmtMc(mc)}</strong><span>MC</span></div>
     </div>
   </a>`;
 }
@@ -583,14 +649,7 @@ function homeProfileCard(p,index=0){
     ''
   ).trim();
 
-  const verifiedBadge=verified
-    ? `<span class="home-profile-verified" title="Verified" aria-label="Verified">
-        <svg viewBox="0 0 20 20" aria-hidden="true">
-          <circle class="badge-bg" cx="10" cy="10" r="9"/>
-          <path class="check" d="M6.3 10.2 8.7 12.6 13.9 7.4"/>
-        </svg>
-      </span>`
-    : '';
+  const verifiedBadge=xVerifiedBadge(verified,p.verified_type,'home-profile-verified');
 
   const coverSource=cover||(handle?`/api/x-banner/${encodeURIComponent(handle)}`:'');
   const coverMedia=coverSource
@@ -653,39 +712,24 @@ function homeTopProfiles(profiles){
   </section>`;
 }
 
+/* x-identity-home-recent-payment-v23 */
 function homeRecentPaymentCard(p,i,tokens){
   const amount=p.amount_usd??p.amount??0;
-  const to=p.display_name||p.recipient_handle||p.to||'recipient';
+  const handle=p.recipient_handle||p.to||'recipient';
+  const identity=xIdentity(handle,p);
   const mints=String(p.mints||'').split(',').filter(Boolean);
   const firstMint=mints[0]||'';
   const token=(tokens||[]).find(t=>(t.mint||t.contract)===firstMint)||null;
   const confirmed=['sent','claimed'].includes(p.status);
   return `<button class="home-payment-card expandable" data-expand="home-payment-${i}">
-    <div class="home-payment-top">
-      <div>
-        <strong>${fmtMoney(amount)}</strong>
-        <span>${confirmed?'sent':'scheduled'} to <b>${esc(to)}</b>${confirmed?' <em>✓</em>':''}</span>
-      </div>
-      <span class="chev">⌄</span>
-    </div>
+    <div class="home-payment-top"><div><strong>${fmtMoney(amount)}</strong><span>${confirmed?'sent':'scheduled'} to <b class="x-recipient-name">${esc(identity.name)}${xVerifiedBadge(identity.verified,identity.verifiedType,'x-verified-compact')}</b></span></div><span class="chev">⌄</span></div>
     <div class="home-payment-route">
-      <div class="home-payment-party home-payment-token">
-        ${token?tokenAvatar(token,true):`<span class="home-payment-placeholder">${esc(initials(token?.symbol||firstMint||'T'))}</span>`}
-        <i class="home-payment-badge">●</i>
-      </div>
+      <div class="home-payment-party home-payment-token">${token?tokenAvatar(token,true):`<span class="home-payment-placeholder">${esc(initials(token?.symbol||firstMint||'T'))}</span>`}<i class="home-payment-badge">●</i></div>
       <span class="home-payment-dollar">$</span>
-      <div class="home-payment-party home-payment-recipient">
-        ${recipientAvatar(p.recipient_handle||p.to||'',to,true,p.avatar_url||'')}
-        <i class="home-payment-x">X</i>
-      </div>
+      <div class="home-payment-party home-payment-recipient">${recipientAvatar(handle,identity.name,true,identity.avatarUrl)}<i class="home-payment-x">X</i></div>
       <time>${esc(ago(p.sent_at||p.created_at))}</time>
     </div>
-    <div class="details hidden">
-      <div><span>Status</span><b>${esc(p.status||'queued')}</b></div>
-      <div><span>Provider</span><b>${esc(p.provider||'')}</b></div>
-      <div><span>Reference</span><b>${esc(p.provider_ref||p.id||'')}</b></div>
-      ${p.public_confirmation_url?`<div><span>Confirmation</span><b>${esc(p.public_confirmation_url)}</b></div>`:''}
-    </div>
+    <div class="details hidden"><div><span>Status</span><b>${esc(p.status||'queued')}</b></div><div><span>Provider</span><b>${esc(p.provider||'')}</b></div><div><span>Reference</span><b>${esc(p.provider_ref||p.id||'')}</b></div>${p.public_confirmation_url?`<div><span>Confirmation</span><b>${esc(p.public_confirmation_url)}</b></div>`:''}</div>
   </button>`;
 }
 
@@ -920,28 +964,21 @@ function exploreTrendingCard(t){
   </a>`;
 }
 
+/* x-identity-explore-token-v23 */
 function exploreTokenCard(t){
   const mint=t.mint||t.contract||'';
   const handle=t.profile||t.recipient_handle||'';
+  const identity=xIdentity(handle,t);
   return `<a class="explore-token-card" href="#/token/${encodeURIComponent(mint)}">
-    <div class="explore-token-image">
-      ${tokenMedia(t,'explore-token-fallback')}
-    </div>
+    <div class="explore-token-image">${tokenMedia(t,'explore-token-fallback')}</div>
     <div class="explore-token-info">
       <div class="explore-token-meta">
         ${platformBadge(t.platform||'Pump')}
-        <span class="explore-token-profile">${handle?`@${esc(handle)}`:'Recipient'}</span>
+        <span class="explore-token-profile x-recipient-name">${handle?`${esc(identity.name)}${xVerifiedBadge(identity.verified,identity.verifiedType,'x-verified-compact')}`:'Recipient'}</span>
         <span class="explore-token-age">${esc(t.age||ago(t.created_at))}</span>
       </div>
-      <div class="explore-token-name">
-        <strong>${esc(t.name)}</strong>
-        <span>${esc(t.symbol||'')}</span>
-      </div>
-      <div class="explore-token-stats">
-        <div><b>${fmtMc(t.mc??t.market_cap_usd)}</b><small>MC</small></div>
-        <div><b>${fmtNum(t.sent||0)}</b><small>Sent</small></div>
-        <div><b>${fmtNum(t.owed||0)}</b><small>Owed</small></div>
-      </div>
+      <div class="explore-token-name"><strong>${esc(t.name)}</strong><span>${esc(t.symbol||'')}</span></div>
+      <div class="explore-token-stats"><div><b>${fmtMc(t.mc??t.market_cap_usd)}</b><small>MC</small></div><div><b>${fmtNum(t.sent||0)}</b><small>Sent</small></div><div><b>${fmtNum(t.owed||0)}</b><small>Owed</small></div></div>
       <div class="explore-token-contract">${mint?`${esc(mint.slice(0,6))}...${esc(mint.slice(-6))}`:'-'}</div>
     </div>
   </a>`;
@@ -1340,12 +1377,8 @@ function renderLaunchXLookup(profile){
   const name=document.createElement('strong');
   name.textContent=profile.name||profile.username;
   top.appendChild(name);
-  if(profile.verified){
-    const badge=document.createElement('span');
-    badge.className='launch-x-verified';
-    badge.textContent='✓';
-    badge.title=profile.verifiedType?`Verified: ${profile.verifiedType}`:'Verified';
-    top.appendChild(badge);
+  if(xIsVerified(profile.verified,profile.verifiedType)){
+    top.insertAdjacentHTML('beforeend',xVerifiedBadge(profile.verified,profile.verifiedType,'launch-x-verified'));
   }
   const handle=document.createElement('span');
   handle.textContent=`@${profile.username}`;
@@ -1533,12 +1566,8 @@ function launchPreviewProfileNode(profile,mode='row'){
 
   wrap.append(avatar,name);
 
-  if(profile.verified){
-    const verified=document.createElement('span');
-    verified.className='launch-preview-profile-verified';
-    verified.textContent='✓';
-    verified.title=profile.verifiedType?`Verified: ${profile.verifiedType}`:'Verified';
-    wrap.appendChild(verified);
+  if(xIsVerified(profile.verified,profile.verifiedType)){
+    wrap.insertAdjacentHTML('beforeend',xVerifiedBadge(profile.verified,profile.verifiedType,'launch-preview-profile-verified'));
   }
 
   return wrap;
@@ -2105,27 +2134,14 @@ function tokenDetailClaimCard(c,i){
   </button>`;
 }
 
+/* x-identity-token-payment-v23 */
 function tokenDetailPaymentCard(p,i,handle){
   const amount=Number(p.item_amount_usd??p.amount_usd??0);
+  const identity=xIdentity(handle||p.recipient_handle,p);
   return `<button class="token-detail-event expandable" data-expand="token-payment-${i}">
-    <div class="token-event-main">
-      <div>
-        <span>Payment to @${esc(handle||p.recipient_handle||'recipient')}</span>
-        <strong>${fmtMoney(amount)}</strong>
-      </div>
-      <div class="token-event-value">
-        <span class="token-status-pill">${esc(p.status||'queued')}</span>
-        <time>${esc(ago(p.sent_at||p.created_at))}</time>
-      </div>
-    </div>
-    <div class="token-event-meta">
-      <span>${esc(p.provider||'payout rail')}</span>
-      <span>${p.public_confirmation_url?'Public confirmation':'Ledger record'}</span>
-    </div>
-    <div class="details hidden">
-      <div><span>Provider reference</span><b class="token-detail-truncate">${esc(p.provider_ref||p.id||'—')}</b></div>
-      <div><span>Created</span><b>${esc(p.created_at||'—')}</b></div>
-    </div>
+    <div class="token-event-main"><div><span>Payment to <b class="x-recipient-name">${esc(identity.name)}${xVerifiedBadge(identity.verified,identity.verifiedType,'x-verified-compact')}</b></span><strong>${fmtMoney(amount)}</strong></div><div class="token-event-value"><span class="token-status-pill">${esc(p.status||'queued')}</span><time>${esc(ago(p.sent_at||p.created_at))}</time></div></div>
+    <div class="token-event-meta"><span>${esc(p.provider||'payout rail')}</span><span>${p.public_confirmation_url?'Public confirmation':'Ledger record'}</span></div>
+    <div class="details hidden"><div><span>Provider reference</span><b class="token-detail-truncate">${esc(p.provider_ref||p.id||'—')}</b></div><div><span>Created</span><b>${esc(p.created_at||'—')}</b></div></div>
   </button>`;
 }
 
@@ -2136,6 +2152,7 @@ function tokenDetailEmpty(title,copy){
 async function tokenPage(mint){
   const t=await api(`/api/tokens/${encodeURIComponent(mint)}`);
   const recipient=moneyProfile(t.recipient_handle)||{};
+  const recipientIdentity=xIdentity(t.recipient_handle,{...t,...recipient});
   const chain=t.chain||null;
   const recipientPct=fmtNum((state.brand.recipientShareBps||8000)/100);
   const protocolPct=fmtNum((state.brand.protocolShareBps||2000)/100);
@@ -2165,8 +2182,8 @@ async function tokenPage(mint){
         </div>
 
         <a class="token-detail-recipient" href="#/profile/${encodeURIComponent(t.recipient_handle||'')}">
-          ${recipientAvatar(t.recipient_handle||'',recipient.display_name||t.recipient_handle||'X',true,recipient.avatar_url||'')}
-          <div><span>X Money sent to</span><b>@${esc(t.recipient_handle||'—')}</b></div>
+          ${recipientAvatar(t.recipient_handle||'',recipientIdentity.name,true,recipientIdentity.avatarUrl)}
+          <div><span>X Money sent to</span><b class="x-recipient-name">${esc(recipientIdentity.name)}${xVerifiedBadge(recipientIdentity.verified,recipientIdentity.verifiedType,'x-verified-compact')}</b></div>
           <i>→</i>
         </a>
       </div>
@@ -2333,7 +2350,7 @@ async function profilePage(handle){
         ${recipientAvatar(cleanHandle,display,true,r.avatar_url||'')}
         <div class="profile-v1-name">
           <p>X Profile</p>
-          <h1>${esc(display)}</h1>
+          <h1 class="x-recipient-name">${esc(display)}${xVerifiedBadge(r.verified,r.verified_type)}</h1>
           <span>@${esc(cleanHandle)}</span>
         </div>
         ${xUrl?`<a class="profile-x-link" href="${xUrl}" target="_blank" rel="noopener">View on X ↗</a>`:''}
@@ -2409,47 +2426,109 @@ function adminPage(){return `<main><section class="wrap launch-page"><p class="e
 function launchModal(){return `<div class="modal-bg hidden" id="launchModal"><div class="modal"><button class="modal-x" data-action="close-launch">×</button><p class="eyebrow">Launch</p><h2>Route creator fees</h2><p>Create the token on pump.fun, name a recipient in metadata, then permanently route 100% of creator fees to the configured treasury.</p><a class="modal-option" href="#/launch"><span class="option-icon">●</span><div><b>Launch / route token</b><small>Build and sign the fee-sharing transaction</small></div><span>→</span></a><a class="modal-option" href="#/docs"><span class="option-icon">⌘</span><div><b>Read integration docs</b><small>Indexer, claims, ledger and payouts</small></div><span>→</span></a></div></div>`;}
 function loadingPage(){return `<main><section class="wrap launch-page"><p class="eyebrow">Loading</p><h1>Syncing ledger…</h1></section></main>`;}
 function errorPage(err){return `<main><section class="wrap launch-page"><p class="eyebrow">Error</p><h1>Could not load</h1><p class="lead">${esc(err?.message||err)}</p><button class="btn-light" data-action="reload">Retry</button></section></main>`;}
-/* home-top-x-live-identity-v22-2 */
-async function hydrateHomeXProfiles(home){
-  const profiles=Array.isArray(home?.profiles)?home.profiles:[];
-  if(!profiles.length)return home;
+/* sitewide-x-live-identity-v23 */
+function identityHandle(row){
+  return String(row?.handle||row?.recipient_handle||row?.profile||row?.to||'').replace(/^@/,'').trim();
+}
 
-  const hydrated=await Promise.all(profiles.map(async(p,index)=>{
-    if(index>=4)return p;
-    const handle=String(p?.handle||'').replace(/^@/,'').trim();
-    if(!/^[A-Za-z0-9_]{1,15}$/.test(handle))return p;
+function applyLiveXIdentity(row,identity){
+  if(!row||!identity)return row;
+  const isToken=!!(row.mint||row.contract||row.symbol);
+  const base={
+    ...row,
+    recipient_display_name:identity.name||row.recipient_display_name||'',
+    recipient_avatar_url:identity.profileImageUrl||row.recipient_avatar_url||'',
+    recipient_verified:identity.verified?1:0,
+    recipient_verified_type:identity.verifiedType||row.recipient_verified_type||''
+  };
+  if(isToken)return base;
+  return {
+    ...base,
+    display_name:identity.name||row.display_name||identity.username,
+    avatar_url:identity.profileImageUrl||row.avatar_url||'',
+    banner_url:identity.profileBannerUrl||row.banner_url||'',
+    verified:identity.verified?1:0,
+    verified_type:identity.verifiedType||row.verified_type||''
+  };
+}
 
-    try{
-      const x=await api(`/api/x/profile?username=${encodeURIComponent(handle)}`);
-      const verifiedType=String(x?.verifiedType||'').toLowerCase();
-      const verified=Boolean(x?.verified)||
-        ['blue','business','government'].includes(verifiedType);
+function applyIdentityList(rows,map){
+  return (rows||[]).map(row=>{
+    const handle=identityHandle(row).toLowerCase();
+    return handle&&map.has(handle)?applyLiveXIdentity(row,map.get(handle)):row;
+  });
+}
 
-      return {
-        ...p,
-        display_name:String(x?.name||p?.display_name||handle),
-        avatar_url:String(x?.profileImageUrl||p?.avatar_url||''),
-        banner_url:String(x?.profileBannerUrl||p?.banner_url||''),
-        verified:verified?1:0,
-        verified_type:String(x?.verifiedType||p?.verified_type||'')
-      };
-    }catch{
-      return p;
+async function hydrateSiteXData(rawHome,rawMoney,rawTokens){
+  const home=rawHome||{};
+  const money=rawMoney||{};
+  const tokenPayload=rawTokens||{tokens:[]};
+
+  const sources=[
+    ...(home.profiles||[]),
+    ...(home.tokens||[]),
+    ...(home.payments||[]),
+    ...(home.money?.recent||[]),
+    ...(home.money?.topPaid||[]),
+    ...(money.recent||[]),
+    ...(money.topPaid||[]),
+    ...(tokenPayload.tokens||[])
+  ];
+
+  const handles=[...new Set(
+    sources.map(identityHandle)
+      .filter(x=>/^[A-Za-z0-9_]{1,15}$/.test(x))
+      .map(x=>x.toLowerCase())
+  )].slice(0,100);
+
+  if(!handles.length)return {home,money,tokenPayload};
+
+  let identities=[];
+  try{
+    const out=await api(`/api/x/identities?usernames=${encodeURIComponent(handles.join(','))}`);
+    identities=Array.isArray(out?.identities)?out.identities:[];
+  }catch{}
+
+  const map=new Map(
+    identities
+      .filter(Boolean)
+      .map(x=>[String(x.username||'').toLowerCase(),x])
+      .filter(([key])=>key)
+  );
+
+  return {
+    home:{
+      ...home,
+      profiles:applyIdentityList(home.profiles,map),
+      tokens:applyIdentityList(home.tokens,map),
+      payments:applyIdentityList(home.payments,map),
+      money:home.money?{
+        ...home.money,
+        recent:applyIdentityList(home.money.recent,map),
+        topPaid:applyIdentityList(home.money.topPaid,map)
+      }:home.money
+    },
+    money:{
+      ...money,
+      recent:applyIdentityList(money.recent,map),
+      topPaid:applyIdentityList(money.topPaid,map)
+    },
+    tokenPayload:{
+      ...tokenPayload,
+      tokens:applyIdentityList(tokenPayload.tokens,map)
     }
-  }));
-
-  return {...home,profiles:hydrated};
+  };
 }
 
 async function loadBase(){
-  const [cfg,rawHome,money,tokens]=await Promise.all([
+  const [cfg,rawHome,rawMoney,rawTokens]=await Promise.all([
     api('/api/config'),
     api('/api/home'),
     api('/api/money'),
     api('/api/tokens?limit=100')
   ]);
 
-  const home=await hydrateHomeXProfiles(rawHome);
+  const hydrated=await hydrateSiteXData(rawHome,rawMoney,rawTokens);
 
   state.brand={
     ...state.brand,
@@ -2458,11 +2537,12 @@ async function loadBase(){
     heroLine2:'through X Money',
     description:'Point a token’s creator fees at any X handle and route the recipient share in dollars through your configured payout rail.'
   };
-  state.home=home;
-  state.money=money;
-  state.tokens=tokens.tokens||[];
+  state.home=hydrated.home;
+  state.money=hydrated.money;
+  state.tokens=hydrated.tokenPayload.tokens||[];
   document.title=state.brand.name;
 }
+
 async function refreshTokens(){const q=new URLSearchParams({search:state.explore.query,sort:state.explore.sort,venue:state.explore.venue,limit:'200'});const j=await api(`/api/tokens?${q}`);state.tokens=j.tokens||[];}
 async function render(){const path=(location.hash||'#/').slice(2).split('?')[0];app.innerHTML=header()+loadingPage()+launchModal();try{if(!state.home)await loadBase();let page;if(path===''||path==='/')page=homePage();else if(path==='explore'){await refreshTokens();page=explorePage();}else if(path==='money'){state.money=await api('/api/money');page=moneyPage();}else if(path==='docs')page=docsPage();else if(path==='legal')page=legalPage();else if(path==='launch')page=launchPage();else if(path==='capital-flow'){state.money=await api('/api/money');page=capitalFlowPage();}else if(path==='paid'){state.money=await api('/api/money');page=paidPage();}else if(path==='opt-out')page=optOutPage();else if(path==='admin')page=adminPage();else if(path.startsWith('token/'))page=await tokenPage(decodeURIComponent(path.slice(6)));else if(path.startsWith('profile/'))page=await profilePage(decodeURIComponent(path.slice(8)));else page=homePage();app.innerHTML=header()+page+launchModal();window.scrollTo(0,0);}catch(e){app.innerHTML=header()+errorPage(e)+launchModal();}}
 let currentLaunch=null,currentWallet=null;
@@ -3033,7 +3113,7 @@ function launchDemoAvatar(profile, extraClass=''){
 }
 
 function launchDemoVerified(show){
-  return show ? '<span class="launch-demo-verified" aria-hidden="true">✓</span>' : '';
+  return xVerifiedBadge(show,'','launch-demo-verified');
 }
 
 function launchDemoContent(scene){
