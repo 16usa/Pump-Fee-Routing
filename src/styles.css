@@ -7119,3 +7119,32 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     padding-top:24px;
   }
 }
+
+/* top-x-avatar-ring-raise-v24-3
+   Remove the outer translucent avatar ring and raise avatar/content
+   by roughly half of the previous adjustment. */
+.home-profile-feature[data-profile-layout="v22"] .home-profile-avatar{
+  bottom:-15px;
+}
+
+.home-profile-feature[data-profile-layout="v22"] .home-profile-avatar .avatar{
+  box-shadow:none !important;
+}
+
+.home-profile-feature[data-profile-layout="v22"] .home-profile-feature-body{
+  padding-top:23px;
+}
+
+@media(max-width:640px){
+  .home-profile-feature[data-profile-layout="v22"] .home-profile-avatar{
+    bottom:-14px;
+  }
+
+  .home-profile-feature[data-profile-layout="v22"] .home-profile-avatar .avatar{
+    box-shadow:none !important;
+  }
+
+  .home-profile-feature[data-profile-layout="v22"] .home-profile-feature-body{
+    padding-top:20px;
+  }
+}
