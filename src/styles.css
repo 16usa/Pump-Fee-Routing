@@ -8735,3 +8735,145 @@ body{
     z-index:10 !important;
   }
 }
+
+
+/* explore-reference-fade-v24-43
+   Match the Explore preview closer to the UsePaid reference:
+   - no full-block vignette blur
+   - blur/fade lives only INSIDE the projected preview content
+   - footer labels stay crisp above the effect
+   - lower area fades more strongly than the top */
+
+/* Neutralize the full-stage blur from earlier patch attempts. */
+.home-explore-reference-v8 .home-explore-v8-stage::before,
+.home-explore-reference-v8 .home-explore-v8-stage::after{
+  content:none !important;
+  display:none !important;
+  background:none !important;
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+  -webkit-mask-image:none !important;
+  mask-image:none !important;
+}
+
+.home-explore-reference-v8 .home-explore-v8-stage{
+  position:absolute !important;
+  inset:0 !important;
+  overflow:hidden !important;
+  isolation:isolate !important;
+}
+
+/* Keep the shared footer sharp and above the preview treatment. */
+.home-explore-reference-v8 .home-explore-v8-footer,
+.home-explore-reference-v8 .home-explore-v8-footer strong,
+.home-explore-reference-v8 .home-explore-v8-footer span{
+  position:relative !important;
+  z-index:20 !important;
+  -webkit-filter:none !important;
+  filter:none !important;
+}
+
+/* The treatment should affect only the inner preview slots. */
+.home-explore-reference-v8 .home-explore-v8-primary-slot,
+.home-explore-reference-v8 .home-explore-v8-secondary-slot{
+  position:absolute !important;
+  overflow:hidden !important;
+  isolation:isolate !important;
+}
+
+/* Soft perimeter shade like the reference. This is NOT the main blur. */
+.home-explore-reference-v8 .home-explore-v8-primary-slot::before,
+.home-explore-reference-v8 .home-explore-v8-secondary-slot::before{
+  content:"" !important;
+  position:absolute !important;
+  inset:0 !important;
+  pointer-events:none !important;
+  z-index:7 !important;
+  background:
+    radial-gradient(120% 92% at 50% 8%, rgba(10,10,10,0) 42%, rgba(10,10,10,.05) 62%, rgba(10,10,10,.12) 78%, rgba(10,10,10,.18) 100%),
+    linear-gradient(to right, rgba(10,10,10,.18) 0%, rgba(10,10,10,0) 12%, rgba(10,10,10,0) 88%, rgba(10,10,10,.16) 100%);
+}
+
+/* Main lower fade / progressive blur. Strongest at the bottom, softer upward.
+   This sits over the card internals only, not over the Explore/Open footer. */
+.home-explore-reference-v8 .home-explore-v8-primary-slot::after,
+.home-explore-reference-v8 .home-explore-v8-secondary-slot::after{
+  content:"" !important;
+  position:absolute !important;
+  left:0 !important;
+  right:0 !important;
+  bottom:0 !important;
+  height:44% !important;
+  pointer-events:none !important;
+  z-index:8 !important;
+  background:linear-gradient(
+    to top,
+    rgba(10,10,10,.86) 0%,
+    rgba(10,10,10,.66) 22%,
+    rgba(10,10,10,.34) 52%,
+    rgba(10,10,10,.14) 74%,
+    rgba(10,10,10,0) 100%
+  ) !important;
+  -webkit-backdrop-filter:blur(12px) saturate(.94) !important;
+  backdrop-filter:blur(12px) saturate(.94) !important;
+  -webkit-mask-image:linear-gradient(
+    to top,
+    #000 0%,
+    rgba(0,0,0,.98) 18%,
+    rgba(0,0,0,.88) 42%,
+    rgba(0,0,0,.56) 74%,
+    transparent 100%
+  ) !important;
+  mask-image:linear-gradient(
+    to top,
+    #000 0%,
+    rgba(0,0,0,.98) 18%,
+    rgba(0,0,0,.88) 42%,
+    rgba(0,0,0,.56) 74%,
+    transparent 100%
+  ) !important;
+}
+
+/* Keep the projected card visible and behind the treatment. */
+.home-explore-reference-v8 .home-explore-v8-primary-slot > *,
+.home-explore-reference-v8 .home-explore-v8-secondary-slot > *{
+  position:relative !important;
+  z-index:3 !important;
+}
+
+/* The shared footer should float over the lower fade, similar to the reference. */
+.home-explore-reference-v8 .home-explore-v8-footer{
+  left:18px !important;
+  right:18px !important;
+  bottom:14px !important;
+}
+
+@media(max-width:640px){
+  .home-explore-reference-v8 .home-explore-v8-primary-slot::before,
+  .home-explore-reference-v8 .home-explore-v8-secondary-slot::before{
+    background:
+      radial-gradient(124% 96% at 50% 8%, rgba(10,10,10,0) 40%, rgba(10,10,10,.05) 60%, rgba(10,10,10,.13) 78%, rgba(10,10,10,.20) 100%),
+      linear-gradient(to right, rgba(10,10,10,.16) 0%, rgba(10,10,10,0) 11%, rgba(10,10,10,0) 89%, rgba(10,10,10,.16) 100%) !important;
+  }
+
+  .home-explore-reference-v8 .home-explore-v8-primary-slot::after,
+  .home-explore-reference-v8 .home-explore-v8-secondary-slot::after{
+    height:47% !important;
+    background:linear-gradient(
+      to top,
+      rgba(10,10,10,.88) 0%,
+      rgba(10,10,10,.68) 24%,
+      rgba(10,10,10,.36) 54%,
+      rgba(10,10,10,.14) 76%,
+      rgba(10,10,10,0) 100%
+    ) !important;
+    -webkit-backdrop-filter:blur(13px) saturate(.94) !important;
+    backdrop-filter:blur(13px) saturate(.94) !important;
+  }
+
+  .home-explore-reference-v8 .home-explore-v8-footer{
+    left:14px !important;
+    right:14px !important;
+    bottom:11px !important;
+  }
+}
