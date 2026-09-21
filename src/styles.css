@@ -7374,3 +7374,19 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     margin-left: 4px;
   }
 }
+
+
+/* top-tokens-name-match-launch-fix-v24-9
+   Top Tokens recipient chip: increase only the GG name so it visually
+   matches the Launch block, while keeping the verified badge as-is. */
+.home-top-token-recipient b{
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+@media (max-width: 640px){
+  .home-top-token-recipient b{
+    font-size: 18px;
+  }
+}
