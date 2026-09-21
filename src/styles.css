@@ -8337,3 +8337,11 @@ body{
     bottom:10px !important;
   }
 }
+
+
+/* explore-remove-pump-badge-v24-34-fixed */
+.home-explore-reference-v8
+.home-explore-top-token-card[data-explore-projection]
+.home-top-token-platform{
+  display:none !important;
+}
