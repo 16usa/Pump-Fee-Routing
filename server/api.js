@@ -261,6 +261,98 @@ async function proxyXAvatar(res,handle){
 }
 
 
+/* sitewide-x-banners-v22-1 */
+async function resolveXBanner(handle){
+  const username=String(handle||'').replace(/^@/,'').trim();
+  if(!/^[A-Za-z0-9_]{1,15}$/.test(username)) return null;
+
+  const existing=db.prepare(
+    'SELECT handle,banner_url,avatar_url FROM recipients WHERE handle=? COLLATE NOCASE'
+  ).get(username);
+
+  if(existing?.banner_url) return String(existing.banner_url);
+  if(!config.xBearerToken) return null;
+
+  try{
+    const fields='id,name,username,profile_image_url,profile_banner_url,verified,verified_type';
+    const r=await fetch(
+      `https://api.x.com/2/users/by/username/${encodeURIComponent(username)}?user.fields=${encodeURIComponent(fields)}`,
+      {
+        headers:{authorization:`Bearer ${config.xBearerToken}`,accept:'application/json'},
+        signal:AbortSignal.timeout(12000)
+      }
+    );
+    if(!r.ok) return null;
+
+    const payload=await r.json().catch(()=>({}));
+    const u=payload?.data;
+    if(!u) return null;
+
+    const avatarUrl=largerXAvatar(u.profile_image_url||'');
+    const bannerUrl=String(u.profile_banner_url||'').trim();
+
+    if(existing){
+      db.prepare(`UPDATE recipients
+        SET x_user_id=COALESCE(NULLIF(?,''),x_user_id),
+            display_name=COALESCE(NULLIF(?,''),display_name),
+            avatar_url=COALESCE(NULLIF(?,''),avatar_url),
+            banner_url=COALESCE(NULLIF(?,''),banner_url),
+            verified=?,
+            verified_type=?,
+            updated_at=CURRENT_TIMESTAMP
+        WHERE handle=? COLLATE NOCASE`)
+        .run(
+          String(u.id||''),
+          String(u.name||u.username||''),
+          avatarUrl,
+          bannerUrl,
+          u.verified?1:0,
+          String(u.verified_type||''),
+          username
+        );
+    }
+
+    return bannerUrl||null;
+  }catch{
+    return null;
+  }
+}
+
+async function proxyXBanner(res,handle){
+  const target=await resolveXBanner(handle);
+  if(!target) return false;
+
+  try{
+    const r=await fetch(target,{
+      headers:{
+        accept:'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+        'user-agent':'Mozilla/5.0'
+      },
+      redirect:'follow',
+      signal:AbortSignal.timeout(12000)
+    });
+    if(!r.ok) return false;
+
+    const type=String(r.headers.get('content-type')||'').split(';')[0].trim().toLowerCase();
+    if(!type.startsWith('image/')) return false;
+
+    const bytes=Buffer.from(await r.arrayBuffer());
+    if(!bytes.length || bytes.length>8_000_000) return false;
+
+    res.writeHead(200,{
+      'content-type':type,
+      'content-length':String(bytes.length),
+      'cache-control':'public, max-age=3600, stale-while-revalidate=86400',
+      'x-content-type-options':'nosniff'
+    });
+    res.end(bytes);
+    return true;
+  }catch{
+    return false;
+  }
+}
+
+
 export async function handleApi(req,res,url){
   try{
 
@@ -278,6 +370,13 @@ export async function handleApi(req,res,url){
       if(sent) return;
       return json(res,404,{error:'X avatar not found'});
     }
+    if(req.method==='GET'&&url.pathname.startsWith('/api/x-banner/')){
+      const handle=decodeURIComponent(url.pathname.slice('/api/x-banner/'.length)).replace(/^@/,'').trim();
+      if(!/^[A-Za-z0-9_]{1,15}$/.test(handle)) return json(res,400,{error:'Invalid X username'});
+      const sent=await proxyXBanner(res,handle);
+      if(sent) return;
+      return json(res,404,{error:'X banner not found'});
+    }
     if(req.method==='GET'&&url.pathname==='/api/health') return json(res,200,{ok:true,name:config.appName,treasuryConfigured:!!config.treasuryAddress,readOnly:config.readOnlyMode,liveChain:config.liveChainTransactions,userSignedLaunch:config.userSignedLaunchEnabled,onchainDiscovery:config.onchainDiscoveryEnabled,claimWorker:!config.readOnlyMode&&config.claimWorkerEnabled&&config.liveChainTransactions,payoutWorker:!config.readOnlyMode&&config.payoutWorkerEnabled,payoutProvider:config.payoutProvider,exchangeProvider:config.exchangeProvider,indexer:getIndexerStatus()});
     if(req.method==='GET'&&url.pathname==='/api/indexer/status') return json(res,200,getIndexerStatus());
     if(req.method==='GET'&&url.pathname==='/api/config') return json(res,200,{name:config.appName,mark:config.appMark,treasuryAddress:config.treasuryAddress,recipientShareBps:config.recipientShareBps,protocolShareBps:config.protocolShareBps,readOnly:config.readOnlyMode,liveChain:config.liveChainTransactions,userSignedLaunch:config.userSignedLaunchEnabled,payoutProvider:config.payoutProvider});
@@ -291,7 +390,7 @@ export async function handleApi(req,res,url){
       const username=String(url.searchParams.get('username')||'').replace(/^@/,'').trim();
       if(!/^[A-Za-z0-9_]{1,15}$/.test(username))throw Object.assign(new Error('Invalid X username'),{statusCode:400});
       if(!config.xBearerToken)throw Object.assign(new Error('X lookup is not configured'),{statusCode:503});
-      const fields='id,name,username,profile_image_url,verified,verified_type';
+      const fields='id,name,username,profile_image_url,profile_banner_url,verified,verified_type';
       const r=await fetch(`https://api.x.com/2/users/by/username/${encodeURIComponent(username)}?user.fields=${encodeURIComponent(fields)}`,{
         headers:{authorization:`Bearer ${config.xBearerToken}`,accept:'application/json'},
         signal:AbortSignal.timeout(12000)
@@ -305,22 +404,33 @@ export async function handleApi(req,res,url){
         throw Object.assign(new Error(message),{statusCode:r.status===429?429:502});
       }
       const u=payload.data;
-      /* cache-x-profile-avatar-v13 */
+      /* cache-x-profile-avatar-v13 + x-profile-banner-v22-1 */
       const cachedAvatar=largerXAvatar(u.profile_image_url||'');
-      if(cachedAvatar){
-        db.prepare(`UPDATE recipients
-          SET x_user_id=COALESCE(NULLIF(?,''),x_user_id),
-              display_name=COALESCE(NULLIF(?,''),display_name),
-              avatar_url=?,
-              updated_at=CURRENT_TIMESTAMP
-          WHERE handle=? COLLATE NOCASE`)
-          .run(String(u.id||''),String(u.name||u.username||''),cachedAvatar,username);
-      }
+      const cachedBanner=String(u.profile_banner_url||'').trim();
+      db.prepare(`UPDATE recipients
+        SET x_user_id=COALESCE(NULLIF(?,''),x_user_id),
+            display_name=COALESCE(NULLIF(?,''),display_name),
+            avatar_url=COALESCE(NULLIF(?,''),avatar_url),
+            banner_url=COALESCE(NULLIF(?,''),banner_url),
+            verified=?,
+            verified_type=?,
+            updated_at=CURRENT_TIMESTAMP
+        WHERE handle=? COLLATE NOCASE`)
+        .run(
+          String(u.id||''),
+          String(u.name||u.username||''),
+          cachedAvatar,
+          cachedBanner,
+          u.verified?1:0,
+          String(u.verified_type||''),
+          username
+        );
       return json(res,200,{
         id:String(u.id||''),
         name:String(u.name||u.username||''),
         username:String(u.username||username),
         profileImageUrl:String(u.profile_image_url||''),
+        profileBannerUrl:cachedBanner,
         verified:Boolean(u.verified),
         verifiedType:String(u.verified_type||'')
       });

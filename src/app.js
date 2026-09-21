@@ -589,8 +589,9 @@ function homeProfileCard(p,index=0){
       </span>`
     : '';
 
-  const coverMedia=cover
-    ? `<img class="home-profile-cover-image" src="${esc(cover)}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="home-profile-cover-fallback" style="display:none"><span>${esc(initials(name))}</span></div>`
+  const coverSource=cover||(handle?`/api/x-banner/${encodeURIComponent(handle)}`:'');
+  const coverMedia=coverSource
+    ? `<img class="home-profile-cover-image" src="${esc(coverSource)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="home-profile-cover-fallback" style="display:none"><span>${esc(initials(name))}</span></div>`
     : `<div class="home-profile-cover-fallback"><span>${esc(initials(name))}</span></div>`;
 
   return `<a class="home-profile-feature" data-profile-layout="v22" href="#/profile/${encodeURIComponent(handle)}">

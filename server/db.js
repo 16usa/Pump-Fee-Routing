@@ -17,6 +17,9 @@ export function migrate() {
       display_name TEXT,
       bio TEXT,
       avatar_url TEXT,
+      banner_url TEXT,
+      verified INTEGER NOT NULL DEFAULT 0,
+      verified_type TEXT,
       opted_out INTEGER NOT NULL DEFAULT 0,
       opt_out_at TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -167,6 +170,14 @@ export function migrate() {
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  /* x-profile-banner-columns-v22-1 */
+  const recipientColumns=new Set(
+    db.prepare('PRAGMA table_info(recipients)').all().map(row=>String(row.name||''))
+  );
+  if(!recipientColumns.has('banner_url')) db.exec('ALTER TABLE recipients ADD COLUMN banner_url TEXT');
+  if(!recipientColumns.has('verified')) db.exec('ALTER TABLE recipients ADD COLUMN verified INTEGER NOT NULL DEFAULT 0');
+  if(!recipientColumns.has('verified_type')) db.exec('ALTER TABLE recipients ADD COLUMN verified_type TEXT');
 }
 
 function upsertRecipient(handle, displayName = null) {
