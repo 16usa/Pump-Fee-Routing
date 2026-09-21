@@ -6467,15 +6467,15 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 }
 
 .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient>i{
-  width:21px;
-  height:21px;
-  flex:0 0 21px;
+  width:22px;
+  height:22px;
+  flex:0 0 22px;
   display:grid;
   place-items:center;
   border-radius:50%;
   background:#171717;
   color:#d8d8d8;
-  font-size:10px;
+  font-size:11px;
   line-height:1;
   font-style:normal;
   font-weight:750;
@@ -6530,10 +6530,10 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   }
 
   .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient>i{
-    width:18px;
-    height:18px;
-    flex-basis:18px;
-    font-size:9px;
+    width:19px;
+    height:19px;
+    flex-basis:19px;
+    font-size:10px;
   }
 
   .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient .avatar{
@@ -7402,5 +7402,23 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 @media(max-width:640px){
   .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient>b.x-recipient-name{
     font-size:12px !important;
+  }
+}
+
+
+/* top-tokens-money-mark-match-avatar-v24-11 */
+.home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient>i.home-top-token-money-mark{
+  width:22px !important;
+  height:22px !important;
+  flex:0 0 22px !important;
+  font-size:11px !important;
+}
+
+@media(max-width:640px){
+  .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient>i.home-top-token-money-mark{
+    width:19px !important;
+    height:19px !important;
+    flex-basis:19px !important;
+    font-size:10px !important;
   }
 }
