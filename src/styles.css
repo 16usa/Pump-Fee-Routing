@@ -7271,3 +7271,75 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     flex-basis: 14px;
   }
 }
+
+
+/* top-tokens-name-dollar-scale-v24-7
+   Top Tokens: make the recipient name and the left dollar mark scale up
+   to match the enlarged avatar/chip more proportionally. */
+.home-top-token-recipient{
+  gap: 9px;
+  min-height: 46px;
+  padding: 6px 14px 6px 10px;
+}
+
+.home-top-token-recipient .home-top-token-money-mark{
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  font-size: 15px;
+}
+
+.home-top-token-recipient .avatar,
+.home-top-token-recipient .recipient-avatar,
+.home-top-token-recipient .recipient-avatar-wrap{
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+}
+
+.home-top-token-recipient b{
+  font-size: 22px;
+  line-height: 1;
+}
+
+.home-top-token-recipient .x-verified-badge.x-verified-compact{
+  width: 16px;
+  height: 16px;
+  flex-basis: 16px;
+  margin-left: 5px;
+}
+
+@media (max-width: 640px){
+  .home-top-token-recipient{
+    gap: 8px;
+    min-height: 42px;
+    padding: 5px 12px 5px 9px;
+  }
+
+  .home-top-token-recipient .home-top-token-money-mark{
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    font-size: 14px;
+  }
+
+  .home-top-token-recipient .avatar,
+  .home-top-token-recipient .recipient-avatar,
+  .home-top-token-recipient .recipient-avatar-wrap{
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+  }
+
+  .home-top-token-recipient b{
+    font-size: 20px;
+  }
+
+  .home-top-token-recipient .x-verified-badge.x-verified-compact{
+    width: 15px;
+    height: 15px;
+    flex-basis: 15px;
+  }
+}
