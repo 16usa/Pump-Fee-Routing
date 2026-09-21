@@ -7422,3 +7422,46 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     font-size:10px !important;
   }
 }
+
+
+/* top-tokens-avatar-dollar-conflict-fix-v24-12
+   Fix the real conflict: the v21-specific selectors were still forcing
+   avatar + money circle back down to 22/19px.
+   Force BOTH to the intended enlarged size at the same specificity. */
+.home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient>i.home-top-token-money-mark{
+  width:30px !important;
+  height:30px !important;
+  min-width:30px !important;
+  flex:0 0 30px !important;
+  font-size:15px !important;
+}
+
+.home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient .avatar.x-recipient-avatar{
+  width:30px !important;
+  height:30px !important;
+  min-width:30px !important;
+  min-height:30px !important;
+  flex:0 0 30px !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+
+@media(max-width:640px){
+  .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient>i.home-top-token-money-mark{
+    width:28px !important;
+    height:28px !important;
+    min-width:28px !important;
+    flex:0 0 28px !important;
+    font-size:14px !important;
+  }
+
+  .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient .avatar.x-recipient-avatar{
+    width:28px !important;
+    height:28px !important;
+    min-width:28px !important;
+    min-height:28px !important;
+    flex:0 0 28px !important;
+    border:0 !important;
+    box-shadow:none !important;
+  }
+}
