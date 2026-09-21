@@ -505,7 +505,18 @@ function homeTopTokenCard(t){
   return `<a class="home-top-token-card" data-top-token-layout="v21" href="#/token/${encodeURIComponent(mint)}">
     <div class="home-top-token-media">
       ${tokenMedia(t,'home-top-token-fallback')}
-      <div class="home-top-token-platform">${platformBadge(t.platform||'Pump')}</div>
+      <div class="home-top-token-platform" data-top-token-pump-logo="v21-1" aria-label="${esc(t.platform||'Pump')}">
+        ${String(t.platform||'Pump').toLowerCase().includes('pump')
+          ? `<span class="home-top-token-pump-logo" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="presentation" focusable="false">
+                <g transform="rotate(-42 12 12)">
+                  <rect x="7" y="3" width="10" height="18" rx="5" fill="#f2f2f2"/>
+                  <path d="M7 12h10v4a5 5 0 0 1-5 5 5 5 0 0 1-5-5v-4Z" fill="#63d7a4"/>
+                </g>
+              </svg>
+            </span>`
+          : platformBadge(t.platform||'Pump')}
+      </div>
       <div class="home-top-token-age">${esc(ageText||'')}</div>
       <div class="home-top-token-recipient">
         <i class="home-top-token-money-mark">$</i>
