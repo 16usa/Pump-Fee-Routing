@@ -7664,3 +7664,62 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     height:auto !important;
   }
 }
+
+
+/* home-pager-spread-left-v24-21
+   Spread pager items farther apart while keeping the right arrow visually in place.
+   The wider pager block extends leftward: right arrow stays at the right edge,
+   page number shifts left, and left arrow shifts further left proportionally. */
+.home-top-token-pager,
+.home-top-profiles-pager,
+.home-recent-payments-pager,
+.home-most-payments-pager,
+.home-off-pager,
+.home-on-pager{
+  display:grid !important;
+  grid-template-columns:1fr 1fr 1fr !important;
+  align-items:center !important;
+  justify-items:center !important;
+  width:92px !important;
+  min-width:92px !important;
+  margin-left:auto !important;
+}
+
+.home-top-token-pager > :first-child,
+.home-top-profiles-pager > :first-child,
+.home-recent-payments-pager > :first-child,
+.home-most-payments-pager > :first-child,
+.home-off-pager > :first-child,
+.home-on-pager > :first-child{
+  justify-self:start !important;
+}
+
+.home-top-token-pager > :nth-child(2),
+.home-top-profiles-pager > :nth-child(2),
+.home-recent-payments-pager > :nth-child(2),
+.home-most-payments-pager > :nth-child(2),
+.home-off-pager > :nth-child(2),
+.home-on-pager > :nth-child(2){
+  justify-self:center !important;
+}
+
+.home-top-token-pager > :last-child,
+.home-top-profiles-pager > :last-child,
+.home-recent-payments-pager > :last-child,
+.home-most-payments-pager > :last-child,
+.home-off-pager > :last-child,
+.home-on-pager > :last-child{
+  justify-self:end !important;
+}
+
+@media(max-width:640px){
+  .home-top-token-pager,
+  .home-top-profiles-pager,
+  .home-recent-payments-pager,
+  .home-most-payments-pager,
+  .home-off-pager,
+  .home-on-pager{
+    width:84px !important;
+    min-width:84px !important;
+  }
+}
