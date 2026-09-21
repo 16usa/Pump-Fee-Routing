@@ -510,7 +510,7 @@ function homeTopTokenCard(t){
       <div class="home-top-token-recipient">
         <i class="home-top-token-money-mark">$</i>
         ${handle?recipientAvatar(handle,handle,false,''):avatar(t.symbol||'T')}
-        <span>${handle?esc(handle.replace(/^@/,'')):'Recipient'}</span>
+        <b>${handle?esc(handle.replace(/^@/,'')):'Recipient'}</b>
       </div>
     </div>
     <div class="home-top-token-body">
