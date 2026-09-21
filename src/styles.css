@@ -7845,3 +7845,62 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     line-height:1 !important;
   }
 }
+
+
+/* home-hero-cta-match-header-launch-v24-26
+   Make the hero CTA text match the header Launch button size. */
+.home-hero-actions button,
+.home-hero-actions a,
+.home-hero-ctas button,
+.home-hero-ctas a,
+.hero-actions button,
+.hero-actions a,
+.hero-ctas button,
+.hero-ctas a,
+.home-actions button,
+.home-actions a,
+.home-cta-row button,
+.home-cta-row a,
+.home-hero button[href],
+.home-hero a[href] {
+  font-size: 16px !important;
+  line-height: 1.15 !important;
+  font-weight: 600 !important;
+}
+
+.home-hero-actions a svg,
+.home-hero-actions button svg,
+.home-hero-ctas a svg,
+.home-hero-ctas button svg,
+.hero-actions a svg,
+.hero-actions button svg,
+.hero-ctas a svg,
+.hero-ctas button svg,
+.home-actions a svg,
+.home-actions button svg,
+.home-cta-row a svg,
+.home-cta-row button svg,
+.home-hero a[href] svg,
+.home-hero button[href] svg {
+  width: 1em !important;
+  height: 1em !important;
+}
+
+@media (max-width: 640px) {
+  .home-hero-actions button,
+  .home-hero-actions a,
+  .home-hero-ctas button,
+  .home-hero-ctas a,
+  .hero-actions button,
+  .hero-actions a,
+  .hero-ctas button,
+  .hero-ctas a,
+  .home-actions button,
+  .home-actions a,
+  .home-cta-row button,
+  .home-cta-row a,
+  .home-hero button[href],
+  .home-hero a[href] {
+    font-size: 16px !important;
+  }
+}
