@@ -7560,3 +7560,54 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     height:auto !important;
   }
 }
+
+
+/* home-pagers-match-docs-open-v24-19
+   New reference = Docs / Open footer text.
+   Footer reference is 13px desktop and 12px mobile.
+   Make page number and both arrows the SAME size in all requested sections. */
+.home-top-token-pager,
+.home-top-profiles-pager,
+.home-recent-payments-pager,
+.home-most-payments-pager,
+.home-off-pager,
+.home-on-pager{
+  font-size:13px !important;
+  line-height:1 !important;
+}
+
+.home-top-token-pager button,
+.home-top-profiles-pager button,
+.home-recent-payments-pager button,
+.home-most-payments-pager button,
+.home-off-pager button,
+.home-on-pager button{
+  font-size:13px !important;
+  line-height:1 !important;
+  width:auto !important;
+  height:auto !important;
+}
+
+@media(max-width:640px){
+  .home-top-token-pager,
+  .home-top-profiles-pager,
+  .home-recent-payments-pager,
+  .home-most-payments-pager,
+  .home-off-pager,
+  .home-on-pager{
+    font-size:12px !important;
+    line-height:1 !important;
+  }
+
+  .home-top-token-pager button,
+  .home-top-profiles-pager button,
+  .home-recent-payments-pager button,
+  .home-most-payments-pager button,
+  .home-off-pager button,
+  .home-on-pager button{
+    font-size:12px !important;
+    line-height:1 !important;
+    width:auto !important;
+    height:auto !important;
+  }
+}
