@@ -8243,10 +8243,10 @@ body{
    The card ends above the shared Explore/Open footer with a clean gap.
    Right side remains the static second-image magazine crop. */
 .home-explore-reference-v8 .home-explore-v8-primary-slot{
-  left:2.5% !important;
-  top:4% !important;
-  bottom:54px !important;
-  width:48% !important;
+  left:0 !important;
+  top:0 !important;
+  bottom:12px !important;
+  width:56% !important;
   height:auto !important;
   z-index:4 !important;
   display:flex !important;
@@ -8290,9 +8290,9 @@ body{
 
 .home-explore-reference-v8 .home-explore-v8-secondary-slot{
   right:0 !important;
-  top:14% !important;
-  bottom:54px !important;
-  width:33% !important;
+  top:12% !important;
+  bottom:12px !important;
+  width:30% !important;
   height:auto !important;
   z-index:3 !important;
 }
@@ -8315,10 +8315,10 @@ body{
 
 @media(max-width:640px){
   .home-explore-reference-v8 .home-explore-v8-primary-slot{
-    left:2.5% !important;
-    top:3.5% !important;
-    bottom:46px !important;
-    width:48% !important;
+    left:0 !important;
+    top:0 !important;
+    bottom:10px !important;
+    width:56% !important;
   }
 
   .home-explore-reference-v8 .home-explore-top-token-card[data-top-token-layout="v21"][data-explore-projection="top-token-v24-32"]{
@@ -8326,9 +8326,9 @@ body{
   }
 
   .home-explore-reference-v8 .home-explore-v8-secondary-slot{
-    top:14% !important;
-    bottom:46px !important;
-    width:33% !important;
+    top:12% !important;
+    bottom:10px !important;
+    width:30% !important;
   }
 
   .home-explore-reference-v8 .home-explore-v8-footer{
