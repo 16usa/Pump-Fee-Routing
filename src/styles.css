@@ -7465,3 +7465,47 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     box-shadow:none !important;
   }
 }
+
+
+/* home-pagers-match-fees-route-v24-16
+   Match all Home section pager text/arrows to FEES ROUTE TO typography size:
+   11px desktop, 9px mobile. */
+.home-top-token-pager,
+.home-top-profiles-pager,
+.home-recent-payments-pager,
+.home-most-payments-pager,
+.home-off-pager,
+.home-on-pager{
+  font-size:11px !important;
+  line-height:1 !important;
+}
+
+.home-top-token-pager button,
+.home-top-profiles-pager button,
+.home-recent-payments-pager button,
+.home-most-payments-pager button,
+.home-off-pager button,
+.home-on-pager button{
+  font-size:11px !important;
+  line-height:1 !important;
+}
+
+@media(max-width:640px){
+  .home-top-token-pager,
+  .home-top-profiles-pager,
+  .home-recent-payments-pager,
+  .home-most-payments-pager,
+  .home-off-pager,
+  .home-on-pager{
+    font-size:9px !important;
+  }
+
+  .home-top-token-pager button,
+  .home-top-profiles-pager button,
+  .home-recent-payments-pager button,
+  .home-most-payments-pager button,
+  .home-off-pager button,
+  .home-on-pager button{
+    font-size:9px !important;
+  }
+}
