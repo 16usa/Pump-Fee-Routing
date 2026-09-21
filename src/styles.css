@@ -9546,3 +9546,12 @@ body{
     font-size:10px !important;
   }
 }
+
+
+/* hero-docs-text-match-launch-v24-49
+   Match the dark Read the docs button text size to the white Launch a token CTA. */
+@media(max-width:640px){
+  .home-reference-v1 .home-hero .text-link{
+    font-size:11px !important;
+  }
+}
