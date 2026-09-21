@@ -7169,3 +7169,18 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     padding-top:24px;
   }
 }
+
+
+/* top-x-avatar-size-v24-5
+   Slightly enlarge the Top X avatar while keeping the current position. */
+.home-profile-feature[data-profile-layout="v22"] .home-profile-avatar .avatar{
+  width:86px;
+  height:86px;
+}
+
+@media(max-width:640px){
+  .home-profile-feature[data-profile-layout="v22"] .home-profile-avatar .avatar{
+    width:76px;
+    height:76px;
+  }
+}
