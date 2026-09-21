@@ -9506,3 +9506,10 @@ body{
     bottom:11px !important;
   }
 }
+
+
+/* launch-preview-search-border-white-v24-47
+   Match the Launch preview search outline to the exact white used by .btn-light. */
+.home-v2-launch-card[data-launch-reference="v18"] .home-v2-launch-search{
+  border-color:#fff !important;
+}
