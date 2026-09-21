@@ -9629,11 +9629,19 @@ body{
 .home-reference-v1 .home-hero .hero-copy h1 .hero-x-logo{
   width:.72em !important;
   height:.74em !important;
-  vertical-align:-.10em !important;
+  vertical-align:-.035em !important;
   margin:0 .025em !important;
 }
 
 .home-reference-v1 .home-hero .hero-copy h1 .hero-x-logo svg{
   width:100% !important;
   height:100% !important;
+}
+
+
+/* hero-x-logo-raise-baseline-v24-54
+   Raise the inline X mark slightly so its bottom sits closer to the text baseline.
+   Size stays unchanged; this is only a vertical position correction. */
+.home-reference-v1 .home-hero .hero-copy h1 .hero-x-logo{
+  vertical-align:-.035em !important;
 }
