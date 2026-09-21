@@ -7938,3 +7938,301 @@ body{
 .home-page .topbar{
   background:rgba(10,10,10,.90) !important;
 }
+
+
+/* explore-magazine-static-v24-31
+   Static editorial/store treatment for the existing Explore card.
+   Structure and data remain unchanged. Maximum: the two existing token images. */
+.home-reference-v2-previews
+.home-preview-card.home-ref-explore-card.home-explore-reference-v8{
+  aspect-ratio:1.34 / 1 !important;
+  background:#171717 !important;
+  border:1px solid #343434 !important;
+  border-radius:20px !important;
+  box-shadow:0 22px 54px rgba(0,0,0,.24) !important;
+  overflow:hidden !important;
+}
+
+.home-explore-reference-v8,
+.home-explore-reference-v8 *{
+  animation:none !important;
+  transition:none !important;
+}
+
+/* Existing two-image composition only. */
+.home-explore-reference-v8 .home-explore-v8-primary-slot{
+  left:0 !important;
+  top:0 !important;
+  bottom:0 !important;
+  width:68% !important;
+  z-index:2 !important;
+}
+
+.home-explore-reference-v8 .home-explore-v8-secondary-slot{
+  right:0 !important;
+  top:11% !important;
+  bottom:11% !important;
+  width:30% !important;
+  height:auto !important;
+  z-index:3 !important;
+}
+
+/* Left card: same structure, more editorial spacing. */
+.home-explore-reference-v8
+.home-explore-v8-primary-card[data-explore-card-info="v15"]{
+  grid-template-rows:minmax(0,1fr) 64px !important;
+  padding:12px 12px 42px !important;
+  border:0 !important;
+  border-radius:0 18px 18px 0 !important;
+  background:#0d0d0d !important;
+  box-shadow:none !important;
+}
+
+.home-explore-reference-v8
+.home-explore-v8-primary-card[data-explore-card-info="v15"]
+> .home-explore-v8-media{
+  position:relative !important;
+  border:0 !important;
+  border-radius:16px !important;
+  overflow:hidden !important;
+  background:#0A0A0A !important;
+  isolation:isolate !important;
+}
+
+.home-explore-reference-v8 .home-explore-v8-primary-slot .home-explore-v8-art{
+  object-fit:cover !important;
+  object-position:center 42% !important;
+  filter:saturate(.84) contrast(1.04) brightness(.96) !important;
+  transform:scale(1.015) !important;
+}
+
+/* Magazine-style soft edge treatment, no new content. */
+.home-explore-reference-v8
+.home-explore-v8-primary-card[data-explore-card-info="v15"]
+> .home-explore-v8-media::after{
+  content:"" !important;
+  position:absolute !important;
+  inset:0 !important;
+  z-index:2 !important;
+  pointer-events:none !important;
+  border-radius:inherit !important;
+  background:
+    linear-gradient(90deg,
+      rgba(10,10,10,.26) 0%,
+      rgba(10,10,10,0) 18%,
+      rgba(10,10,10,0) 78%,
+      rgba(10,10,10,.18) 100%),
+    linear-gradient(180deg,
+      rgba(10,10,10,.12) 0%,
+      rgba(10,10,10,0) 24%,
+      rgba(10,10,10,.04) 64%,
+      rgba(10,10,10,.58) 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.035),
+    inset 0 -52px 62px -36px rgba(0,0,0,.72) !important;
+}
+
+/* Existing age badge becomes a quiet editorial tag. */
+.home-explore-reference-v8
+.home-explore-v8-primary-card[data-explore-card-info="v15"]
+.home-top-token-age{
+  top:9px !important;
+  right:9px !important;
+  z-index:5 !important;
+  border:1px solid rgba(255,255,255,.13) !important;
+  background:rgba(10,10,10,.76) !important;
+  backdrop-filter:blur(10px) !important;
+  -webkit-backdrop-filter:blur(10px) !important;
+}
+
+/* Existing recipient pill: static black-glass capsule. */
+.home-explore-reference-v8
+.home-explore-v8-primary-card[data-explore-card-info="v15"]
+.home-explore-v8-recipient{
+  left:10px !important;
+  bottom:10px !important;
+  z-index:5 !important;
+  border:1px solid rgba(255,255,255,.14) !important;
+  background:rgba(8,8,8,.90) !important;
+  box-shadow:0 8px 24px rgba(0,0,0,.25) !important;
+  backdrop-filter:blur(10px) !important;
+  -webkit-backdrop-filter:blur(10px) !important;
+}
+
+/* Keep the existing information, but give it magazine typography. */
+.home-explore-reference-v8
+.home-explore-v8-primary-card[data-explore-card-info="v15"]
+> .home-explore-v8-copy{
+  align-content:center !important;
+  gap:5px !important;
+  padding:9px 2px 10px !important;
+  border:0 !important;
+  background:#0d0d0d !important;
+}
+
+.home-explore-reference-v8
+.home-explore-v8-primary-card[data-explore-card-info="v15"]
+.home-explore-v8-title strong{
+  font-family:Georgia,"Times New Roman",serif !important;
+  font-size:15px !important;
+  line-height:1 !important;
+  font-weight:500 !important;
+  letter-spacing:-.015em !important;
+  color:#f2f0ec !important;
+}
+
+.home-explore-reference-v8
+.home-explore-v8-primary-card[data-explore-card-info="v15"]
+.home-explore-v8-title span{
+  color:#747474 !important;
+  font-size:9px !important;
+  letter-spacing:.06em !important;
+}
+
+.home-explore-reference-v8
+.home-explore-v8-primary-card[data-explore-card-info="v15"]
+.home-explore-v8-stats[data-explore-metrics="v15-3-1"] > span,
+.home-explore-reference-v8
+.home-explore-v8-primary-card[data-explore-card-info="v15"]
+.home-explore-v8-stats[data-explore-metrics="v15-3-1"] > b{
+  font-size:12px !important;
+  font-weight:600 !important;
+  color:#ececec !important;
+}
+
+/* Right image: no extra info, just a narrow editorial crop. */
+.home-explore-reference-v8 .home-explore-v8-secondary-card{
+  inset:0 !important;
+  border:0 !important;
+  border-radius:18px 0 0 18px !important;
+  overflow:hidden !important;
+  background:#0A0A0A !important;
+  box-shadow:-12px 0 34px rgba(0,0,0,.18) !important;
+}
+
+.home-explore-reference-v8 .home-explore-v8-secondary-slot .home-explore-v8-art{
+  object-fit:cover !important;
+  object-position:52% center !important;
+  filter:grayscale(1) saturate(.15) contrast(1.08) brightness(.58) !important;
+  transform:scale(1.07) !important;
+}
+
+.home-explore-reference-v8 .home-explore-v8-secondary-shade{
+  background:
+    linear-gradient(90deg,rgba(23,23,23,.62) 0%,rgba(10,10,10,.06) 42%,rgba(10,10,10,.22) 100%),
+    linear-gradient(180deg,rgba(10,10,10,.12) 0%,rgba(10,10,10,.04) 50%,rgba(10,10,10,.48) 100%) !important;
+}
+
+/* Fade the whole composition into the card color at top/bottom. */
+.home-explore-reference-v8 .home-explore-v8-bottom-shade{
+  left:0 !important;
+  right:0 !important;
+  bottom:0 !important;
+  height:21% !important;
+  z-index:7 !important;
+  background:linear-gradient(
+    180deg,
+    rgba(23,23,23,0) 0%,
+    rgba(23,23,23,.38) 42%,
+    rgba(23,23,23,.86) 78%,
+    #171717 100%
+  ) !important;
+}
+
+.home-explore-reference-v8 .home-explore-v8-stage::after{
+  content:"" !important;
+  position:absolute !important;
+  left:0 !important;
+  right:0 !important;
+  top:0 !important;
+  height:14% !important;
+  z-index:6 !important;
+  pointer-events:none !important;
+  background:linear-gradient(
+    180deg,
+    #171717 0%,
+    rgba(23,23,23,.58) 35%,
+    rgba(23,23,23,0) 100%
+  ) !important;
+}
+
+/* Keep the existing Explore / Open footer, no additional UI. */
+.home-explore-reference-v8 .home-explore-v8-footer{
+  left:18px !important;
+  right:18px !important;
+  bottom:15px !important;
+  z-index:9 !important;
+}
+
+.home-explore-reference-v8 .home-explore-v8-footer strong,
+.home-explore-reference-v8 .home-explore-v8-footer span{
+  font-size:12px !important;
+  font-weight:450 !important;
+  color:#858585 !important;
+}
+
+@media(max-width:640px){
+  .home-reference-v2-previews
+  .home-preview-card.home-ref-explore-card.home-explore-reference-v8{
+    border-radius:16px !important;
+  }
+
+  .home-explore-reference-v8 .home-explore-v8-primary-slot{
+    width:68% !important;
+  }
+
+  .home-explore-reference-v8 .home-explore-v8-secondary-slot{
+    top:13% !important;
+    bottom:12% !important;
+    width:29% !important;
+  }
+
+  .home-explore-reference-v8
+  .home-explore-v8-primary-card[data-explore-card-info="v15"]{
+    grid-template-rows:minmax(0,1fr) 54px !important;
+    padding:9px 9px 36px !important;
+    border-radius:0 14px 14px 0 !important;
+  }
+
+  .home-explore-reference-v8
+  .home-explore-v8-primary-card[data-explore-card-info="v15"]
+  > .home-explore-v8-media{
+    border-radius:12px !important;
+  }
+
+  .home-explore-reference-v8
+  .home-explore-v8-primary-card[data-explore-card-info="v15"]
+  .home-explore-v8-title strong{
+    font-size:11px !important;
+  }
+
+  .home-explore-reference-v8
+  .home-explore-v8-primary-card[data-explore-card-info="v15"]
+  .home-explore-v8-title span{
+    font-size:7px !important;
+  }
+
+  .home-explore-reference-v8
+  .home-explore-v8-primary-card[data-explore-card-info="v15"]
+  .home-explore-v8-stats[data-explore-metrics="v15-3-1"] > span,
+  .home-explore-reference-v8
+  .home-explore-v8-primary-card[data-explore-card-info="v15"]
+  .home-explore-v8-stats[data-explore-metrics="v15-3-1"] > b{
+    font-size:10px !important;
+  }
+
+  .home-explore-reference-v8 .home-explore-v8-secondary-card{
+    border-radius:14px 0 0 14px !important;
+  }
+
+  .home-explore-reference-v8 .home-explore-v8-footer{
+    left:12px !important;
+    right:12px !important;
+    bottom:11px !important;
+  }
+
+  .home-explore-reference-v8 .home-explore-v8-footer strong,
+  .home-explore-reference-v8 .home-explore-v8-footer span{
+    font-size:10px !important;
+  }
+}
