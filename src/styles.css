@@ -7783,3 +7783,50 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     min-width:118px !important;
   }
 }
+
+
+/* top-tokens-inner-avatar-downsize-v24-24
+   Top Tokens: slightly reduce the recipient avatar inside the pill,
+   make the left dollar circle the same size, and reduce the dollar
+   glyph proportionally. */
+.home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient .avatar,
+.home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient .avatar.x-recipient-avatar,
+.home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient .recipient-avatar,
+.home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient .recipient-avatar-wrap,
+.home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient > i.home-top-token-money-mark{
+  width:27px !important;
+  height:27px !important;
+  min-width:27px !important;
+  min-height:27px !important;
+  flex:0 0 27px !important;
+}
+
+.home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient > i.home-top-token-money-mark{
+  font-size:13px !important;
+}
+
+.home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient .avatar,
+.home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient .avatar.x-recipient-avatar,
+.home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient .recipient-avatar,
+.home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient .recipient-avatar-wrap{
+  border:0 !important;
+  box-shadow:none !important;
+}
+
+@media(max-width:640px){
+  .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient .avatar,
+  .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient .avatar.x-recipient-avatar,
+  .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient .recipient-avatar,
+  .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient .recipient-avatar-wrap,
+  .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient > i.home-top-token-money-mark{
+    width:25px !important;
+    height:25px !important;
+    min-width:25px !important;
+    min-height:25px !important;
+    flex:0 0 25px !important;
+  }
+
+  .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient > i.home-top-token-money-mark{
+    font-size:12px !important;
+  }
+}
