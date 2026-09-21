@@ -9555,3 +9555,25 @@ body{
     font-size:11px !important;
   }
 }
+
+
+/* hero-cta-typography-unify-v24-50
+   Resolve accumulated mobile font-size conflicts by defining BOTH hero CTAs
+   from one final shared typography rule. Visual colors/backgrounds stay separate. */
+.home-reference-v1 .home-hero .btn-light,
+.home-reference-v1 .home-hero .text-link{
+  font-family:inherit !important;
+  font-size:13px !important;
+  line-height:normal !important;
+  font-weight:700 !important;
+  letter-spacing:0 !important;
+}
+
+@media(max-width:640px){
+  .home-reference-v1 .home-hero .btn-light,
+  .home-reference-v1 .home-hero .text-link{
+    font-size:10px !important;
+    line-height:normal !important;
+    font-weight:700 !important;
+  }
+}
