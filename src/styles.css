@@ -6550,3 +6550,50 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   }
 }
 
+
+/* top-token-time-badge-v21-1 */
+
+/*
+  Scope: Top Tokens card only.
+  Make the age/time pill the same visual size and typography as the Pump pill.
+*/
+
+.home-top-token-card[data-top-token-layout="v21"] .home-top-token-platform,
+.home-top-token-card[data-top-token-layout="v21"] .home-top-token-age{
+  box-sizing:border-box;
+  width:46px;
+  min-width:46px;
+  height:26px;
+  min-height:26px;
+  padding:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#d1d1d1;
+  font-size:8px;
+  line-height:1;
+  font-weight:400;
+  letter-spacing:0;
+  white-space:nowrap;
+}
+
+.home-top-token-card[data-top-token-layout="v21"] .home-top-token-platform .platform-badge{
+  color:inherit;
+  font-size:inherit;
+  line-height:inherit;
+  font-weight:inherit;
+  letter-spacing:inherit;
+}
+
+@media(max-width:640px){
+  .home-top-token-card[data-top-token-layout="v21"] .home-top-token-platform,
+  .home-top-token-card[data-top-token-layout="v21"] .home-top-token-age{
+    width:42px;
+    min-width:42px;
+    height:24px;
+    min-height:24px;
+    padding:0;
+    font-size:7px;
+  }
+}
+
