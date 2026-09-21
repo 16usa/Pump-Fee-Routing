@@ -568,7 +568,10 @@ function homeProfileCard(p,index=0){
   const received=Number(p.received||0);
   const verified=
     p.verified===true||
+    Number(p.verified)===1||
+    String(p.verified||'').toLowerCase()==='true'||
     p.is_verified===true||
+    Number(p.is_verified)===1||
     p.blue_verified===true||
     p.is_blue_verified===true||
     ['blue','business','government'].includes(String(p.verified_type||'').toLowerCase());
@@ -2406,7 +2409,60 @@ function adminPage(){return `<main><section class="wrap launch-page"><p class="e
 function launchModal(){return `<div class="modal-bg hidden" id="launchModal"><div class="modal"><button class="modal-x" data-action="close-launch">×</button><p class="eyebrow">Launch</p><h2>Route creator fees</h2><p>Create the token on pump.fun, name a recipient in metadata, then permanently route 100% of creator fees to the configured treasury.</p><a class="modal-option" href="#/launch"><span class="option-icon">●</span><div><b>Launch / route token</b><small>Build and sign the fee-sharing transaction</small></div><span>→</span></a><a class="modal-option" href="#/docs"><span class="option-icon">⌘</span><div><b>Read integration docs</b><small>Indexer, claims, ledger and payouts</small></div><span>→</span></a></div></div>`;}
 function loadingPage(){return `<main><section class="wrap launch-page"><p class="eyebrow">Loading</p><h1>Syncing ledger…</h1></section></main>`;}
 function errorPage(err){return `<main><section class="wrap launch-page"><p class="eyebrow">Error</p><h1>Could not load</h1><p class="lead">${esc(err?.message||err)}</p><button class="btn-light" data-action="reload">Retry</button></section></main>`;}
-async function loadBase(){const [cfg,home,money,tokens]=await Promise.all([api('/api/config'),api('/api/home'),api('/api/money'),api('/api/tokens?limit=100')]);state.brand={...state.brand,...cfg,heroLine1:'Route token fees',heroLine2:'through X Money',description:'Point a token’s creator fees at any X handle and route the recipient share in dollars through your configured payout rail.'};state.home=home;state.money=money;state.tokens=tokens.tokens||[];document.title=state.brand.name;}
+/* home-top-x-live-identity-v22-2 */
+async function hydrateHomeXProfiles(home){
+  const profiles=Array.isArray(home?.profiles)?home.profiles:[];
+  if(!profiles.length)return home;
+
+  const hydrated=await Promise.all(profiles.map(async(p,index)=>{
+    if(index>=4)return p;
+    const handle=String(p?.handle||'').replace(/^@/,'').trim();
+    if(!/^[A-Za-z0-9_]{1,15}$/.test(handle))return p;
+
+    try{
+      const x=await api(`/api/x/profile?username=${encodeURIComponent(handle)}`);
+      const verifiedType=String(x?.verifiedType||'').toLowerCase();
+      const verified=Boolean(x?.verified)||
+        ['blue','business','government'].includes(verifiedType);
+
+      return {
+        ...p,
+        display_name:String(x?.name||p?.display_name||handle),
+        avatar_url:String(x?.profileImageUrl||p?.avatar_url||''),
+        banner_url:String(x?.profileBannerUrl||p?.banner_url||''),
+        verified:verified?1:0,
+        verified_type:String(x?.verifiedType||p?.verified_type||'')
+      };
+    }catch{
+      return p;
+    }
+  }));
+
+  return {...home,profiles:hydrated};
+}
+
+async function loadBase(){
+  const [cfg,rawHome,money,tokens]=await Promise.all([
+    api('/api/config'),
+    api('/api/home'),
+    api('/api/money'),
+    api('/api/tokens?limit=100')
+  ]);
+
+  const home=await hydrateHomeXProfiles(rawHome);
+
+  state.brand={
+    ...state.brand,
+    ...cfg,
+    heroLine1:'Route token fees',
+    heroLine2:'through X Money',
+    description:'Point a token’s creator fees at any X handle and route the recipient share in dollars through your configured payout rail.'
+  };
+  state.home=home;
+  state.money=money;
+  state.tokens=tokens.tokens||[];
+  document.title=state.brand.name;
+}
 async function refreshTokens(){const q=new URLSearchParams({search:state.explore.query,sort:state.explore.sort,venue:state.explore.venue,limit:'200'});const j=await api(`/api/tokens?${q}`);state.tokens=j.tokens||[];}
 async function render(){const path=(location.hash||'#/').slice(2).split('?')[0];app.innerHTML=header()+loadingPage()+launchModal();try{if(!state.home)await loadBase();let page;if(path===''||path==='/')page=homePage();else if(path==='explore'){await refreshTokens();page=explorePage();}else if(path==='money'){state.money=await api('/api/money');page=moneyPage();}else if(path==='docs')page=docsPage();else if(path==='legal')page=legalPage();else if(path==='launch')page=launchPage();else if(path==='capital-flow'){state.money=await api('/api/money');page=capitalFlowPage();}else if(path==='paid'){state.money=await api('/api/money');page=paidPage();}else if(path==='opt-out')page=optOutPage();else if(path==='admin')page=adminPage();else if(path.startsWith('token/'))page=await tokenPage(decodeURIComponent(path.slice(6)));else if(path.startsWith('profile/'))page=await profilePage(decodeURIComponent(path.slice(8)));else page=homePage();app.innerHTML=header()+page+launchModal();window.scrollTo(0,0);}catch(e){app.innerHTML=header()+errorPage(e)+launchModal();}}
 let currentLaunch=null,currentWallet=null;
