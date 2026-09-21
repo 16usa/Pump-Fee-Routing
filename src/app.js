@@ -85,13 +85,16 @@ function xIdentity(handle,source={}){
   const stored=typeof moneyProfile==='function'?moneyProfile(clean):null;
   const isToken=!!(source?.mint||source?.contract||source?.symbol);
 
-  const name=String(
-    source?.recipient_display_name||
-    (!isToken?source?.display_name:'')||
-    stored?.display_name||
-    clean||
-    'Recipient'
+  const rawCandidates=[
+    source?.recipient_display_name,
+    !isToken?source?.display_name:'',
+    stored?.display_name
+  ].map(x=>String(x||'').trim()).filter(Boolean);
+
+  const realName=rawCandidates.find(
+    value=>value.replace(/^@/,'').toLowerCase()!==clean.toLowerCase()
   );
+  const name=String(realName||rawCandidates[0]||clean||'Recipient');
 
   const avatarUrl=String(
     source?.recipient_avatar_url||
@@ -2434,9 +2437,27 @@ function identityHandle(row){
 function applyLiveXIdentity(row,identity){
   if(!row||!identity)return row;
   const isToken=!!(row.mint||row.contract||row.symbol);
+  const handle=identityHandle(row).toLowerCase();
+  const incoming=String(identity.name||'').trim();
+  const current=String(
+    row.recipient_display_name||
+    row.display_name||
+    ''
+  ).trim();
+
+  const incomingIsHandle=
+    incoming.replace(/^@/,'').toLowerCase()===handle;
+  const currentIsReal=
+    current &&
+    current.replace(/^@/,'').toLowerCase()!==handle;
+
+  const displayName=(incoming && !(incomingIsHandle&&currentIsReal))
+    ? incoming
+    : (current||incoming||identity.username||handle);
+
   const base={
     ...row,
-    recipient_display_name:identity.name||row.recipient_display_name||'',
+    recipient_display_name:displayName,
     recipient_avatar_url:identity.profileImageUrl||row.recipient_avatar_url||'',
     recipient_verified:identity.verified?1:0,
     recipient_verified_type:identity.verifiedType||row.recipient_verified_type||''
@@ -2444,7 +2465,7 @@ function applyLiveXIdentity(row,identity){
   if(isToken)return base;
   return {
     ...base,
-    display_name:identity.name||row.display_name||identity.username,
+    display_name:displayName,
     avatar_url:identity.profileImageUrl||row.avatar_url||'',
     banner_url:identity.profileBannerUrl||row.banner_url||'',
     verified:identity.verified?1:0,

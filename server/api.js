@@ -354,7 +354,70 @@ async function proxyXBanner(res,handle){
 
 
 
-/* x-identities-batch-v23 */
+/* x-identities-batch-v23-1 */
+function cacheXIdentityUser(u){
+  const username=String(u?.username||'').replace(/^@/,'').trim();
+  if(!username) return null;
+
+  const avatarUrl=largerXAvatar(u?.profile_image_url||u?.profileImageUrl||'');
+  const bannerUrl=String(u?.profile_banner_url||u?.profileBannerUrl||'').trim();
+  const displayName=String(u?.name||username).trim()||username;
+  const verifiedType=String(u?.verified_type||u?.verifiedType||'');
+  const verified=Boolean(u?.verified);
+
+  db.prepare(`INSERT INTO recipients(
+    handle,x_user_id,display_name,avatar_url,banner_url,verified,verified_type
+  ) VALUES(?,?,?,?,?,?,?)
+  ON CONFLICT(handle) DO UPDATE SET
+    x_user_id=COALESCE(NULLIF(excluded.x_user_id,''),recipients.x_user_id),
+    display_name=COALESCE(NULLIF(excluded.display_name,''),recipients.display_name),
+    avatar_url=COALESCE(NULLIF(excluded.avatar_url,''),recipients.avatar_url),
+    banner_url=COALESCE(NULLIF(excluded.banner_url,''),recipients.banner_url),
+    verified=excluded.verified,
+    verified_type=excluded.verified_type,
+    updated_at=CURRENT_TIMESTAMP`)
+    .run(
+      username,
+      String(u?.id||''),
+      displayName,
+      avatarUrl,
+      bannerUrl,
+      verified?1:0,
+      verifiedType
+    );
+
+  return {
+    username,
+    name:displayName,
+    profileImageUrl:avatarUrl,
+    profileBannerUrl:bannerUrl,
+    verified,
+    verifiedType
+  };
+}
+
+async function fetchSingleXIdentity(username){
+  if(!config.xBearerToken) return null;
+
+  try{
+    const fields='id,name,username,profile_image_url,profile_banner_url,verified,verified_type';
+    const r=await fetch(
+      `https://api.x.com/2/users/by/username/${encodeURIComponent(username)}?user.fields=${encodeURIComponent(fields)}`,
+      {
+        headers:{authorization:`Bearer ${config.xBearerToken}`,accept:'application/json'},
+        signal:AbortSignal.timeout(12000)
+      }
+    );
+
+    if(!r.ok) return null;
+    const payload=await r.json().catch(()=>({}));
+    if(!payload?.data) return null;
+    return cacheXIdentityUser(payload.data);
+  }catch{
+    return null;
+  }
+}
+
 async function resolveXIdentities(handles){
   const usernames=[...new Set((handles||[])
     .map(x=>String(x||'').replace(/^@/,'').trim())
@@ -363,7 +426,10 @@ async function resolveXIdentities(handles){
 
   if(!usernames.length) return [];
 
+  const live=new Map();
+
   if(config.xBearerToken){
+    // Fast path: X batch lookup.
     try{
       const fields='id,name,username,profile_image_url,profile_banner_url,verified,verified_type';
       const r=await fetch(
@@ -377,40 +443,40 @@ async function resolveXIdentities(handles){
       if(r.ok){
         const payload=await r.json().catch(()=>({}));
         for(const u of (payload?.data||[])){
-          const username=String(u?.username||'').replace(/^@/,'').trim();
-          if(!username) continue;
-          const avatarUrl=largerXAvatar(u?.profile_image_url||'');
-          const bannerUrl=String(u?.profile_banner_url||'').trim();
-
-          db.prepare(`INSERT INTO recipients(
-            handle,x_user_id,display_name,avatar_url,banner_url,verified,verified_type
-          ) VALUES(?,?,?,?,?,?,?)
-          ON CONFLICT(handle) DO UPDATE SET
-            x_user_id=COALESCE(NULLIF(excluded.x_user_id,''),recipients.x_user_id),
-            display_name=COALESCE(NULLIF(excluded.display_name,''),recipients.display_name),
-            avatar_url=COALESCE(NULLIF(excluded.avatar_url,''),recipients.avatar_url),
-            banner_url=COALESCE(NULLIF(excluded.banner_url,''),recipients.banner_url),
-            verified=excluded.verified,
-            verified_type=excluded.verified_type,
-            updated_at=CURRENT_TIMESTAMP`)
-            .run(
-              username,
-              String(u?.id||''),
-              String(u?.name||username),
-              avatarUrl,
-              bannerUrl,
-              u?.verified?1:0,
-              String(u?.verified_type||'')
-            );
+          const identity=cacheXIdentityUser(u);
+          if(identity) live.set(identity.username.toLowerCase(),identity);
         }
       }
     }catch{}
+
+    // Reliable fallback: if the DB name is still literally the @handle,
+    // refresh that account through the single X profile lookup.
+    const getStored=db.prepare(`SELECT handle,display_name FROM recipients
+      WHERE handle=? COLLATE NOCASE`);
+
+    const stale=usernames.filter(username=>{
+      if(live.has(username.toLowerCase())) return false;
+      const row=getStored.get(username);
+      const stored=String(row?.display_name||'').replace(/^@/,'').trim();
+      return !stored || stored.toLowerCase()===username.toLowerCase();
+    });
+
+    for(let i=0;i<stale.length;i+=4){
+      const group=stale.slice(i,i+4);
+      const resolved=await Promise.all(group.map(fetchSingleXIdentity));
+      resolved.filter(Boolean).forEach(identity=>{
+        live.set(identity.username.toLowerCase(),identity);
+      });
+    }
   }
 
   const get=db.prepare(`SELECT handle,display_name,avatar_url,banner_url,verified,verified_type
     FROM recipients WHERE handle=? COLLATE NOCASE`);
 
   return usernames.map(username=>{
+    const current=live.get(username.toLowerCase());
+    if(current) return current;
+
     const row=get.get(username)||{};
     return {
       username:String(row.handle||username),
