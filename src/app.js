@@ -607,6 +607,7 @@ function homeTopTokenCard(t){
 }
 
 function homeTopTokens(top){
+  const totalPages=Math.max(1,Math.ceil((top||[]).length/20));
   const rows=top.slice(0,20);
   return `<section class="wrap section home-top-tokens">
     <div class="home-top-tokens-head">
@@ -617,7 +618,7 @@ function homeTopTokens(top){
           <button disabled>■ Pons</button>
           <button>All</button>
         </div>
-        <div class="home-top-token-pager"><button disabled>‹</button><span>1</span><button disabled>›</button></div>
+        <div class="home-top-token-pager"><button disabled>‹</button><span>1 / ${totalPages}</span><button disabled>›</button></div>
       </div>
     </div>
     ${rows.length
@@ -694,11 +695,12 @@ function homeProfileCard(p,index=0){
 }
 
 function homeTopProfiles(profiles){
+  const totalPages=Math.max(1,Math.ceil((profiles||[]).length/4));
   const rows=(profiles||[]).slice(0,4);
   return `<section class="wrap section profiles-section home-top-profiles">
     <div class="home-top-profiles-head">
       <h2>Top X Profiles</h2>
-      <div class="home-top-profiles-pager"><button disabled>‹</button><span>1</span><button disabled>›</button></div>
+      <div class="home-top-profiles-pager"><button disabled>‹</button><span>1 / ${totalPages}</span><button disabled>›</button></div>
     </div>
     ${rows.length
       ? `<div class="home-profile-feature-grid">${rows.map(homeProfileCard).join('')}</div>`
@@ -737,13 +739,14 @@ function homeRecentPaymentCard(p,i,tokens){
 }
 
 function homeRecentPayments(h){
+  const totalPages=Math.max(1,Math.ceil((h.payments||[]).length/6));
   const payments=(h.payments||[]).slice(0,6);
   const tokens=h.tokens||[];
   return `<section class="wrap section home-recent-payments">
     <p class="home-payment-update">Updates are delayed. Showing recent payments from the confirmed ledger.</p>
     <div class="home-recent-payments-head">
       <h2>Recent payments</h2>
-      <div class="home-recent-payments-pager"><button disabled>‹</button><span>1</span><button disabled>›</button></div>
+      <div class="home-recent-payments-pager"><button disabled>‹</button><span>1 / ${totalPages}</span><button disabled>›</button></div>
     </div>
     <div class="home-payment-list">
       ${payments.length
@@ -784,13 +787,14 @@ function homeMostPaymentRow(x,index,tokens){
 }
 
 function homeMostPayments(h){
+  const totalPages=Math.max(1,Math.ceil((h.money?.topPaid||[]).length/6));
   const rows=(h.money?.topPaid||[]).slice(0,6);
   const tokens=h.tokens||[];
   return `<section class="wrap section home-most-payments">
     <p class="home-most-update">Ranked by all-time confirmed payments.</p>
     <div class="home-most-payments-head">
       <h2>Most Payments</h2>
-      <div class="home-most-payments-pager"><button disabled>‹</button><span>1 / 1</span><button disabled>›</button></div>
+      <div class="home-most-payments-pager"><button disabled>‹</button><span>1 / ${totalPages}</span><button disabled>›</button></div>
     </div>
     <div class="home-most-payments-list">
       ${rows.length
@@ -852,11 +856,12 @@ function homeOffRampCard(x,i){
 }
 
 function homeOffRamp(h){
+  const totalPages=Math.max(1,Math.ceil((h.money?.exchange||[]).length/6));
   const exchanges=(h.money?.exchange||[]).slice(0,6);
   return `<section class="wrap section home-off-ramp">
     <div class="home-off-head">
       <h2>Off-ramp</h2>
-      <div class="home-off-pager"><button disabled>‹</button><span>1</span><button disabled>›</button></div>
+      <div class="home-off-pager"><button disabled>‹</button><span>1 / ${totalPages}</span><button disabled>›</button></div>
     </div>
     <div class="home-off-tabs">
       <button class="active">All</button>
@@ -911,13 +916,15 @@ function homeOnRampCard(x,i){
 }
 
 function homeOnRamp(h){
-  const orders=(h.money?.exchange||[]).filter(isOnRampOrder).slice(0,6);
+  const allOrders=(h.money?.exchange||[]).filter(isOnRampOrder);
+  const totalPages=Math.max(1,Math.ceil(allOrders.length/6));
+  const orders=allOrders.slice(0,6);
   const inTransit=orders.reduce((sum,x)=>sum+Number(x.received_usd||x.gross_usd||0),0);
   return `<section class="wrap section home-on-ramp">
     <div class="home-on-head">
       <h2>On-ramp</h2>
       <div class="home-on-transit"><b>${fmtMoney(inTransit)}</b><span>in transit</span></div>
-      <div class="home-on-pager"><button disabled>‹</button><span>1</span><button disabled>›</button></div>
+      <div class="home-on-pager"><button disabled>‹</button><span>1 / ${totalPages}</span><button disabled>›</button></div>
     </div>
     <div class="home-on-list">
       ${orders.length
