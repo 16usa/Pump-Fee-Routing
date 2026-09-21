@@ -7148,3 +7148,24 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     padding-top:20px;
   }
 }
+
+/* top-x-avatar-lower-v24-4
+   Undo only the last upward move from v24.3.
+   Keep the outer translucent ring removed. */
+.home-profile-feature[data-profile-layout="v22"] .home-profile-avatar{
+  bottom:-19px;
+}
+
+.home-profile-feature[data-profile-layout="v22"] .home-profile-feature-body{
+  padding-top:27px;
+}
+
+@media(max-width:640px){
+  .home-profile-feature[data-profile-layout="v22"] .home-profile-avatar{
+    bottom:-17px;
+  }
+
+  .home-profile-feature[data-profile-layout="v22"] .home-profile-feature-body{
+    padding-top:24px;
+  }
+}
