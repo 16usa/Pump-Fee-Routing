@@ -9593,3 +9593,31 @@ body{
     font-size:12px !important;
   }
 }
+
+
+/* hero-x-logo-mark-v24-52
+   Replace the text X in the Home hero heading with the actual X logo mark.
+   The logo follows the heading color via currentColor and scales like one glyph. */
+.home-reference-v1 .home-hero .hero-copy h1 .hero-x-logo{
+  display:inline-flex !important;
+  width:.86em !important;
+  height:.86em !important;
+  align-items:center !important;
+  justify-content:center !important;
+  color:currentColor !important;
+  vertical-align:-.075em !important;
+  margin:0 .015em !important;
+  line-height:1 !important;
+}
+
+.home-reference-v1 .home-hero .hero-copy h1 .hero-x-logo svg{
+  display:block !important;
+  width:100% !important;
+  height:100% !important;
+  overflow:visible !important;
+  fill:currentColor !important;
+}
+
+.home-reference-v1 .home-hero .hero-copy h1 .hero-x-logo path{
+  fill:currentColor !important;
+}

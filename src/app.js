@@ -953,7 +953,7 @@ function homePage(){
   return `<main class="home-page home-reference-v1">
     <section class="hero wrap home-hero">
       <div class="hero-copy">
-        <h1>Route token fees<br>through X Money</h1>
+        <h1>Route token fees<br>through <span class="hero-x-logo" aria-label="X"><svg viewBox="0 0 1200 1227" aria-hidden="true" focusable="false"><path fill="currentColor" d="M714.163 519.284L1160.89 0H1055.06L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.454 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.137 687.828L521.697 619.934L144.011 79.6944H306.615L611.449 515.999L658.889 583.893L1055.11 1150.13H892.506L569.137 687.854V687.828Z"/></svg></span> Money</h1>
         <p>Point a token's creator fees at any X handle and we pay them out in dollars through X Money. Launch on Pump and Pons.</p>
         <div class="hero-buttons">
           <a class="btn-light" href="#/launch">Launch a token</a>
