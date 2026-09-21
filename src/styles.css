@@ -7099,3 +7099,23 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     padding-top:32px;
   }
 }
+
+/* top-x-avatar-raise-v24-2
+   Raise the Top X avatar and the profile content by the same amount again. */
+.home-profile-feature[data-profile-layout="v22"] .home-profile-avatar{
+  bottom:-19px;
+}
+
+.home-profile-feature[data-profile-layout="v22"] .home-profile-feature-body{
+  padding-top:27px;
+}
+
+@media(max-width:640px){
+  .home-profile-feature[data-profile-layout="v22"] .home-profile-avatar{
+    bottom:-17px;
+  }
+
+  .home-profile-feature[data-profile-layout="v22"] .home-profile-feature-body{
+    padding-top:24px;
+  }
+}
