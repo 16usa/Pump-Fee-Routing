@@ -8236,3 +8236,104 @@ body{
     font-size:10px !important;
   }
 }
+
+
+/* explore-project-top-token-card-v24-32
+   Project the exact Top Tokens card into the LEFT side of Explore.
+   The card ends above the shared Explore/Open footer with a clean gap.
+   Right side remains the static second-image magazine crop. */
+.home-explore-reference-v8 .home-explore-v8-primary-slot{
+  left:2.5% !important;
+  top:4% !important;
+  bottom:54px !important;
+  width:48% !important;
+  height:auto !important;
+  z-index:4 !important;
+  display:flex !important;
+  align-items:flex-start !important;
+  justify-content:flex-start !important;
+  overflow:visible !important;
+}
+
+.home-explore-reference-v8 .home-explore-top-token-card[data-top-token-layout="v21"][data-explore-projection="top-token-v24-32"]{
+  position:relative !important;
+  inset:auto !important;
+  box-sizing:border-box !important;
+  width:100% !important;
+  height:auto !important;
+  min-width:0 !important;
+  margin:0 !important;
+  color:#fff !important;
+  background:#141414 !important;
+  border:1px solid #252525 !important;
+  border-radius:13px !important;
+  box-shadow:none !important;
+  overflow:hidden !important;
+  pointer-events:none !important;
+}
+
+.home-explore-reference-v8 .home-explore-top-token-card[data-top-token-layout="v21"] .home-top-token-media{
+  position:relative !important;
+  width:100% !important;
+  height:auto !important;
+  aspect-ratio:1/1 !important;
+}
+
+.home-explore-reference-v8 .home-explore-top-token-card[data-top-token-layout="v21"] .home-top-token-media>img{
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  object-position:center !important;
+  filter:none !important;
+  transform:none !important;
+}
+
+.home-explore-reference-v8 .home-explore-v8-secondary-slot{
+  right:0 !important;
+  top:14% !important;
+  bottom:54px !important;
+  width:33% !important;
+  height:auto !important;
+  z-index:3 !important;
+}
+
+.home-explore-reference-v8 .home-explore-v8-bottom-shade{
+  height:17% !important;
+  z-index:7 !important;
+}
+
+.home-explore-reference-v8 .home-explore-v8-footer{
+  left:18px !important;
+  right:18px !important;
+  bottom:14px !important;
+  z-index:9 !important;
+}
+
+.home-explore-reference-v8 .home-explore-v8-stage::after{
+  display:none !important;
+}
+
+@media(max-width:640px){
+  .home-explore-reference-v8 .home-explore-v8-primary-slot{
+    left:2.5% !important;
+    top:3.5% !important;
+    bottom:46px !important;
+    width:48% !important;
+  }
+
+  .home-explore-reference-v8 .home-explore-top-token-card[data-top-token-layout="v21"][data-explore-projection="top-token-v24-32"]{
+    border-radius:12px !important;
+  }
+
+  .home-explore-reference-v8 .home-explore-v8-secondary-slot{
+    top:14% !important;
+    bottom:46px !important;
+    width:33% !important;
+  }
+
+  .home-explore-reference-v8 .home-explore-v8-footer{
+    left:12px !important;
+    right:12px !important;
+    bottom:10px !important;
+  }
+}

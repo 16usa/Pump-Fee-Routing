@@ -460,30 +460,39 @@ function homePreviewDeck(h,top){
 
           const renderPrimary = (token) => {
             if (!token) {
-              return `<div class="home-explore-v8-primary-card is-empty"><div class="home-explore-v8-media">${renderTokenArt(null, 'primary')}</div></div>`;
+              return `<div class="home-top-token-card home-explore-top-token-card is-empty" data-top-token-layout="v21" data-explore-projection="top-token-v24-32">
+                <div class="home-top-token-media">${renderTokenArt(null, 'primary')}</div>
+                <div class="home-top-token-body">
+                  <div class="home-top-token-title"><strong>Token</strong><span></span></div>
+                  <div class="home-top-token-market"><strong>$0</strong><span>MC</span></div>
+                </div>
+              </div>`;
             }
+
+            const handle = String(token.profile || token.recipient_handle || token.recipient_handles || '').replace(/^@/, '').trim();
+            const profile = findProfile(token);
+            const identity = xIdentity(handle,{...token,...(profile||{})});
             const ageText = token.age || ago(token.created_at);
-            return `<div class="home-explore-v8-primary-card" data-explore-card-info="v15">
-              <div class="home-explore-v8-media">
-                ${renderTokenArt(token, 'primary')}
-                <div class="home-top-token-age" data-explore-age-badge="v14">${esc(ageText || '')}</div>
-                ${renderRecipient(token)}
+            const mc = token.mc ?? token.market_cap_usd;
+
+            return `<div class="home-top-token-card home-explore-top-token-card" data-top-token-layout="v21" data-explore-projection="top-token-v24-32">
+              <div class="home-top-token-media">
+                ${tokenMedia(token,'home-top-token-fallback')}
+                <div class="home-top-token-platform" data-top-token-pump-logo="v21-1" aria-label="${esc(token.platform||'Pump')}">
+                  ${String(token.platform||'Pump').toLowerCase().includes('pump')
+                    ? `<span class="home-top-token-pump-logo" aria-hidden="true"><svg viewBox="0 0 24 24" role="presentation" focusable="false"><g transform="rotate(-42 12 12)"><rect x="7" y="3" width="10" height="18" rx="5" fill="#f2f2f2"/><path d="M7 12h10v4a5 5 0 0 1-5 5 5 5 0 0 1-5-5v-4Z" fill="#63d7a4"/></g></svg></span>`
+                    : platformBadge(token.platform||'Pump')}
+                </div>
+                <div class="home-top-token-age">${esc(ageText||'')}</div>
+                <div class="home-top-token-recipient">
+                  <i class="home-top-token-money-mark">$</i>
+                  ${handle?recipientAvatar(handle,identity.name,false,identity.avatarUrl):avatar(token.symbol||'T')}
+                  <b class="x-recipient-name">${handle?`${esc(identity.name)}${xVerifiedBadge(identity.verified,identity.verifiedType,'x-verified-compact')}`:'Recipient'}</b>
+                </div>
               </div>
-              <div class="home-explore-v8-copy">
-                <div class="home-explore-v8-title">
-                  <strong>${esc(token.name || 'Token')}</strong>
-                  <span>${esc(token.symbol || '')}</span>
-                </div>
-                <div class="home-explore-v8-stats" data-explore-metrics="v15-3-1">
-                  <span>
-                    <strong>${fmtMc(token.mc ?? token.market_cap_usd)}</strong>
-                    <small>MC</small>
-                  </span>
-                  <b>
-                    <strong>${fmtMoney(token.sent || 0)}</strong>
-                    <small>Sent</small>
-                  </b>
-                </div>
+              <div class="home-top-token-body">
+                <div class="home-top-token-title"><strong>${esc(token.name)}</strong><span>${esc(token.symbol||'')}</span></div>
+                <div class="home-top-token-market"><strong>${fmtMc(mc)}</strong><span>MC</span></div>
               </div>
             </div>`;
           };
