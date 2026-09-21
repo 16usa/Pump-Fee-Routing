@@ -6496,7 +6496,7 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   text-overflow:ellipsis;
   white-space:nowrap;
   color:#f1f1f1;
-  font-size:11px;
+  font-size:12px;
   line-height:1;
   font-weight:650;
 }
@@ -6546,7 +6546,7 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 
   .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient>b,
   .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient>span{
-    font-size:9px;
+    font-size:12px;
   }
 }
 
@@ -7388,5 +7388,19 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 @media (max-width: 640px){
   .home-top-token-recipient b{
     font-size: 18px;
+  }
+}
+
+
+/* top-tokens-name-conflict-fix-v24-10 */
+.home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient>b.x-recipient-name{
+  font-size:12px !important;
+  line-height:1 !important;
+  font-weight:650 !important;
+}
+
+@media(max-width:640px){
+  .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient>b.x-recipient-name{
+    font-size:12px !important;
   }
 }
