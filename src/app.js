@@ -562,23 +562,66 @@ function homeTopTokens(top){
 }
 
 function homeProfileCard(p,index=0){
-  const name=p.display_name||p.handle;
+  const name=p.display_name||p.handle||'Profile';
+  const handle=String(p.handle||'').replace(/^@/,'');
   const tokens=Number(p.token_count||0);
   const received=Number(p.received||0);
-  return `<a class="home-profile-feature" href="#/profile/${encodeURIComponent(p.handle)}">
+  const verified=
+    p.verified===true||
+    p.is_verified===true||
+    p.blue_verified===true||
+    p.is_blue_verified===true||
+    ['blue','business','government'].includes(String(p.verified_type||'').toLowerCase());
+  const cover=String(
+    p.banner_url||
+    p.profile_banner_url||
+    p.cover_url||
+    p.header_url||
+    ''
+  ).trim();
+
+  const verifiedBadge=verified
+    ? `<span class="home-profile-verified" title="Verified" aria-label="Verified">
+        <svg viewBox="0 0 22 22" aria-hidden="true">
+          <path d="M20.4 11c0 1.02-.72 1.88-1.7 2.08.18 1-.3 2.02-1.2 2.52-.35.2-.74.29-1.12.27-.05.96-.72 1.82-1.66 2.12-.38.12-.78.13-1.15.04-.43.86-1.32 1.43-2.32 1.43s-1.89-.57-2.32-1.43c-.37.09-.77.08-1.15-.04-.94-.3-1.61-1.16-1.66-2.12-.38.02-.77-.07-1.12-.27-.9-.5-1.38-1.52-1.2-2.52A2.12 2.12 0 0 1 1.6 11c0-1.02.72-1.88 1.7-2.08-.18-1 .3-2.02 1.2-2.52.35-.2.74-.29 1.12-.27.05-.96.72-1.82 1.66-2.12.38-.12.78-.13 1.15-.04C8.86 3.11 9.75 2.54 10.75 2.54s1.89.57 2.32 1.43c.37-.09.77-.08 1.15.04.94.3 1.61 1.16 1.66 2.12.38-.02.77.07 1.12.27.9.5 1.38 1.52 1.2 2.52.98.2 1.7 1.06 1.7 2.08Z"/>
+          <path class="check" d="m7.2 11.2 2.2 2.2 5.3-5.4"/>
+        </svg>
+      </span>`
+    : '';
+
+  const coverMedia=cover
+    ? `<img class="home-profile-cover-image" src="${esc(cover)}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="home-profile-cover-fallback" style="display:none"><span>${esc(initials(name))}</span></div>`
+    : `<div class="home-profile-cover-fallback"><span>${esc(initials(name))}</span></div>`;
+
+  return `<a class="home-profile-feature" data-profile-layout="v22" href="#/profile/${encodeURIComponent(handle)}">
     <div class="home-profile-cover home-profile-cover-${index%4}">
-      <div class="home-profile-cover-mark">${esc(initials(name))}</div>
-      <div class="home-profile-avatar">${recipientAvatar(p.handle,name,true,p.avatar_url||'')}</div>
-      <div class="home-profile-open">↗</div>
+      ${coverMedia}
+      <div class="home-profile-avatar">${recipientAvatar(handle,name,true,p.avatar_url||'')}</div>
     </div>
+
     <div class="home-profile-feature-body">
-      <div class="home-profile-feature-name">
-        <div><strong>${esc(name)}</strong><span>@${esc(p.handle)}</span></div>
-        <em>𝕏</em>
+      <div class="home-profile-identity">
+        <div class="home-profile-display-row">
+          <strong>${esc(name)}</strong>
+          ${verifiedBadge}
+        </div>
+        <span class="home-profile-handle">@${esc(handle)}</span>
       </div>
+
+      <div class="home-profile-paid-badge">
+        <i class="home-profile-paid-icon">$</i>
+        <span>Paid Profile</span>
+      </div>
+
       <div class="home-profile-feature-stats">
-        <div><small>Tokens</small><b>${fmtNum(tokens)}</b></div>
-        <div><small>Received</small><b>${fmtMoney(received)}</b></div>
+        <div class="home-profile-stat">
+          <b>${fmtNum(tokens)}</b>
+          <small>Tokens</small>
+        </div>
+        <div class="home-profile-stat">
+          <b>${fmtMoney(received)}</b>
+          <small>Received</small>
+        </div>
       </div>
     </div>
   </a>`;
