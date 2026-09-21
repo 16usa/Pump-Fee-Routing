@@ -957,7 +957,7 @@ function homePage(){
         <p>Point a token's creator fees at any X handle and we pay them out in dollars through X Money. Launch on Pump and Pons.</p>
         <div class="hero-buttons">
           <a class="btn-light" href="#/launch">Launch a token</a>
-          <a class="text-link" href="#/docs">Read the docs <span>→</span></a>
+          <a class="text-link" href="#/docs">Read the docs</a>
         </div>
       </div>
     </section>

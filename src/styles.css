@@ -9513,3 +9513,36 @@ body{
 .home-v2-launch-card[data-launch-reference="v18"] .home-v2-launch-search{
   border-color:#fff !important;
 }
+
+
+/* hero-docs-black-pill-v24-48
+   Turn Read the docs into a black pill button matching the Launch CTA shape.
+   No arrow. White text. Thin site-standard outline. */
+.home-reference-v1 .home-hero .text-link{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  box-sizing:border-box !important;
+  padding:10px 16px !important;
+  border:1px solid var(--line,#272727) !important;
+  border-radius:999px !important;
+  background:#0A0A0A !important;
+  color:#fff !important;
+  font-size:13px !important;
+  line-height:normal !important;
+  font-weight:700 !important;
+  letter-spacing:0 !important;
+  white-space:nowrap !important;
+  text-decoration:none !important;
+}
+
+.home-reference-v1 .home-hero .text-link > span{
+  display:none !important;
+}
+
+@media(max-width:640px){
+  .home-reference-v1 .home-hero .text-link{
+    padding:9px 15px !important;
+    font-size:10px !important;
+  }
+}
