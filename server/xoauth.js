@@ -3,8 +3,13 @@ import { config } from './config.js';
 import { db } from './db.js';
 
 const b64url = b => Buffer.from(b).toString('base64url');
+const fromB64url = value => Buffer.from(String(value||''),'base64url');
 const parseB64Json = value => JSON.parse(Buffer.from(value,'base64url').toString('utf8'));
 
+/* x-oauth-state-fix-v24-57
+   Keep PKCE state/verifier portable across Replit restarts/host aliases by
+   sealing the OAuth transaction into an authenticated, encrypted state token.
+   No browser-readable verifier and no dependency on one SQLite/process copy. */
 function sessionSecret(){
   return String(
     config.xSessionSecret ||
@@ -13,6 +18,45 @@ function sessionSecret(){
     config.adminToken ||
     ''
   ).trim();
+}
+
+function oauthStateKey(){
+  const secret=sessionSecret();
+  if(!secret){
+    throw Object.assign(
+      new Error('X session secret is not configured. Set X_SESSION_SECRET in Replit Secrets.'),
+      {statusCode:503}
+    );
+  }
+  return crypto.createHash('sha256').update(secret).digest();
+}
+
+function sealOAuthState(payload){
+  const iv=crypto.randomBytes(12);
+  const cipher=crypto.createCipheriv('aes-256-gcm',oauthStateKey(),iv);
+  const plaintext=Buffer.from(JSON.stringify(payload),'utf8');
+  const encrypted=Buffer.concat([cipher.update(plaintext),cipher.final()]);
+  const tag=cipher.getAuthTag();
+  return `v1.${b64url(iv)}.${b64url(tag)}.${b64url(encrypted)}`;
+}
+
+function openOAuthState(token){
+  const parts=String(token||'').split('.');
+  if(parts.length!==4 || parts[0]!=='v1') return null;
+  try{
+    const iv=fromB64url(parts[1]);
+    const tag=fromB64url(parts[2]);
+    const encrypted=fromB64url(parts[3]);
+    const decipher=crypto.createDecipheriv('aes-256-gcm',oauthStateKey(),iv);
+    decipher.setAuthTag(tag);
+    const plaintext=Buffer.concat([decipher.update(encrypted),decipher.final()]);
+    const data=JSON.parse(plaintext.toString('utf8'));
+    if(!data?.codeVerifier || !data?.redirectUri) return null;
+    if(Number(data.expiresAt||0)<Date.now()) return null;
+    return data;
+  }catch{
+    return null;
+  }
 }
 
 export function xOAuthConfigured(){
@@ -26,18 +70,20 @@ export function startXOAuth({redirectUri}={}){
 
   db.prepare(`DELETE FROM oauth_states WHERE created_at < datetime('now','-20 minutes')`).run();
 
-  const state=b64url(crypto.randomBytes(24));
   const verifier=b64url(crypto.randomBytes(48));
   const challenge=b64url(crypto.createHash('sha256').update(verifier).digest());
-
-  db.prepare(`INSERT INTO oauth_states(state,code_verifier,redirect_uri) VALUES(?,?,?)`)
-    .run(state,verifier,callback);
+  const state=sealOAuthState({
+    codeVerifier:verifier,
+    redirectUri:callback,
+    expiresAt:Date.now()+(15*60*1000),
+    nonce:b64url(crypto.randomBytes(16))
+  });
 
   const u=new URL('https://x.com/i/oauth2/authorize');
   u.searchParams.set('response_type','code');
   u.searchParams.set('client_id',config.xClientId);
   u.searchParams.set('redirect_uri',callback);
-  u.searchParams.set('scope','users.read');
+  u.searchParams.set('scope','tweet.read users.read');
   u.searchParams.set('state',state);
   u.searchParams.set('code_challenge',challenge);
   u.searchParams.set('code_challenge_method','S256');
@@ -48,11 +94,28 @@ export async function finishXOAuth({code,state}){
   if(!code) throw Object.assign(new Error('X did not return an authorization code'),{statusCode:400});
   if(!state) throw Object.assign(new Error('Missing OAuth state'),{statusCode:400});
 
-  const row=db.prepare('SELECT * FROM oauth_states WHERE state=?').get(state);
-  if(!row) throw Object.assign(new Error('Invalid or expired OAuth state'),{statusCode:400});
-  db.prepare('DELETE FROM oauth_states WHERE state=?').run(state);
+  let transaction=openOAuthState(state);
 
-  const redirectUri=String(row.redirect_uri||config.xRedirectUri||'').trim();
+  /* Backward-compatible fallback for an authorization flow started before this patch. */
+  if(!transaction){
+    const row=db.prepare('SELECT * FROM oauth_states WHERE state=?').get(state);
+    if(row){
+      db.prepare('DELETE FROM oauth_states WHERE state=?').run(state);
+      transaction={
+        codeVerifier:row.code_verifier,
+        redirectUri:String(row.redirect_uri||config.xRedirectUri||'').trim()
+      };
+    }
+  }
+
+  if(!transaction){
+    throw Object.assign(
+      new Error('Invalid or expired OAuth state. Start sign-in again from the site.'),
+      {statusCode:400}
+    );
+  }
+
+  const redirectUri=String(transaction.redirectUri||config.xRedirectUri||'').trim();
   if(!redirectUri) throw Object.assign(new Error('OAuth callback URL is missing'),{statusCode:500});
 
   const form=new URLSearchParams({
@@ -60,7 +123,7 @@ export async function finishXOAuth({code,state}){
     grant_type:'authorization_code',
     client_id:config.xClientId,
     redirect_uri:redirectUri,
-    code_verifier:row.code_verifier
+    code_verifier:transaction.codeVerifier
   });
 
   const headers={'content-type':'application/x-www-form-urlencoded'};
