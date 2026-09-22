@@ -9645,3 +9645,31 @@ body{
 .home-reference-v1 .home-hero .hero-copy h1 .hero-x-logo{
   vertical-align:-.035em !important;
 }
+
+
+/* launch-hero-x-logo-mark-v24-55
+   Replace the text letter X in the Launch page hero heading with the actual X logo mark.
+   The logo follows the heading color via currentColor and is aligned like one capital glyph. */
+.launch-hero-x-logo{
+  display:inline-flex !important;
+  width:.84em !important;
+  height:.84em !important;
+  align-items:center !important;
+  justify-content:center !important;
+  color:currentColor !important;
+  vertical-align:-.035em !important;
+  margin:0 .01em !important;
+  line-height:1 !important;
+}
+
+.launch-hero-x-logo svg{
+  display:block !important;
+  width:100% !important;
+  height:100% !important;
+  overflow:visible !important;
+  fill:currentColor !important;
+}
+
+.launch-hero-x-logo path{
+  fill:currentColor !important;
+}

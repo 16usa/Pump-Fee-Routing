@@ -1679,7 +1679,7 @@ function launchPage(){
 
   return `<main class="launch-page-v1">
     <section class="wrap launch-v1-hero">
-      <h1>Launch and direct fees through X Money</h1>
+      <h1>Launch and direct fees through <span class="launch-hero-x-logo" aria-label="X"><svg viewBox="0 0 1200 1227" aria-hidden="true" focusable="false"><path fill="currentColor" d="M714.163 519.284L1160.89 0H1055.06L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.454 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.137 687.828L521.697 619.934L144.011 79.6944H306.615L611.449 515.999L658.889 583.893L1055.11 1150.13H892.506L569.137 687.854V687.828Z"/></svg></span> Money</h1>
       <p>Prepare a token for pump.fun, name the X recipient, then register the mint and permanently route 100% of creator fees to the configured treasury.</p>
     </section>
 
