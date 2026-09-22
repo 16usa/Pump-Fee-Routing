@@ -9673,3 +9673,28 @@ body{
 .launch-hero-x-logo path{
   fill:currentColor !important;
 }
+
+
+/* x-oauth-signin-session-v24-56 */
+.optout-auth-handle{
+  margin:4px 0 18px;
+  color:var(--muted,#8b8b8b);
+}
+.optout-auth-actions{
+  display:grid;
+  gap:10px;
+}
+.optout-secondary-button{
+  width:100%;
+  min-height:48px;
+  border:1px solid var(--line,#272727);
+  border-radius:999px;
+  background:#0A0A0A;
+  color:#fff;
+  font:inherit;
+  font-weight:700;
+  cursor:pointer;
+}
+.optout-oauth-error{
+  border-color:#5a2b2b !important;
+}

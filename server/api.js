@@ -6,7 +6,7 @@ import { verifyAndRegisterMint, buildFeeRoutingTransaction, buildPumpCreateTrans
 import { runDiscovery, runClaims, runPayouts } from './workers.js';
 import { confirmPayout, optOutHandle } from './payouts.js';
 import { sellSolUsd } from './kraken.js';
-import { startXOAuth, finishXOAuth } from './xoauth.js';
+import { startXOAuth, finishXOAuth, createXSession, readXSession, xOAuthConfigured } from './xoauth.js';
 
 function json(res,status,body){ const data=JSON.stringify(body); res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}); res.end(data); }
 async function body(req,maxBytes=1_000_000){ const chunks=[]; let size=0; for await(const c of req){ size+=c.length; if(size>maxBytes)throw Object.assign(new Error('Body too large'),{statusCode:413}); chunks.push(c); } if(!chunks.length)return {}; const text=Buffer.concat(chunks).toString('utf8'); try{return JSON.parse(text);}catch{throw Object.assign(new Error('Invalid JSON'),{statusCode:400});} }
@@ -15,6 +15,34 @@ function requireAdmin(req){ const token=(req.headers.authorization||'').replace(
 function requireWebhook(req){ const token=req.headers['x-webhook-secret'] || (req.headers.authorization||'').replace(/^Bearer\s+/i,''); if(!config.webhookSecret||!secureEq(token,config.webhookSecret))throw Object.assign(new Error('Unauthorized'),{statusCode:401}); }
 function requireWritable(){ if(config.readOnlyMode)throw Object.assign(new Error('Read-only mode: money-moving and accounting mutation routes are disabled'),{statusCode:423}); }
 function requireUserSignedLaunch(){ if(!config.userSignedLaunchEnabled)throw Object.assign(new Error('User-signed launch is disabled'),{statusCode:423}); }
+
+function requestOrigin(req){
+  const forwardedProto=String(req.headers['x-forwarded-proto']||'').split(',')[0].trim();
+  const forwardedHost=String(req.headers['x-forwarded-host']||'').split(',')[0].trim();
+  const proto=forwardedProto || (req.socket?.encrypted?'https':'http');
+  const host=forwardedHost || String(req.headers.host||'localhost');
+  return `${proto}://${host}`;
+}
+function xCallbackUri(req){
+  return config.xRedirectUri || `${requestOrigin(req)}/api/auth/x/callback`;
+}
+function cookieValue(req,name){
+  const raw=String(req.headers.cookie||'');
+  for(const part of raw.split(';')){
+    const i=part.indexOf('=');
+    if(i<0)continue;
+    const key=part.slice(0,i).trim();
+    if(key===name)return decodeURIComponent(part.slice(i+1).trim());
+  }
+  return '';
+}
+function xSessionCookie(req,value,maxAge=1800){
+  const secure=requestOrigin(req).startsWith('https://')?'; Secure':'';
+  return `x_session=${encodeURIComponent(value)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`;
+}
+function xSessionUser(req){
+  return readXSession(cookieValue(req,'x_session'));
+}
 
 
 
@@ -676,8 +704,57 @@ export async function handleApi(req,res,url){
     }
     if(req.method==='POST'&&url.pathname==='/api/webhooks/pump'){ requireWebhook(req); const b=await body(req); const key=b.id||b.signature||randomUUID(); try{db.prepare(`INSERT INTO webhook_events(id,source,event_key,payload_json) VALUES(?,?,?,?)`).run(randomUUID(),'pump',key,JSON.stringify(b));}catch{return json(res,200,{ok:true,duplicate:true});} const mints=[...(Array.isArray(b.mints)?b.mints:[]),...(b.mint?[b.mint]:[])]; const out=[]; for(const mint of [...new Set(mints)]){try{out.push(await verifyAndRegisterMint(mint,{fallbackHandle:b.recipient_handle||''}));}catch(e){out.push({ok:false,mint,error:e.message});}} return json(res,200,{ok:true,results:out}); }
     if(req.method==='POST'&&url.pathname==='/api/webhooks/payout'){ requireWebhook(req); requireWritable(); const b=await body(req); return json(res,200,confirmPayout({id:b.id,status:b.status||'sent',provider_ref:b.provider_ref||b.reference,confirmation_url:b.public_confirmation_url})); }
-    if(req.method==='GET'&&url.pathname==='/api/auth/x/start'){ const dest=startXOAuth(); res.writeHead(302,{location:dest}); return res.end(); }
-    if(req.method==='GET'&&url.pathname==='/api/auth/x/callback'){ const user=await finishXOAuth({code:url.searchParams.get('code'),state:url.searchParams.get('state')}); if(!user?.username)throw new Error('X did not return a username'); const result=optOutHandle(user.username); res.writeHead(302,{location:`/#/opt-out?done=${encodeURIComponent(result.handle)}`}); return res.end(); }
+    if(req.method==='GET'&&url.pathname==='/api/auth/x/status'){
+      return json(res,200,{
+        configured:xOAuthConfigured(),
+        callbackUrl:xCallbackUri(req),
+        hasClientSecret:Boolean(config.xClientSecret),
+        hasSessionSecret:Boolean(config.xSessionSecret||config.xClientSecret||config.webhookSecret||config.adminToken)
+      });
+    }
+    if(req.method==='GET'&&url.pathname==='/api/auth/x/start'){
+      try{
+        const dest=startXOAuth({redirectUri:xCallbackUri(req)});
+        res.writeHead(302,{location:dest,'cache-control':'no-store'});
+        return res.end();
+      }catch(e){
+        res.writeHead(302,{location:`/#/opt-out?oauth_error=${encodeURIComponent(e.message||'X OAuth is not configured')}`,'cache-control':'no-store'});
+        return res.end();
+      }
+    }
+    if(req.method==='GET'&&url.pathname==='/api/auth/x/callback'){
+      const denied=url.searchParams.get('error');
+      if(denied){
+        res.writeHead(302,{location:`/#/opt-out?oauth_error=${encodeURIComponent(url.searchParams.get('error_description')||denied)}`,'cache-control':'no-store'});
+        return res.end();
+      }
+      const user=await finishXOAuth({code:url.searchParams.get('code'),state:url.searchParams.get('state')});
+      if(!user?.username)throw Object.assign(new Error('X did not return a username'),{statusCode:502});
+      const token=createXSession(user);
+      res.writeHead(302,{
+        location:'/#/opt-out?auth=1',
+        'set-cookie':xSessionCookie(req,token,1800),
+        'cache-control':'no-store'
+      });
+      return res.end();
+    }
+    if(req.method==='GET'&&url.pathname==='/api/auth/x/session'){
+      const user=xSessionUser(req);
+      return json(res,200,{authenticated:Boolean(user),user:user?{
+        id:user.id,username:user.username,name:user.name,profile_image_url:user.profile_image_url
+      }:null});
+    }
+    if(req.method==='POST'&&url.pathname==='/api/auth/x/opt-out'){
+      const user=xSessionUser(req);
+      if(!user)throw Object.assign(new Error('Sign in with X first'),{statusCode:401});
+      const result=optOutHandle(user.username);
+      res.setHeader('set-cookie',xSessionCookie(req,'',0));
+      return json(res,200,{ok:true,handle:result.handle});
+    }
+    if(req.method==='POST'&&url.pathname==='/api/auth/x/logout'){
+      res.setHeader('set-cookie',xSessionCookie(req,'',0));
+      return json(res,200,{ok:true});
+    }
     if(req.method==='POST'&&url.pathname==='/api/admin/opt-out'){ requireAdmin(req); const b=await body(req); return json(res,200,optOutHandle(b.handle)); }
     if(req.method==='POST'&&url.pathname==='/api/admin/claim-record'){ requireAdmin(req); requireWritable(); const b=await body(req); const price=Number(b.native_usd_price||await fetchSolUsd()); return json(res,201,recordClaim({mint:b.mint,txSignature:b.tx_signature||null,grossNative:Number(b.gross_native),nativeUsdPrice:price,raw:{manual:true}})); }
     if(req.method==='POST'&&url.pathname==='/api/admin/payout-confirm'){ requireAdmin(req); requireWritable(); const b=await body(req); return json(res,200,confirmPayout({id:b.id,status:b.status||'sent',provider_ref:b.provider_ref,confirmation_url:b.public_confirmation_url})); }

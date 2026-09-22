@@ -167,9 +167,15 @@ export function migrate() {
     CREATE TABLE IF NOT EXISTS oauth_states (
       state TEXT PRIMARY KEY,
       code_verifier TEXT NOT NULL,
+      redirect_uri TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  const oauthStateColumns=new Set(
+    db.prepare('PRAGMA table_info(oauth_states)').all().map(row=>String(row.name||''))
+  );
+  if(!oauthStateColumns.has('redirect_uri')) db.exec('ALTER TABLE oauth_states ADD COLUMN redirect_uri TEXT');
 
   /* x-profile-banner-columns-v22-1 */
   const recipientColumns=new Set(
