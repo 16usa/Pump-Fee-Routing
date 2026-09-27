@@ -4,7 +4,7 @@ import { db, recordClaim, getIndexerStatus } from './db.js';
 import { homeData, listTokens, getToken, moneySummary, profile, listPayments } from './queries.js';
 import { verifyAndRegisterMint, buildFeeRoutingTransaction, buildPumpCreateTransaction, confirmUserSignedTransaction, parseRecipient, fetchSolUsd } from './solana.js';
 import { runDiscovery, runClaims, runPayouts } from './workers.js';
-import { confirmPayout, optOutHandle } from './payouts.js';
+import { confirmPayout, optOutHandle, reactivateHandle } from './payouts.js';
 import { sellSolUsd } from './kraken.js';
 import { startXOAuth, finishXOAuth, createXSession, readXSession, xOAuthConfigured } from './xoauth.js';
 
@@ -730,6 +730,7 @@ export async function handleApi(req,res,url){
       }
       const user=await finishXOAuth({code:url.searchParams.get('code'),state:url.searchParams.get('state')});
       if(!user?.username)throw Object.assign(new Error('X did not return a username'),{statusCode:502});
+      cacheXIdentityUser(user);
       const token=createXSession(user);
       res.writeHead(302,{
         location:'/#/opt-out?auth=1',
@@ -740,8 +741,14 @@ export async function handleApi(req,res,url){
     }
     if(req.method==='GET'&&url.pathname==='/api/auth/x/session'){
       const user=xSessionUser(req);
+      const recipient=user
+        ? db.prepare('SELECT opted_out,opt_out_at,reactivated_at FROM recipients WHERE handle=? COLLATE NOCASE').get(user.username)
+        : null;
       return json(res,200,{authenticated:Boolean(user),user:user?{
-        id:user.id,username:user.username,name:user.name,profile_image_url:user.profile_image_url
+        id:user.id,username:user.username,name:user.name,profile_image_url:user.profile_image_url,
+        opted_out:Boolean(recipient?.opted_out),
+        opt_out_at:recipient?.opt_out_at||null,
+        reactivated_at:recipient?.reactivated_at||null
       }:null});
     }
     if(req.method==='POST'&&url.pathname==='/api/auth/x/opt-out'){
@@ -749,13 +756,21 @@ export async function handleApi(req,res,url){
       if(!user)throw Object.assign(new Error('Sign in with X first'),{statusCode:401});
       const result=optOutHandle(user.username);
       res.setHeader('set-cookie',xSessionCookie(req,'',0));
-      return json(res,200,{ok:true,handle:result.handle});
+      return json(res,200,{ok:true,...result});
+    }
+    if(req.method==='POST'&&url.pathname==='/api/auth/x/reactivate'){
+      const user=xSessionUser(req);
+      if(!user)throw Object.assign(new Error('Sign in with X first'),{statusCode:401});
+      const result=reactivateHandle(user.username);
+      res.setHeader('set-cookie',xSessionCookie(req,'',0));
+      return json(res,200,{ok:true,...result});
     }
     if(req.method==='POST'&&url.pathname==='/api/auth/x/logout'){
       res.setHeader('set-cookie',xSessionCookie(req,'',0));
       return json(res,200,{ok:true});
     }
     if(req.method==='POST'&&url.pathname==='/api/admin/opt-out'){ requireAdmin(req); const b=await body(req); return json(res,200,optOutHandle(b.handle)); }
+    if(req.method==='POST'&&url.pathname==='/api/admin/reactivate'){ requireAdmin(req); const b=await body(req); return json(res,200,reactivateHandle(b.handle)); }
     if(req.method==='POST'&&url.pathname==='/api/admin/claim-record'){ requireAdmin(req); requireWritable(); const b=await body(req); const price=Number(b.native_usd_price||await fetchSolUsd()); return json(res,201,recordClaim({mint:b.mint,txSignature:b.tx_signature||null,grossNative:Number(b.gross_native),nativeUsdPrice:price,raw:{manual:true}})); }
     if(req.method==='POST'&&url.pathname==='/api/admin/payout-confirm'){ requireAdmin(req); requireWritable(); const b=await body(req); return json(res,200,confirmPayout({id:b.id,status:b.status||'sent',provider_ref:b.provider_ref,confirmation_url:b.public_confirmation_url})); }
     if(req.method==='POST'&&url.pathname==='/api/admin/exchange/sell'){ requireAdmin(req); requireWritable(); const b=await body(req); return json(res,200,await sellSolUsd({claimId:b.claim_id||null,volumeSol:Number(b.volume_sol)})); }

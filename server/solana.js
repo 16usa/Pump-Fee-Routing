@@ -125,13 +125,30 @@ export async function verifyAndRegisterMint(mint,{fallbackHandle='',connection:p
     fee_share_bps:10000,permanent:true,hidden:false,fee_config_address:cfg,
     created_at:meta.created_timestamp?new Date(Number(meta.created_timestamp)<1e12?Number(meta.created_timestamp)*1000:Number(meta.created_timestamp)).toISOString():existing?.created_at||null,metadata:meta
   });
+
+  const recipientState=db.prepare('SELECT opted_out FROM recipients WHERE handle=? COLLATE NOCASE').get(handle);
+  const previousState=db.prepare('SELECT opt_out_reserved_lamports FROM token_chain_state WHERE mint=?').get(mint);
+  const optedOut=Boolean(recipientState?.opted_out);
+  const priorReserved=Math.max(0,Number(previousState?.opt_out_reserved_lamports||0));
+  const reservedLamports=optedOut
+    ? distributableLamports
+    : Math.min(distributableLamports,priorReserved);
+  const eligibleLamports=Math.max(0,distributableLamports-reservedLamports);
+  const reservedUsd=(reservedLamports/1e9)*solPrice;
+  const eligibleUsd=(eligibleLamports/1e9)*solPrice;
+  const recipientUnclaimedUsd=optedOut ? 0 : eligibleUsd*config.recipientShareBps/10000;
+  const protocolUnclaimedUsd=optedOut
+    ? grossUnclaimedUsd
+    : reservedUsd + eligibleUsd*config.protocolShareBps/10000;
+
   upsertTokenChainState({
     mint,sharing_config_address:cfg,verified_slot:slot,admin_revoked:true,sole_treasury:true,fee_share_bps:10000,
     distributable_lamports:distributableLamports,minimum_required_lamports:minimumLamports,
     can_distribute:!!minimum.canDistribute,is_graduated:!!minimum.isGraduated,sol_usd:solPrice,
     gross_unclaimed_usd:grossUnclaimedUsd,
-    recipient_unclaimed_usd:grossUnclaimedUsd*config.recipientShareBps/10000,
-    protocol_unclaimed_usd:grossUnclaimedUsd*config.protocolShareBps/10000,
+    recipient_unclaimed_usd:recipientUnclaimedUsd,
+    protocol_unclaimed_usd:protocolUnclaimedUsd,
+    opt_out_reserved_lamports:reservedLamports,
     shareholders,active:true
   });
   logMint('info',mint,'indexed',{recipient:handle,slot,distributableLamports,canDistribute:!!minimum.canDistribute,metadataStale});
@@ -225,7 +242,7 @@ export async function claimMint(mint) {
   if(grossLamports<=0){ const after=await connection.getBalance(new PublicKey(config.treasuryAddress),'confirmed'); grossLamports=Math.max(0,after-before); }
   const solPrice=await fetchSolUsd();
   const claim=recordClaim({mint,txSignature:signature,grossNative:grossLamports/1e9,nativeUsdPrice:solPrice,raw:{isGraduated,distributableLamports:distributable}});
-  db.prepare(`UPDATE token_chain_state SET distributable_lamports=0,gross_unclaimed_usd=0,recipient_unclaimed_usd=0,protocol_unclaimed_usd=0,can_distribute=0,indexed_at=CURRENT_TIMESTAMP WHERE mint=?`).run(mint);
+  db.prepare(`UPDATE token_chain_state SET distributable_lamports=0,gross_unclaimed_usd=0,recipient_unclaimed_usd=0,protocol_unclaimed_usd=0,opt_out_reserved_lamports=0,can_distribute=0,indexed_at=CURRENT_TIMESTAMP WHERE mint=?`).run(mint);
   return {ok:true,submitted:true,signature,grossLamports,solPrice,claim};
 }
 

@@ -141,7 +141,7 @@ export async function finishXOAuth({code,state}){
   }
 
   const me=await fetch(
-    'https://api.x.com/2/users/me?user.fields=name,username,profile_image_url',
+    'https://api.x.com/2/users/me?user.fields=name,username,profile_image_url,verified,verified_type',
     {headers:{authorization:`Bearer ${tj.access_token}`,accept:'application/json'}}
   );
   const mj=await me.json().catch(()=>({}));

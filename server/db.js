@@ -22,6 +22,7 @@ export function migrate() {
       verified_type TEXT,
       opted_out INTEGER NOT NULL DEFAULT 0,
       opt_out_at TEXT,
+      reactivated_at TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
@@ -38,6 +39,7 @@ export function migrate() {
       fee_share_bps INTEGER NOT NULL DEFAULT 0,
       permanent INTEGER NOT NULL DEFAULT 0,
       hidden INTEGER NOT NULL DEFAULT 0,
+      opt_out_hidden INTEGER NOT NULL DEFAULT 0,
       fee_config_address TEXT,
       created_at TEXT,
       discovered_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -157,6 +159,7 @@ export function migrate() {
       gross_unclaimed_usd REAL,
       recipient_unclaimed_usd REAL,
       protocol_unclaimed_usd REAL,
+      opt_out_reserved_lamports INTEGER NOT NULL DEFAULT 0,
       active INTEGER NOT NULL DEFAULT 1,
       shareholders_json TEXT NOT NULL DEFAULT '[]',
       last_error TEXT,
@@ -184,6 +187,28 @@ export function migrate() {
   if(!recipientColumns.has('banner_url')) db.exec('ALTER TABLE recipients ADD COLUMN banner_url TEXT');
   if(!recipientColumns.has('verified')) db.exec('ALTER TABLE recipients ADD COLUMN verified INTEGER NOT NULL DEFAULT 0');
   if(!recipientColumns.has('verified_type')) db.exec('ALTER TABLE recipients ADD COLUMN verified_type TEXT');
+  if(!recipientColumns.has('reactivated_at')) db.exec('ALTER TABLE recipients ADD COLUMN reactivated_at TEXT');
+
+  /* optout-reactivation-v1 */
+  const tokenColumns=new Set(
+    db.prepare('PRAGMA table_info(tokens)').all().map(row=>String(row.name||''))
+  );
+  if(!tokenColumns.has('opt_out_hidden')) db.exec('ALTER TABLE tokens ADD COLUMN opt_out_hidden INTEGER NOT NULL DEFAULT 0');
+
+  const chainStateColumns=new Set(
+    db.prepare('PRAGMA table_info(token_chain_state)').all().map(row=>String(row.name||''))
+  );
+  if(!chainStateColumns.has('opt_out_reserved_lamports')) db.exec('ALTER TABLE token_chain_state ADD COLUMN opt_out_reserved_lamports INTEGER NOT NULL DEFAULT 0');
+
+  // Convert legacy opt-outs from the old shared `hidden` flag to a dedicated reversible flag.
+  db.exec(`UPDATE tokens
+    SET opt_out_hidden=1
+    WHERE recipient_handle IN (SELECT handle FROM recipients WHERE opted_out=1)`);
+  db.exec(`UPDATE tokens
+    SET hidden=0
+    WHERE opt_out_hidden=1
+      AND hidden=1
+      AND EXISTS (SELECT 1 FROM token_chain_state s WHERE s.mint=tokens.mint AND s.active=1)`);
 }
 
 function upsertRecipient(handle, displayName = null) {
@@ -202,19 +227,20 @@ function upsertRecipient(handle, displayName = null) {
 
 export function upsertToken(token) {
   const handle = upsertRecipient(token.recipient_handle, token.recipient_display_name || token.recipient_handle);
+  const optedOut=Number(db.prepare('SELECT opted_out FROM recipients WHERE handle=? COLLATE NOCASE').get(handle)?.opted_out||0)===1;
   db.prepare(`INSERT INTO tokens(
     mint,venue,name,symbol,image_url,description,recipient_handle,recipient_source,market_cap_usd,
-    fee_share_bps,permanent,hidden,fee_config_address,created_at,metadata_json
-  ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    fee_share_bps,permanent,hidden,opt_out_hidden,fee_config_address,created_at,metadata_json
+  ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   ON CONFLICT(mint) DO UPDATE SET
     venue=excluded.venue,name=excluded.name,symbol=excluded.symbol,image_url=excluded.image_url,
     description=excluded.description,recipient_handle=excluded.recipient_handle,recipient_source=excluded.recipient_source,
     market_cap_usd=excluded.market_cap_usd,fee_share_bps=excluded.fee_share_bps,permanent=excluded.permanent,
-    hidden=excluded.hidden,fee_config_address=excluded.fee_config_address,created_at=COALESCE(excluded.created_at,tokens.created_at),
+    hidden=excluded.hidden,opt_out_hidden=excluded.opt_out_hidden,fee_config_address=excluded.fee_config_address,created_at=COALESCE(excluded.created_at,tokens.created_at),
     metadata_json=excluded.metadata_json,updated_at=CURRENT_TIMESTAMP`).run(
       token.mint, token.venue || 'pump', token.name || 'Unknown token', token.symbol || 'TOKEN', token.image_url || '',
       token.description || '', handle, token.recipient_source || 'description', Number(token.market_cap_usd || 0),
-      Number(token.fee_share_bps || 0), token.permanent ? 1 : 0, token.hidden ? 1 : 0, token.fee_config_address || '',
+      Number(token.fee_share_bps || 0), token.permanent ? 1 : 0, token.hidden ? 1 : 0, optedOut ? 1 : 0, token.fee_config_address || '',
       token.created_at || null, JSON.stringify(token.metadata || {})
     );
 }
@@ -223,9 +249,9 @@ export function upsertTokenChainState(state) {
   db.prepare(`INSERT INTO token_chain_state(
     mint,sharing_config_address,verified_slot,admin_revoked,sole_treasury,fee_share_bps,
     distributable_lamports,minimum_required_lamports,can_distribute,is_graduated,sol_usd,
-    gross_unclaimed_usd,recipient_unclaimed_usd,protocol_unclaimed_usd,active,
+    gross_unclaimed_usd,recipient_unclaimed_usd,protocol_unclaimed_usd,opt_out_reserved_lamports,active,
     shareholders_json,last_error,indexed_at
-  ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)
+  ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)
   ON CONFLICT(mint) DO UPDATE SET
     sharing_config_address=excluded.sharing_config_address,verified_slot=excluded.verified_slot,
     admin_revoked=excluded.admin_revoked,sole_treasury=excluded.sole_treasury,
@@ -234,7 +260,8 @@ export function upsertTokenChainState(state) {
     is_graduated=excluded.is_graduated,sol_usd=excluded.sol_usd,
     gross_unclaimed_usd=excluded.gross_unclaimed_usd,
     recipient_unclaimed_usd=excluded.recipient_unclaimed_usd,
-    protocol_unclaimed_usd=excluded.protocol_unclaimed_usd,active=excluded.active,
+    protocol_unclaimed_usd=excluded.protocol_unclaimed_usd,
+    opt_out_reserved_lamports=excluded.opt_out_reserved_lamports,active=excluded.active,
     shareholders_json=excluded.shareholders_json,last_error=excluded.last_error,
     indexed_at=CURRENT_TIMESTAMP`).run(
       state.mint, state.sharing_config_address, state.verified_slot ?? null,
@@ -245,6 +272,7 @@ export function upsertTokenChainState(state) {
       state.gross_unclaimed_usd == null ? null : Number(state.gross_unclaimed_usd),
       state.recipient_unclaimed_usd == null ? null : Number(state.recipient_unclaimed_usd),
       state.protocol_unclaimed_usd == null ? null : Number(state.protocol_unclaimed_usd),
+      Number(state.opt_out_reserved_lamports || 0),
       state.active === false ? 0 : 1, JSON.stringify(state.shareholders || []),
       state.last_error || null
     );
@@ -297,15 +325,25 @@ export function recordClaim({ mint, txSignature, grossNative, nativeUsdPrice, ra
     if (existing) return existing;
   }
   const grossUsd = grossNative * nativeUsdPrice;
-  const recipientUsd = token.opted_out ? 0 : grossUsd * config.recipientShareBps / 10000;
+  const chainState=db.prepare('SELECT opt_out_reserved_lamports FROM token_chain_state WHERE mint=?').get(mint);
+  const grossLamports=Math.max(0,Math.round(Number(grossNative||0)*1e9));
+  const reservedLamports=Math.min(grossLamports,Math.max(0,Number(chainState?.opt_out_reserved_lamports||0)));
+  const reservedUsd=(reservedLamports/1e9)*nativeUsdPrice;
+  const eligibleUsd=Math.max(0,grossUsd-reservedUsd);
+  const recipientUsd = token.opted_out ? 0 : eligibleUsd * config.recipientShareBps / 10000;
   const protocolUsd = grossUsd - recipientUsd;
+  const buybackSource=token.opted_out
+    ? 'opted_out_recipient'
+    : reservedLamports>0
+      ? 'opt_out_reserved_plus_protocol_cut'
+      : 'protocol_cut';
   const id = randomUUID();
   const tx = db.prepare(`INSERT INTO claims(id,mint,tx_signature,gross_native,native_usd_price,gross_usd,recipient_usd,protocol_usd,confirmed_at,raw_json)
     VALUES(?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,?)`);
   db.exec('BEGIN IMMEDIATE');
   try {
     tx.run(id,mint,txSignature || null,grossNative,nativeUsdPrice,grossUsd,recipientUsd,protocolUsd,JSON.stringify(raw || {}));
-    db.prepare(`INSERT INTO buybacks(id,claim_id,source,amount_usd) VALUES(?,?,?,?)`).run(randomUUID(), id, token.opted_out ? 'opted_out_recipient' : 'protocol_cut', protocolUsd);
+    db.prepare(`INSERT INTO buybacks(id,claim_id,source,amount_usd) VALUES(?,?,?,?)`).run(randomUUID(), id, buybackSource, protocolUsd);
     db.exec('COMMIT');
   } catch (e) { db.exec('ROLLBACK'); throw e; }
   return db.prepare('SELECT * FROM claims WHERE id=?').get(id);
@@ -320,7 +358,7 @@ export function tokenFinancialsWhere(whereSql = '1=1', params = []) {
       MAX(0,
         COALESCE((SELECT SUM(c.recipient_usd) FROM claims c WHERE c.mint=t.mint AND c.status='confirmed'),0) +
         COALESCE((SELECT s.recipient_unclaimed_usd FROM token_chain_state s WHERE s.mint=t.mint AND s.active=1),0) -
-        COALESCE((SELECT SUM(pi.amount_usd) FROM payout_items pi JOIN payouts p ON p.id=pi.payout_id WHERE pi.mint=t.mint AND p.status IN ('sent','claimed')),0)
+        COALESCE((SELECT SUM(pi.amount_usd) FROM payout_items pi JOIN payouts p ON p.id=pi.payout_id WHERE pi.mint=t.mint AND p.status IN ('sent','claimed','diverted')),0)
       ) AS owed_usd,
       (SELECT s.distributable_lamports FROM token_chain_state s WHERE s.mint=t.mint AND s.active=1) AS distributable_lamports,
       (SELECT s.minimum_required_lamports FROM token_chain_state s WHERE s.mint=t.mint AND s.active=1) AS minimum_required_lamports,
@@ -334,17 +372,30 @@ export function tokenFinancialsWhere(whereSql = '1=1', params = []) {
   `).all(...params);
 }
 
-export function allocatePayoutItems(payoutId, handle, amountUsd) {
+export function allocatePayoutItems(payoutId, handle, amountUsd, {includeHidden=false,claimsOnly=false}={}) {
   let remaining = amountUsd;
-  const rows = tokenFinancialsWhere(`t.recipient_handle=? COLLATE NOCASE AND t.hidden=0`, [handle])
-    .filter(x => x.owed_usd > 0).sort((a,b) => String(a.discovered_at).localeCompare(String(b.discovered_at)));
-  for (const row of rows) {
-    if (remaining <= 0.000001) break;
-    const take = Math.min(remaining, row.owed_usd);
-    db.prepare(`INSERT INTO payout_items(payout_id,mint,amount_usd) VALUES(?,?,?)
-      ON CONFLICT(payout_id,mint) DO UPDATE SET amount_usd=amount_usd+excluded.amount_usd`).run(payoutId,row.mint,take);
-    remaining -= take;
-  }
+  const visibility=includeHidden ? '' : ' AND t.hidden=0 AND COALESCE(t.opt_out_hidden,0)=0';
+  const rows = claimsOnly
+    ? db.prepare(`
+        SELECT t.mint,t.discovered_at,
+          MAX(0,
+            COALESCE((SELECT SUM(c.recipient_usd) FROM claims c WHERE c.mint=t.mint AND c.status='confirmed'),0) -
+            COALESCE((SELECT SUM(pi.amount_usd) FROM payout_items pi JOIN payouts p ON p.id=pi.payout_id
+              WHERE pi.mint=t.mint AND p.status IN ('sent','claimed','diverted')),0)
+          ) AS owed_usd
+        FROM tokens t
+        WHERE t.recipient_handle=? COLLATE NOCASE${visibility}
+      `).all(handle)
+    : tokenFinancialsWhere(`t.recipient_handle=? COLLATE NOCASE${visibility}`, [handle]);
+  rows.filter(x => x.owed_usd > 0)
+    .sort((a,b) => String(a.discovered_at).localeCompare(String(b.discovered_at)))
+    .forEach(row => {
+      if (remaining <= 0.000001) return;
+      const take = Math.min(remaining, Number(row.owed_usd||0));
+      db.prepare(`INSERT INTO payout_items(payout_id,mint,amount_usd) VALUES(?,?,?)
+        ON CONFLICT(payout_id,mint) DO UPDATE SET amount_usd=amount_usd+excluded.amount_usd`).run(payoutId,row.mint,take);
+      remaining -= take;
+    });
   return Math.max(0, remaining);
 }
 

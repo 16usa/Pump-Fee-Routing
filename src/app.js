@@ -1229,7 +1229,7 @@ function docsPage(){
 
       <section class="docs-v1-section" id="docs-13">
         <h2><span>13</span>Stopping payments</h2>
-        <p>The project includes an X OAuth opt-out flow. Once a handle is verified and opted out, future payout eligibility can be blocked and the related token visibility/accounting rules can be applied consistently by the backend.</p>
+        <p>The project includes an X OAuth opt-out and reactivation flow. Once a handle is verified and opted out, future payout eligibility is blocked, related tokens are hidden and unpaid recipient accounting is diverted. The same X owner can later reactivate future eligibility; amounts already diverted while opted out are not restored.</p>
         <a class="docs-inline-link" href="#/opt-out">Open opt-out →</a>
       </section>
 
@@ -1297,7 +1297,7 @@ function legalPage(){
         <p>Amounts displayed as owed, pending or sent depend on confirmed ledger records and the configured payout rail. A displayed balance is not a bank deposit, custodial account or guaranteed payment time.</p>
 
         <h3>Opt out</h3>
-        <p>An X account owner can use the opt-out flow to stop future recipient payouts and hide associated listings in this product. Opting out does not prevent third parties from creating or trading tokens elsewhere.</p>
+        <p>An X account owner can use the opt-out flow to stop future recipient payouts and hide associated listings in this product. The same owner can later reactivate future eligibility by signing in again with X. Reactivation does not reverse amounts already diverted while opted out. Opting out does not prevent third parties from creating or trading tokens elsewhere.</p>
 
         <h3>Suspension and corrections</h3>
         <p>Registration, indexing or payout records may be paused or corrected when chain data, recipient identity, provider status or reconciliation evidence is incomplete or contradictory.</p>
@@ -2059,40 +2059,46 @@ async function optOutPage(){
   const raw=(location.hash||'').split('?')[1]||'';
   const qs=new URLSearchParams(raw);
   const done=qs.get('done')||'';
+  const reactivated=qs.get('reactivated')||'';
   const oauthError=qs.get('oauth_error')||'';
 
   let auth={authenticated:false,user:null};
   let oauthStatus={configured:false,callbackUrl:'',hasClientSecret:false,hasSessionSecret:false};
-  if(!done){
+  if(!done&&!reactivated){
     try{auth=await api('/api/auth/x/session');}catch{}
     try{oauthStatus=await api('/api/auth/x/status');}catch{}
   }
   const user=auth?.authenticated?auth.user:null;
+  const isOptedOut=Boolean(user?.opted_out);
+  const finished=Boolean(done||reactivated);
+  const targetLabel=reactivated||isOptedOut?'Active':'Opted out';
 
   return `<main class="optout-page-v1">
     <section class="wrap optout-hero">
-      <h1>Opt out of ${esc(state.brand.name)}</h1>
-      <p>Sign in with X to stop payments to your account and keep tokens that name you off this site.</p>
+      <h1>Manage ${esc(state.brand.name)} status</h1>
+      <p>Sign in with X to stop recipient payments and visibility, or reactivate the same handle later.</p>
     </section>
 
     <section class="wrap optout-card">
-      <p class="eyebrow">Opt out</p>
+      <p class="eyebrow">Recipient control</p>
       <h2>Turn off everything tied to your handle</h2>
-      <p class="optout-lead">${esc(state.brand.name)} pays creator-fee distributions to the X account a token names. If that is you and you do not want it, opting out disables the recipient flow for your handle.</p>
+      <p class="optout-lead">${esc(state.brand.name)} pays creator-fee distributions to the X account a token names. The verified X owner can opt out and can later reactivate the handle.</p>
 
       <div class="optout-effects">
-        <div><b>1</b><section><h3>Payments stop</h3><p>We will not send future X Money-style payouts to your account.</p></section></div>
+        <div><b>1</b><section><h3>Payments stop</h3><p>We will not create future recipient payouts while your handle is opted out.</p></section></div>
         <div><b>2</b><section><h3>Tokens naming you are hidden</h3><p>They are removed from Explore, Payments, search and your public profile views.</p></section></div>
-        <div><b>3</b><section><h3>Unpaid fees move to protocol accounting</h3><p>Future unpaid recipient accounting can be diverted to the protocol allocation and pending $PAID buyback ledger.</p></section></div>
-        <div><b>4</b><section><h3>Launches here cannot pick you</h3><p>The launch flow rejects a recipient handle that has opted out.</p></section></div>
+        <div><b>3</b><section><h3>Unpaid fees move to protocol accounting</h3><p>Already-unpaid recipient balance and fees accrued while opted out stay protocol-side and are not restored by reactivation.</p></section></div>
+        <div><b>4</b><section><h3>Launches here cannot pick you</h3><p>The launch flow rejects a recipient handle while it is opted out.</p></section></div>
       </div>
 
       <div class="optout-limit">
         <h3>What we cannot stop</h3>
         <p>Anyone can still create a token on third-party launch venues using your handle or name. We do not control those venues. We can stop listing it here and stop paying your handle from it.</p>
+        <h3>Reactivation</h3>
+        <p>Sign in again with the same X account and choose Reactivate. Visibility, launch selection and future recipient accounting resume from that point forward; previously diverted amounts remain protocol-side.</p>
       </div>
 
-      <p class="optout-auth-note">Signing in verifies that the request comes from the X account owner. Opt-out happens only after a separate confirmation.</p>
+      <p class="optout-auth-note">Signing in verifies that the request comes from the X account owner. Both opt-out and reactivation require a separate confirmation.</p>
     </section>
 
     <section class="wrap optout-status-card">
@@ -2102,7 +2108,7 @@ async function optOutPage(){
           <div>
             <span>Opted out</span>
             <h2>@${esc(done)}</h2>
-            <p>Payments and launch selection for this handle are now disabled by the backend.</p>
+            <p>Future recipient payouts, public listings and launch selection are disabled for this handle.</p>
           </div>
         </div>
         <div class="optout-check-grid">
@@ -2111,21 +2117,36 @@ async function optOutPage(){
           <div><span>Tokens shown here</span><b>Hidden</b></div>
           <div><span>Selectable at launch</span><b>No</b></div>
         </div>
+      ` : reactivated ? `
+        <div class="optout-success">
+          <div class="optout-success-icon">✓</div>
+          <div>
+            <span>Active again</span>
+            <h2>@${esc(reactivated)}</h2>
+            <p>Future recipient accounting, eligible token visibility and launch selection are active again.</p>
+          </div>
+        </div>
+        <div class="optout-check-grid">
+          <div><span>Your X account</span><b>@${esc(reactivated)}</b></div>
+          <div><span>Future payments</span><b>Enabled</b></div>
+          <div><span>Eligible tokens</span><b>Visible</b></div>
+          <div><span>Past diverted fees</span><b>Not restored</b></div>
+        </div>
       ` : user ? `
         <div class="optout-checking optout-authenticated">
-          <span>Signed in</span>
+          <span>${isOptedOut?'Signed in · opted out':'Signed in · active'}</span>
           <h2>${esc(user.name||user.username)}</h2>
           <p class="optout-auth-handle">@${esc(user.username)}</p>
           <div class="optout-check-grid">
             <div><span>X account</span><b>Verified</b></div>
-            <div><span>X Money payments</span><b>Ready to stop</b></div>
-            <div><span>Tokens shown here</span><b>Ready to hide</b></div>
-            <div><span>Unpaid fees</span><b>Confirm required</b></div>
+            <div><span>X Money payments</span><b>${isOptedOut?'Stopped':'Ready to stop'}</b></div>
+            <div><span>Tokens shown here</span><b>${isOptedOut?'Hidden':'Ready to hide'}</b></div>
+            <div><span>${isOptedOut?'Reactivation':'Unpaid fees'}</span><b>Confirm required</b></div>
           </div>
         </div>
 
         <div class="optout-auth-actions">
-          <button class="btn-light full center-button optout-x-button" type="button" data-action="confirm-opt-out">Confirm opt out</button>
+          <button class="btn-light full center-button optout-x-button" type="button" data-action="${isOptedOut?'confirm-reactivate':'confirm-opt-out'}">${isOptedOut?'Reactivate':'Confirm opt out'}</button>
           <button class="optout-secondary-button" type="button" data-action="x-logout">Sign out</button>
         </div>
       ` : `
@@ -2146,9 +2167,9 @@ async function optOutPage(){
       `}
 
       <div class="optout-progress">
-        <div class="${done||user?'done':'active'}"><b>1</b><span>Sign in with X</span></div>
-        <div class="${done?'done':user?'active':''}"><b>2</b><span>Confirm</span></div>
-        <div class="${done?'done':''}"><b>3</b><span>Opted out</span></div>
+        <div class="${finished||user?'done':'active'}"><b>1</b><span>Sign in with X</span></div>
+        <div class="${finished?'done':user?'active':''}"><b>2</b><span>Confirm</span></div>
+        <div class="${finished?'done':''}"><b>3</b><span>${targetLabel}</span></div>
       </div>
     </section>
 
@@ -3066,7 +3087,7 @@ app.addEventListener('click',async e=>{
       return;
     }
     const launchModeButton=e.target.closest('[data-launch-mode]');if(launchModeButton){e.preventDefault();switchLaunchMode(launchModeButton.dataset.launchMode);return;}
-    const a=e.target.closest('[data-action]');if(a){const action=a.dataset.action;if(action==='confirm-opt-out'){e.preventDefault();a.disabled=true;a.textContent='Confirming…';const result=await api('/api/auth/x/opt-out',{method:'POST',body:'{}'});location.hash=`#/opt-out?done=${encodeURIComponent(result.handle)}`;return;}if(action==='x-logout'){e.preventDefault();await api('/api/auth/x/logout',{method:'POST',body:'{}'});location.hash='#/opt-out';await render();return;}if(action==='menu')document.querySelector('#mobileMenu')?.classList.toggle('hidden');if(action==='go-launch')location.hash='#/launch';if(action==='reload'){state.home=null;render();}if(action==='connect-wallet'){const pub=await connectWallet();if(pub)setLaunchStatus(`Wallet connected: ${pub}`,true);}if(action==='launch-token')await launchTokenOnPump();if(action==='route-fees')await routeFees();if(action==='verify-mint'){const mint=(document.querySelector('#launchMintSuccess')?.value||document.querySelector('#launchMint')?.value||'').trim();if(!mint)throw new Error('Paste the mint first');const out=await api('/api/tokens/register',{method:'POST',body:JSON.stringify({mint,recipient_handle:currentLaunch?.handle||''})});setLaunchStatus(out.ok?`Registered for @${out.recipient}`:`Not ready: ${out.reason}`,out.ok);}if(action==='copy-fee-address'){const value=String(a.dataset.copyValue||'').trim();if(value&&navigator.clipboard?.writeText){await navigator.clipboard.writeText(value);a.textContent='✓';setTimeout(()=>{a.textContent='⌑';},900);}}}
+    const a=e.target.closest('[data-action]');if(a){const action=a.dataset.action;if(action==='confirm-opt-out'){e.preventDefault();a.disabled=true;a.textContent='Confirming…';const result=await api('/api/auth/x/opt-out',{method:'POST',body:'{}'});location.hash=`#/opt-out?done=${encodeURIComponent(result.handle)}`;return;}if(action==='confirm-reactivate'){e.preventDefault();a.disabled=true;a.textContent='Reactivating…';const result=await api('/api/auth/x/reactivate',{method:'POST',body:'{}'});location.hash=`#/opt-out?reactivated=${encodeURIComponent(result.handle)}`;return;}if(action==='x-logout'){e.preventDefault();await api('/api/auth/x/logout',{method:'POST',body:'{}'});location.hash='#/opt-out';await render();return;}if(action==='menu')document.querySelector('#mobileMenu')?.classList.toggle('hidden');if(action==='go-launch')location.hash='#/launch';if(action==='reload'){state.home=null;render();}if(action==='connect-wallet'){const pub=await connectWallet();if(pub)setLaunchStatus(`Wallet connected: ${pub}`,true);}if(action==='launch-token')await launchTokenOnPump();if(action==='route-fees')await routeFees();if(action==='verify-mint'){const mint=(document.querySelector('#launchMintSuccess')?.value||document.querySelector('#launchMint')?.value||'').trim();if(!mint)throw new Error('Paste the mint first');const out=await api('/api/tokens/register',{method:'POST',body:JSON.stringify({mint,recipient_handle:currentLaunch?.handle||''})});setLaunchStatus(out.ok?`Registered for @${out.recipient}`:`Not ready: ${out.reason}`,out.ok);}if(action==='copy-fee-address'){const value=String(a.dataset.copyValue||'').trim();if(value&&navigator.clipboard?.writeText){await navigator.clipboard.writeText(value);a.textContent='✓';setTimeout(()=>{a.textContent='⌑';},900);}}}
     const exp=e.target.closest('.expandable');if(exp){exp.classList.toggle('open');exp.querySelector('.details,.tx-details')?.classList.toggle('hidden');}
     const sort=e.target.closest('[data-sort]');if(sort){state.explore.sort=sort.dataset.sort;await refreshTokens();document.querySelector('#launchGrid').innerHTML=state.tokens.map(exploreTokenCard).join('')||'<div class="explore-empty"><span>No launches.</span></div>';document.querySelectorAll('[data-sort]').forEach(b=>b.classList.toggle('active',b.dataset.sort===state.explore.sort));}
     const venue=e.target.closest('[data-venue]');if(venue){state.explore.venue=state.explore.venue===venue.dataset.venue?'':venue.dataset.venue;await refreshTokens();document.querySelector('#launchGrid').innerHTML=state.tokens.map(exploreTokenCard).join('')||'<div class="explore-empty"><span>No launches.</span></div>';document.querySelectorAll('[data-venue]').forEach(b=>b.classList.toggle('active',b.dataset.venue===state.explore.venue));}
