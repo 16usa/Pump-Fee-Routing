@@ -6121,7 +6121,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 .home-v2-docs-card[data-docs-reference="v19"] .home-v2-docs-footer strong,
 .home-v2-docs-card[data-docs-reference="v19"] .home-v2-docs-footer span{
   color:#888 !important;
-  font-size:14.3px !important;
   line-height:1 !important;
   font-weight:430 !important;
   letter-spacing:0 !important;
@@ -6132,7 +6131,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
    This also neutralizes the old v20 patch if it was installed earlier. */
 .home-v2-launch-card[data-launch-reference="v18"] .home-v2-launch-eyebrow{
   color:#777 !important;
-  font-size:12.1px !important;
   line-height:1 !important;
   font-weight:520 !important;
   letter-spacing:.13em !important;
@@ -6142,7 +6140,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 .home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-topline strong,
 .home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-topline span{
   color:#777 !important;
-  font-size:12.1px !important;
   line-height:1 !important;
   font-weight:520 !important;
   letter-spacing:.13em !important;
@@ -6160,12 +6157,10 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   .home-v2-docs-card[data-docs-reference="v19"] .home-v2-docs-footer strong,
   .home-v2-docs-card[data-docs-reference="v19"] .home-v2-docs-footer span{
     color:#888 !important;
-    font-size:13.2px !important;
   }
 
   .home-v2-launch-card[data-launch-reference="v18"] .home-v2-launch-eyebrow{
     color:#777 !important;
-    font-size:9.9px !important;
     line-height:1 !important;
     font-weight:520 !important;
     letter-spacing:.14em !important;
@@ -6174,7 +6169,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   .home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-topline strong,
   .home-v2-analytics-card[data-analytics-reference="v17"] .home-v2-analytics-topline span{
     color:#777 !important;
-    font-size:9.9px !important;
     line-height:1 !important;
     font-weight:520 !important;
     letter-spacing:.14em !important;
@@ -6437,7 +6431,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   backdrop-filter:blur(7px);
   -webkit-backdrop-filter:blur(7px);
   box-shadow:none;
-  font-size:7.7px;
   line-height:normal;
   font-weight:400;
 }
@@ -6475,7 +6468,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   border-radius:50%;
   background:#171717;
   color:#d8d8d8;
-  font-size:12.1px;
   line-height:1;
   font-style:normal;
   font-weight:750;
@@ -6487,7 +6479,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   flex:0 0 22px;
   margin-left:-10px;
   border:1px solid #292929;
-  font-size:8.8px;
 }
 
 .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient>b{
@@ -6496,7 +6487,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   text-overflow:ellipsis;
   white-space:nowrap;
   color:#f1f1f1;
-  font-size:13.2px;
   line-height:1;
   font-weight:650;
 }
@@ -6508,7 +6498,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   text-overflow:ellipsis;
   white-space:nowrap;
   color:#f1f1f1;
-  font-size:12.1px;
   line-height:1;
   font-weight:650;
 }
@@ -6518,7 +6507,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     top:6px;
     right:6px;
     padding:4px 6px;
-    font-size:7.7px;
   }
 
   .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient{
@@ -6533,7 +6521,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     width:19px;
     height:19px;
     flex-basis:19px;
-    font-size:11px;
   }
 
   .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient .avatar{
@@ -6541,12 +6528,10 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     height:19px;
     flex-basis:19px;
     margin-left:-8px;
-    font-size:7.7px;
   }
 
   .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient>b,
   .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient>span{
-    font-size:13.2px;
   }
 }
 
@@ -6570,7 +6555,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   align-items:center;
   justify-content:center;
   color:#d1d1d1;
-  font-size:8.8px;
   line-height:1;
   font-weight:400;
   letter-spacing:0;
@@ -6579,7 +6563,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 
 .home-top-token-card[data-top-token-layout="v21"] .home-top-token-platform .platform-badge{
   color:inherit;
-  font-size:inherit;
   line-height:inherit;
   font-weight:inherit;
   letter-spacing:inherit;
@@ -6593,7 +6576,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     height:24px;
     min-height:24px;
     padding:0;
-    font-size:7.7px;
   }
 }
 
@@ -7286,7 +7268,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   width: 28px;
   height: 28px;
   min-width: 28px;
-  font-size: 16.5px;
 }
 
 .home-top-token-recipient .avatar,
@@ -7299,7 +7280,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 }
 
 .home-top-token-recipient b{
-  font-size: 24.2px;
   line-height: 1;
 }
 
@@ -7321,7 +7301,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     width: 26px;
     height: 26px;
     min-width: 26px;
-    font-size: 15.4px;
   }
 
   .home-top-token-recipient .avatar,
@@ -7334,7 +7313,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   }
 
   .home-top-token-recipient b{
-    font-size: 22px;
   }
 
   .home-top-token-recipient .x-verified-badge.x-verified-compact{
@@ -7349,7 +7327,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
    Top Tokens recipient chip: make the name and verified badge match
    the size used in the Launch block identity row. */
 .home-top-token-recipient b{
-  font-size: 17.6px;
   line-height: 1;
   font-weight: 700;
 }
@@ -7364,7 +7341,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 
 @media (max-width: 640px){
   .home-top-token-recipient b{
-    font-size: 17.6px;
   }
 
   .home-top-token-recipient .x-verified-badge.x-verified-compact{
@@ -7380,28 +7356,24 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
    Top Tokens recipient chip: increase only the GG name so it visually
    matches the Launch block, while keeping the verified badge as-is. */
 .home-top-token-recipient b{
-  font-size: 19.8px;
   line-height: 1;
   font-weight: 700;
 }
 
 @media (max-width: 640px){
   .home-top-token-recipient b{
-    font-size: 19.8px;
   }
 }
 
 
 /* top-tokens-name-conflict-fix-v24-10 */
 .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient>b.x-recipient-name{
-  font-size:13.2px !important;
   line-height:1 !important;
   font-weight:650 !important;
 }
 
 @media(max-width:640px){
   .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient>b.x-recipient-name{
-    font-size:13.2px !important;
   }
 }
 
@@ -7411,7 +7383,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   width:22px !important;
   height:22px !important;
   flex:0 0 22px !important;
-  font-size:12.1px !important;
 }
 
 @media(max-width:640px){
@@ -7419,7 +7390,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     width:19px !important;
     height:19px !important;
     flex-basis:19px !important;
-    font-size:11px !important;
   }
 }
 
@@ -7433,7 +7403,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   height:30px !important;
   min-width:30px !important;
   flex:0 0 30px !important;
-  font-size:16.5px !important;
 }
 
 .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient .avatar.x-recipient-avatar{
@@ -7452,7 +7421,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
     height:28px !important;
     min-width:28px !important;
     flex:0 0 28px !important;
-    font-size:15.4px !important;
   }
 
   .home-top-token-card[data-top-token-layout="v21"] .home-top-token-recipient .avatar.x-recipient-avatar{
@@ -7476,7 +7444,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 .home-most-payments-pager,
 .home-off-pager,
 .home-on-pager{
-  font-size:12.1px !important;
   line-height:1 !important;
 }
 
@@ -7486,7 +7453,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 .home-most-payments-pager button,
 .home-off-pager button,
 .home-on-pager button{
-  font-size:12.1px !important;
   line-height:1 !important;
 }
 
@@ -7497,7 +7463,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   .home-most-payments-pager,
   .home-off-pager,
   .home-on-pager{
-    font-size:9.9px !important;
   }
 
   .home-top-token-pager button,
@@ -7506,7 +7471,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   .home-most-payments-pager button,
   .home-off-pager button,
   .home-on-pager button{
-    font-size:9.9px !important;
   }
 }
 
@@ -7521,7 +7485,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 .home-most-payments-pager,
 .home-off-pager,
 .home-on-pager{
-  font-size:12.1px !important;
   line-height:1 !important;
 }
 
@@ -7531,7 +7494,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 .home-most-payments-pager button,
 .home-off-pager button,
 .home-on-pager button{
-  font-size:23.1px !important;
   line-height:1 !important;
   width:auto !important;
   height:auto !important;
@@ -7544,7 +7506,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   .home-most-payments-pager,
   .home-off-pager,
   .home-on-pager{
-    font-size:9.9px !important;
     line-height:1 !important;
   }
 
@@ -7554,7 +7515,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   .home-most-payments-pager button,
   .home-off-pager button,
   .home-on-pager button{
-    font-size:18.7px !important;
     line-height:1 !important;
     width:auto !important;
     height:auto !important;
@@ -7572,7 +7532,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 .home-most-payments-pager,
 .home-off-pager,
 .home-on-pager{
-  font-size:14.3px !important;
   line-height:1 !important;
 }
 
@@ -7582,7 +7541,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 .home-most-payments-pager button,
 .home-off-pager button,
 .home-on-pager button{
-  font-size:14.3px !important;
   line-height:1 !important;
   width:auto !important;
   height:auto !important;
@@ -7595,7 +7553,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   .home-most-payments-pager,
   .home-off-pager,
   .home-on-pager{
-    font-size:13.2px !important;
     line-height:1 !important;
   }
 
@@ -7605,7 +7562,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   .home-most-payments-pager button,
   .home-off-pager button,
   .home-on-pager button{
-    font-size:13.2px !important;
     line-height:1 !important;
     width:auto !important;
     height:auto !important;
@@ -7623,7 +7579,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 .home-most-payments-pager,
 .home-off-pager,
 .home-on-pager{
-  font-size:14.3px !important;
   line-height:1 !important;
 }
 
@@ -7633,7 +7588,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 .home-most-payments-pager button,
 .home-off-pager button,
 .home-on-pager button{
-  font-size:22px !important;
   line-height:1 !important;
   font-weight:430 !important;
   width:auto !important;
@@ -7647,7 +7601,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   .home-most-payments-pager,
   .home-off-pager,
   .home-on-pager{
-    font-size:13.2px !important;
     line-height:1 !important;
   }
 
@@ -7657,7 +7610,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   .home-most-payments-pager button,
   .home-off-pager button,
   .home-on-pager button{
-    font-size:19.8px !important;
     line-height:1 !important;
     font-weight:430 !important;
     width:auto !important;
@@ -7835,13 +7787,11 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 /* top-tokens-tabs-match-pager-v24-25
    Match Pump / Pons / All typography to the pager number size. */
 .home-top-tokens .home-top-token-tabs button{
-  font-size:14.3px !important;
   line-height:1 !important;
 }
 
 @media(max-width:640px){
   .home-top-tokens .home-top-token-tabs button{
-    font-size:13.2px !important;
     line-height:1 !important;
   }
 }
@@ -7863,7 +7813,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 .home-cta-row a,
 .home-hero button[href],
 .home-hero a[href] {
-  font-size: 17.6px !important;
   line-height: 1.15 !important;
   font-weight: 600 !important;
 }
@@ -7901,7 +7850,6 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
   .home-cta-row a,
   .home-hero button[href],
   .home-hero a[href] {
-    font-size: 17.6px !important;
   }
 }
 
@@ -7909,13 +7857,11 @@ a.token-card,a.profile-card,a.rank-card,a.trend{color:inherit;text-decoration:no
 /* home-hero-subtitle-match-launch-v24-27
    Match the Home hero description to the Launch hero description size. */
 .home-reference-v1 .home-hero .hero-copy>p{
-  font-size:16.5px !important;
   line-height:1.55 !important;
 }
 
 @media(max-width:760px){
   .home-reference-v1 .home-hero .hero-copy>p{
-    font-size:13.2px !important;
     line-height:1.55 !important;
   }
 }
@@ -8489,7 +8435,6 @@ body{
 .home-explore-reference-v8 .home-explore-v8-footer strong,
 .home-explore-reference-v8 .home-explore-v8-footer span{
   color:#888 !important;
-  font-size:14.3px !important;
   line-height:1 !important;
   font-weight:430 !important;
   letter-spacing:0 !important;
@@ -8500,7 +8445,6 @@ body{
   .home-explore-reference-v8 .home-explore-v8-footer strong,
   .home-explore-reference-v8 .home-explore-v8-footer span{
     color:#888 !important;
-    font-size:13.2px !important;
     line-height:1 !important;
     font-weight:430 !important;
   }
@@ -9552,7 +9496,6 @@ body{
    Match the dark Read the docs button text size to the white Launch a token CTA. */
 @media(max-width:640px){
   .home-reference-v1 .home-hero .text-link{
-    font-size:12.1px !important;
   }
 }
 
@@ -9563,7 +9506,6 @@ body{
 .home-reference-v1 .home-hero .btn-light,
 .home-reference-v1 .home-hero .text-link{
   font-family:inherit !important;
-  font-size:14.3px !important;
   line-height:normal !important;
   font-weight:700 !important;
   letter-spacing:0 !important;
@@ -9572,7 +9514,6 @@ body{
 @media(max-width:640px){
   .home-reference-v1 .home-hero .btn-light,
   .home-reference-v1 .home-hero .text-link{
-    font-size:11px !important;
     line-height:normal !important;
     font-weight:700 !important;
   }
@@ -9584,13 +9525,11 @@ body{
    as the subtitle directly above them. */
 .home-reference-v1 .home-hero .btn-light,
 .home-reference-v1 .home-hero .text-link{
-  font-size:16.5px !important;
 }
 
 @media(max-width:760px){
   .home-reference-v1 .home-hero .btn-light,
   .home-reference-v1 .home-hero .text-link{
-    font-size:13.2px !important;
   }
 }
 
@@ -9708,3 +9647,8 @@ body{
   proportions follow the enlarged type naturally.
   Roll back with rollback.sh from the patch package.
 */
+
+
+/* home-local-typography-reset-v24-61
+   Removed historical Home-only font-size overrides.
+   Global/current site typography is intentionally untouched. */
