@@ -10,7 +10,7 @@ const mapToken = (t) => ({
   recipient_banner_url:t.recipient_banner_url || '',
   profile:t.recipient_handle, mc:Number(t.market_cap_usd||0), market_cap_usd:Number(t.market_cap_usd||0),
   sent:Number(t.sent_usd||0), owed:Number(t.owed_usd||0), earned:Number(t.earned_usd||0), permanent:!!t.permanent,
-  fee_share_bps:Number(t.fee_share_bps||0), created_at:t.created_at, discovered_at:t.discovered_at,
+  fee_share_bps:Number(t.fee_share_bps||0), fee_config_address:t.fee_config_address||'', created_at:t.created_at, discovered_at:t.discovered_at,
   distributable_lamports:t.distributable_lamports == null ? null : Number(t.distributable_lamports),
   minimum_required_lamports:t.minimum_required_lamports == null ? null : Number(t.minimum_required_lamports),
   claimable_usd:t.gross_unclaimed_usd == null ? null : Number(t.gross_unclaimed_usd),

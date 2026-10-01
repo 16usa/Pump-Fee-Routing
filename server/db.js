@@ -123,6 +123,7 @@ export function migrate() {
     CREATE TABLE IF NOT EXISTS launch_intents (
       id TEXT PRIMARY KEY,
       mint TEXT,
+      venue TEXT NOT NULL DEFAULT 'pump',
       recipient_handle TEXT NOT NULL COLLATE NOCASE,
       creator_pubkey TEXT,
       description_line TEXT NOT NULL,
@@ -194,6 +195,12 @@ export function migrate() {
     db.prepare('PRAGMA table_info(tokens)').all().map(row=>String(row.name||''))
   );
   if(!tokenColumns.has('opt_out_hidden')) db.exec('ALTER TABLE tokens ADD COLUMN opt_out_hidden INTEGER NOT NULL DEFAULT 0');
+
+  /* pons-robinhood-v1 */
+  const launchIntentColumns=new Set(
+    db.prepare('PRAGMA table_info(launch_intents)').all().map(row=>String(row.name||''))
+  );
+  if(!launchIntentColumns.has('venue')) db.exec("ALTER TABLE launch_intents ADD COLUMN venue TEXT NOT NULL DEFAULT 'pump'");
 
   const chainStateColumns=new Set(
     db.prepare('PRAGMA table_info(token_chain_state)').all().map(row=>String(row.name||''))
@@ -317,7 +324,7 @@ export function getIndexerStatus() {
   };
 }
 
-export function recordClaim({ mint, txSignature, grossNative, nativeUsdPrice, raw = null }) {
+export function recordClaim({ mint, txSignature, grossNative, nativeUsdPrice, chain = 'solana', nativeSymbol = 'SOL', raw = null }) {
   const token = db.prepare(`SELECT t.*, r.opted_out FROM tokens t JOIN recipients r ON r.handle=t.recipient_handle WHERE mint=?`).get(mint);
   if (!token) throw new Error(`Unknown token ${mint}`);
   if (txSignature) {
@@ -325,10 +332,13 @@ export function recordClaim({ mint, txSignature, grossNative, nativeUsdPrice, ra
     if (existing) return existing;
   }
   const grossUsd = grossNative * nativeUsdPrice;
-  const chainState=db.prepare('SELECT opt_out_reserved_lamports FROM token_chain_state WHERE mint=?').get(mint);
-  const grossLamports=Math.max(0,Math.round(Number(grossNative||0)*1e9));
-  const reservedLamports=Math.min(grossLamports,Math.max(0,Number(chainState?.opt_out_reserved_lamports||0)));
-  const reservedUsd=(reservedLamports/1e9)*nativeUsdPrice;
+  const normalizedChain=String(chain||'solana').toLowerCase();
+  const normalizedSymbol=String(nativeSymbol||'SOL').toUpperCase();
+  const isSolana=normalizedChain==='solana';
+  const chainState=isSolana?db.prepare('SELECT opt_out_reserved_lamports FROM token_chain_state WHERE mint=?').get(mint):null;
+  const grossLamports=isSolana?Math.max(0,Math.round(Number(grossNative||0)*1e9)):0;
+  const reservedLamports=isSolana?Math.min(grossLamports,Math.max(0,Number(chainState?.opt_out_reserved_lamports||0))):0;
+  const reservedUsd=isSolana?(reservedLamports/1e9)*nativeUsdPrice:0;
   const eligibleUsd=Math.max(0,grossUsd-reservedUsd);
   const recipientUsd = token.opted_out ? 0 : eligibleUsd * config.recipientShareBps / 10000;
   const protocolUsd = grossUsd - recipientUsd;
@@ -338,11 +348,11 @@ export function recordClaim({ mint, txSignature, grossNative, nativeUsdPrice, ra
       ? 'opt_out_reserved_plus_protocol_cut'
       : 'protocol_cut';
   const id = randomUUID();
-  const tx = db.prepare(`INSERT INTO claims(id,mint,tx_signature,gross_native,native_usd_price,gross_usd,recipient_usd,protocol_usd,confirmed_at,raw_json)
-    VALUES(?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,?)`);
+  const tx = db.prepare(`INSERT INTO claims(id,mint,chain,tx_signature,gross_native,native_symbol,native_usd_price,gross_usd,recipient_usd,protocol_usd,confirmed_at,raw_json)
+    VALUES(?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,?)`);
   db.exec('BEGIN IMMEDIATE');
   try {
-    tx.run(id,mint,txSignature || null,grossNative,nativeUsdPrice,grossUsd,recipientUsd,protocolUsd,JSON.stringify(raw || {}));
+    tx.run(id,mint,normalizedChain,txSignature || null,grossNative,normalizedSymbol,nativeUsdPrice,grossUsd,recipientUsd,protocolUsd,JSON.stringify(raw || {}));
     db.prepare(`INSERT INTO buybacks(id,claim_id,source,amount_usd) VALUES(?,?,?,?)`).run(randomUUID(), id, buybackSource, protocolUsd);
     db.exec('COMMIT');
   } catch (e) { db.exec('ROLLBACK'); throw e; }

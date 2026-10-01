@@ -1021,7 +1021,7 @@ function explorePage(){
     <section class="wrap explore-head explore-hero">
       <div>
         <h1>Explore tokens</h1>
-        <p>pump.fun launches the tokens. ${esc(state.brand.name)} claims the creator fees on chain and pays them to an X account in dollars through X Money, with a public confirmation for every payout.</p>
+        <p>Pump and Pons launches feed the same ${esc(state.brand.name)} recipient ledger. Creator revenue is attributed on chain, converted to USD accounting, and paid through the configured payout rail.</p>
         <button class="btn-light" data-action="go-launch">Launch a token</button>
       </div>
     </section>
@@ -1034,7 +1034,7 @@ function explorePage(){
       <div class="explore-venue-tabs">
         <button class="${!state.explore.venue?'active':''}" data-venue="">All</button>
         <button class="${state.explore.venue==='pump'?'active':''}" data-venue="pump">● Pump</button>
-        <button disabled>■ Pons <small>Soon</small></button>
+        <button class="${state.explore.venue==='pons'?'active':''}" data-venue="pons">■ Pons</button>
         <button disabled>Four <small>Soon</small></button>
       </div>
 
@@ -1147,14 +1147,14 @@ function docsPage(){
         <p>The venue changes how the creator-fee destination is configured, but it does not change the accounting model after a token is registered.</p>
         <div class="docs-venue-grid">
           ${docsVenueCard('pump.fun','Live','Solana','Fee sharing is configured after token creation. The route must point entirely to the configured treasury and be made permanent.','live')}
-          ${docsVenueCard('pons.family','Not live yet','Robinhood Chain','Reserved for a future launch rail. No Pons token is treated as payable until that integration is explicitly enabled.','soon')}
+          ${docsVenueCard('pons.family','Integrated','Robinhood Chain','Pons V2 user-signed launches route creator revenue to the configured PROJECT EVM treasury. Launch permission still follows Pons canLaunch(wallet).','live')}
           ${docsVenueCard('four.meme','Exploratory','BNB Chain','Shown only as a possible future venue. It is not currently supported by this project.','future')}
         </div>
       </section>
 
       <section class="docs-v1-section" id="docs-3">
         <h2><span>3</span>Directing fees</h2>
-        <p>For a token to become payable, the configured treasury must be the sole creator-fee shareholder at 10,000 basis points and the sharing authority must be permanent. A partial or still-editable route remains ineligible.</p>
+        <p>On Pump, the configured treasury must be the sole creator-fee shareholder at 10,000 basis points and the sharing authority must be permanent. On Pons V2, PROJECT registers only launches whose creatorFeeRecipient is the configured Pons treasury; this release accepts native-ETH quote launches only.</p>
         <div class="docs-facts">
           ${docsFact('When','After the token exists')}
           ${docsFact('What is verified','Fee-sharing config per mint')}
@@ -1338,7 +1338,7 @@ function legalPage(){
         <p>$PAID is currently described as a planned protocol token and buyback / burn mechanism. Until the token and live execution policy are actually enabled, protocol-cut values shown in the product represent accounting state rather than completed market purchases or burns.</p>
 
         <h3>Future integrations</h3>
-        <p>Pons, additional chains, walletless launch modes and other future rails should be treated as unavailable until the corresponding production integration is explicitly enabled.</p>
+        <p>Pons is available only when PROJECT has a configured Pons treasury and the connected wallet passes Pons V2 canLaunch(wallet). Additional chains and other future rails remain unavailable until explicitly enabled.</p>
 
         <div class="legal-review-note">
           <strong>Production review required</strong>
@@ -1613,6 +1613,7 @@ function updateLaunchPreview(){
 
 
 let launchMode='launch';
+let launchVenue='pump';
 
 function launchModeTabs(active='launch'){
   return `<div class="launch-mode-tabs">
@@ -1653,6 +1654,37 @@ function launchFeeAddressBox(treasury){
   </div>`;
 }
 
+
+function switchLaunchVenue(venue){
+  if(!['pump','pons'].includes(venue))return;
+  if(venue==='pons'&&(!state.brand.ponsEnabled||!String(state.brand.ponsTreasuryAddress||'').trim())){
+    setLaunchStatus('Set PONS_TREASURY_ADDRESS in Replit Secrets before enabling Pons.');
+    return;
+  }
+  launchVenue=venue;
+  currentLaunch=null;
+  document.querySelectorAll('[data-launch-venue]').forEach(btn=>btn.classList.toggle('active',btn.dataset.launchVenue===venue));
+  const unit=document.querySelector('#launchDevBuyUnit');
+  const input=document.querySelector('#launchDevBuy');
+  const help=document.querySelector('#launchDevBuyHelp');
+  const notice=document.querySelector('#launchVenueNotice');
+  const button=document.querySelector('#launchSubmitButton');
+  if(venue==='pons'){
+    if(unit)unit.textContent='ETH';
+    if(input){input.value='0';input.disabled=true;}
+    if(help)help.textContent='Pons V2 launch uses zero dev buy in this release. Opening buys remain separate until atomic quote/slippage handling is added.';
+    if(notice)notice.textContent='Pons V2 · Robinhood Chain. PROJECT routes creator revenue to the configured Pons treasury. Pons canLaunch(wallet) still controls who may launch.';
+    if(button){button.disabled=false;button.textContent=currentEvmAccount?'Launch token':'Connect wallet';}
+  }else{
+    if(unit)unit.textContent='SOL';
+    if(input)input.disabled=false;
+    if(help)help.textContent='0 SOL creates the token without an initial buy. Any amount above 0 is included in the Pump launch transaction and still requires your wallet approval.';
+    if(notice)notice.textContent='Pump · Solana. Creator fees are permanently routed to the configured Solana treasury.';
+    if(button){button.disabled=false;button.textContent=currentWallet?'Launch token':'Connect wallet';}
+  }
+  setLaunchStatus('');
+}
+
 function switchLaunchMode(mode){
   if(!['launch','register','walletless'].includes(mode))return;
   launchMode=mode;
@@ -1673,6 +1705,8 @@ function switchLaunchMode(mode){
 
 function launchPage(){
   const treasury=state.brand.treasuryAddress||'';
+  const ponsReady=!!state.brand.ponsEnabled&&!!String(state.brand.ponsTreasuryAddress||'').trim();
+  if(launchVenue==='pons'&&!ponsReady)launchVenue='pump';
   const recipientPct=fmtNum((state.brand.recipientShareBps||8000)/100);
   const protocolPct=fmtNum((state.brand.protocolShareBps||2000)/100);
   const brandName=esc(state.brand.name||'PROJECT');
@@ -1680,7 +1714,7 @@ function launchPage(){
   return `<main class="launch-page-v1">
     <section class="wrap launch-v1-hero">
       <h1>Launch and direct fees through <span class="launch-hero-x-logo" aria-label="X"><svg viewBox="0 0 1200 1227" aria-hidden="true" focusable="false"><path fill="currentColor" d="M714.163 519.284L1160.89 0H1055.06L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.454 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.137 687.828L521.697 619.934L144.011 79.6944H306.615L611.449 515.999L658.889 583.893L1055.11 1150.13H892.506L569.137 687.854V687.828Z"/></svg></span> Money</h1>
-      <p>Prepare a token for pump.fun, name the X recipient, then register the mint and permanently route 100% of creator fees to the configured treasury.</p>
+      <p>Choose Pump on Solana or Pons on Robinhood Chain, name the X recipient, and route PROJECT's creator revenue into the configured treasury ledger.</p>
     </section>
 
     <section class="wrap launch-v1-grid">
@@ -1690,9 +1724,10 @@ function launchPage(){
           ${launchModeTabs('launch')}
 
           <div class="launch-venue-row">
-            <button type="button" class="active">● Pump</button>
-            <button type="button" disabled>■ Pons <small>Soon</small></button>
+            <button type="button" data-launch-venue="pump" class="${launchVenue==='pump'?'active':''}">● Pump</button>
+            <button type="button" data-launch-venue="pons" class="${launchVenue==='pons'?'active':''}" ${ponsReady?'':'disabled'}>■ Pons ${ponsReady?'':'<small>Set treasury</small>'}</button>
           </div>
+          <p class="launch-help" id="launchVenueNotice">${launchVenue==='pons'?'Pons V2 · Robinhood Chain. PROJECT routes creator revenue to the configured Pons treasury. Pons canLaunch(wallet) still controls who may launch.':'Pump · Solana. Creator fees are permanently routed to the configured Solana treasury.'}</p>
 
           <form class="launch-form launch-form-v1" id="launchForm">
             <div class="launch-field">
@@ -1734,8 +1769,8 @@ function launchPage(){
 
             <div class="launch-field">
               <label for="launchDevBuy">Dev Buy <small>(optional)</small></label>
-              <div class="launch-money-input"><span>SOL</span><input id="launchDevBuy" inputmode="decimal" placeholder="0.00"></div>
-              <p class="launch-help">0 SOL creates the token without an initial buy. Any amount above 0 is included in the Pump launch transaction and still requires your wallet approval.</p>
+              <div class="launch-money-input"><span id="launchDevBuyUnit">${launchVenue==='pons'?'ETH':'SOL'}</span><input id="launchDevBuy" inputmode="decimal" placeholder="0.00" ${launchVenue==='pons'?'value="0" disabled':''}></div>
+              <p class="launch-help" id="launchDevBuyHelp">${launchVenue==='pons'?'Pons V2 launch uses zero dev buy in this release. Opening buys remain separate until atomic quote/slippage handling is added.':'0 SOL creates the token without an initial buy. Any amount above 0 is included in the Pump launch transaction and still requires your wallet approval.'}</p>
             </div>
 
             <label class="launch-terms"><input type="checkbox" required><span>I agree to the <a href="#/legal">Terms</a> and have read the disclosures.</span></label>
@@ -1909,10 +1944,10 @@ function capitalFlowPage(){
     <section class="wrap capital-flow-pons">
       <h2>Pons fee flow</h2>
       <div class="capital-flow-pons-grid">
-        <div><b>1</b><span>Native fees accrue and are claimed into the configured treasury.</span></div>
-        <div><b>2</b><span>When Pons support is enabled, bridged assets can be converted onto the Solana payout rail.</span></div>
-        <div><b>3</b><span>The recipient allocation is converted to dollars through the configured exchange and payout provider.</span></div>
-        <div><b>4</b><span>Recipient and protocol allocations remain separate in the ledger from claim through payout.</span></div>
+        <div><b>1</b><span>Pons V2 creator revenue accrues in ETH to PROJECT's configured creatorFeeRecipient through the Pons fee escrow.</span></div>
+        <div><b>2</b><span>The Robinhood Chain indexer attributes each confirmed creator-fee sweep to its Pons token and X recipient.</span></div>
+        <div><b>3</b><span>ETH is normalized to USD accounting and the same recipient / protocol split is applied.</span></div>
+        <div><b>4</b><span>The existing payout engine handles the recipient balance independently of whether it came from Pump or Pons.</span></div>
       </div>
       <p>Accrued fees, claimed funds, conversion and completed payouts are separate stages. Token-denominated fees remain held until the configured rail can process them.</p>
     </section>
@@ -2224,7 +2259,10 @@ async function tokenPage(mint){
   const recipientPct=fmtNum((state.brand.recipientShareBps||8000)/100);
   const protocolPct=fmtNum((state.brand.protocolShareBps||2000)/100);
   const routeGood=!!t.permanent && Number(t.fee_share_bps||0)>=10000;
-  const pumpUrl=t.venue==='pump'?`https://pump.fun/coin/${encodeURIComponent(t.mint)}`:'';
+  const isPons=t.venue==='pons';
+  const externalUrl=t.venue==='pump'?`https://pump.fun/coin/${encodeURIComponent(t.mint)}`:isPons?`${state.brand.ponsExplorerUrl||'https://robinhoodchain.blockscout.com'}/address/${encodeURIComponent(t.mint)}`:'';
+  const externalLabel=t.venue==='pump'?'Open on Pump ↗':isPons?'Open on Robinhood Chain ↗':'';
+  const routeTreasury=isPons?(state.brand.ponsTreasuryAddress||'Not configured'):(state.brand.treasuryAddress||'Not configured');
   const totalClaims=(t.claims||[]).reduce((n,c)=>n+Number(c.gross_usd||0),0);
 
   return `<main class="token-detail-page">
@@ -2245,7 +2283,7 @@ async function tokenPage(mint){
             <h1>${esc(t.name||t.symbol||'Token')}</h1>
             <span>${esc(t.symbol||'')}</span>
           </div>
-          ${pumpUrl?`<a class="token-detail-external" href="${pumpUrl}" target="_blank" rel="noopener">Open on Pump ↗</a>`:''}
+          ${externalUrl?`<a class="token-detail-external" href="${externalUrl}" target="_blank" rel="noopener">${externalLabel}</a>`:''}
         </div>
 
         <a class="token-detail-recipient" href="#/profile/${encodeURIComponent(t.recipient_handle||'')}">
@@ -2270,7 +2308,7 @@ async function tokenPage(mint){
       <div class="token-detail-panel token-route-panel">
         <div class="token-detail-panel-head">
           <div><span>Fee route</span><h2>${routeGood?'Verified':'Pending verification'}</h2></div>
-          <span class="token-route-badge ${routeGood?'good':''}">${routeGood?'Permanent':'Pending'}</span>
+          <span class="token-route-badge ${routeGood?'good':''}">${routeGood?(isPons?'Verified':'Permanent'):'Pending'}</span>
         </div>
 
         <div class="token-route-meter">
@@ -2286,7 +2324,8 @@ async function tokenPage(mint){
 
         <div class="token-route-addresses">
           <div><span>Token mint</span><code>${esc(t.mint)}</code></div>
-          <div><span>Treasury</span><code>${esc(state.brand.treasuryAddress||'Not configured')}</code></div>
+          <div><span>${isPons?'Pons treasury':'Treasury'}</span><code>${esc(routeTreasury)}</code></div>
+          ${isPons&&t.fee_config_address?`<div><span>Pons V2 curve</span><code>${esc(t.fee_config_address)}</code></div>`:''}
         </div>
       </div>
 
@@ -2296,7 +2335,17 @@ async function tokenPage(mint){
           <span class="token-route-badge ${chain?'good':''}">${chain?'Live':'—'}</span>
         </div>
 
-        ${chain?`
+        ${isPons?`
+          <div class="token-chain-facts">
+            <div><span>Network</span><b>Robinhood Chain</b></div>
+            <div><span>Native asset</span><b>ETH</b></div>
+            <div><span>Generation</span><b>Pons V2</b></div>
+            <div><span>Creator route</span><b>${routeGood?'Verified':'Pending'}</b></div>
+            <div><span>Ledgered creator revenue</span><b>${fmtMoney(totalClaims)}</b></div>
+            <div><span>Indexer</span><b>${state.brand.ponsEnabled?'Enabled':'Disabled'}</b></div>
+          </div>
+          <p class="token-indexed-at">Pons creator revenue is ledgered from confirmed V2 fee-sweep events.</p>
+        `:chain?`
           <div class="token-chain-facts">
             <div><span>Claimable now</span><b>${fmtMoney(chain.gross_unclaimed_usd||t.claimable_usd||0)}</b></div>
             <div><span>Recipient unclaimed</span><b>${fmtMoney(chain.recipient_unclaimed_usd||0)}</b></div>
@@ -2629,7 +2678,7 @@ async function loadBase(){
 
 async function refreshTokens(){const q=new URLSearchParams({search:state.explore.query,sort:state.explore.sort,venue:state.explore.venue,limit:'200'});const j=await api(`/api/tokens?${q}`);state.tokens=j.tokens||[];}
 async function render(){const path=(location.hash||'#/').slice(2).split('?')[0];app.innerHTML=header()+loadingPage();try{if(!state.home)await loadBase();let page;if(path===''||path==='/')page=homePage();else if(path==='explore'){await refreshTokens();page=explorePage();}else if(path==='money'){state.money=await api('/api/money');page=moneyPage();}else if(path==='docs')page=docsPage();else if(path==='legal')page=legalPage();else if(path==='launch')page=launchPage();else if(path==='capital-flow'){state.money=await api('/api/money');page=capitalFlowPage();}else if(path==='paid'){state.money=await api('/api/money');page=paidPage();}else if(path==='opt-out')page=await optOutPage();else if(path==='admin')page=adminPage();else if(path.startsWith('token/'))page=await tokenPage(decodeURIComponent(path.slice(6)));else if(path.startsWith('profile/'))page=await profilePage(decodeURIComponent(path.slice(8)));else page=homePage();app.innerHTML=header()+page;window.scrollTo(0,0);}catch(e){app.innerHTML=header()+errorPage(e);}}
-let currentLaunch=null,currentWallet=null;
+let currentLaunch=null,currentWallet=null,currentEvmAccount='';
 
 function solanaWalletProvider(){
   const candidates=[
@@ -2777,6 +2826,11 @@ function restoreLaunchWalletDraft(){
 }
 
 function syncLaunchWalletUi(){
+  if(launchVenue==='pons'){
+    const button=document.querySelector('#launchSubmitButton');
+    if(button&&!button.disabled)button.textContent=currentEvmAccount?'Launch token':'Connect wallet';
+    return;
+  }
   const provider=solanaWalletProvider();
   if(provider && provider.publicKey){
     currentWallet=provider;
@@ -2786,6 +2840,46 @@ function syncLaunchWalletUi(){
     const button=document.querySelector('#launchSubmitButton');
     if(button && !button.disabled && button.textContent!=='Connect wallet')button.textContent='Connect wallet';
   }
+}
+
+
+function evmProvider(){ return window.ethereum||null; }
+
+async function ensureRobinhoodChain(provider){
+  const chainId='0x1237';
+  try{
+    await provider.request({method:'wallet_switchEthereumChain',params:[{chainId}]});
+  }catch(err){
+    if(Number(err?.code)!==4902)throw err;
+    await provider.request({method:'wallet_addEthereumChain',params:[{
+      chainId,
+      chainName:'Robinhood Chain',
+      nativeCurrency:{name:'Ether',symbol:'ETH',decimals:18},
+      rpcUrls:['https://rpc.mainnet.chain.robinhood.com'],
+      blockExplorerUrls:['https://robinhoodchain.blockscout.com']
+    }]});
+  }
+}
+
+async function connectPonsWallet(){
+  const provider=evmProvider();
+  if(!provider?.request)throw new Error('Open PROJECT inside Robinhood Wallet or another EVM wallet browser (for example MetaMask) to launch on Pons.');
+  const accounts=await provider.request({method:'eth_requestAccounts'});
+  await ensureRobinhoodChain(provider);
+  const account=String(accounts?.[0]||'');
+  if(!/^0x[0-9a-fA-F]{40}$/.test(account))throw new Error('EVM wallet connected but did not return a valid address');
+  currentEvmAccount=account;
+  if(typeof provider.on==='function'&&!provider.__projectPonsEventsBound){
+    provider.__projectPonsEventsBound=true;
+    provider.on('accountsChanged',accounts=>{currentEvmAccount=String(accounts?.[0]||'');currentLaunch=null;syncLaunchWalletUi();});
+    provider.on('chainChanged',()=>{currentLaunch=null;});
+  }
+  const status=await api(`/api/pons/status?wallet=${encodeURIComponent(account)}`);
+  if(!status.configured)throw new Error('Set PONS_TREASURY_ADDRESS in Replit Secrets before launching on Pons.');
+  if(status.canLaunch===false){
+    setLaunchStatus(`Wallet connected: ${account.slice(0,6)}…${account.slice(-4)}. Pons V2 currently does not allow this wallet to launch.`,false);
+  }
+  return account;
 }
 
 async function connectWallet(){
@@ -2918,6 +3012,70 @@ async function finishCurrentLaunch(){
     setTimeout(()=>{location.hash=`#/token/${encodeURIComponent(currentLaunch.mint)}`;},900);
   }
   return routed;
+}
+
+
+async function confirmPonsLaunch(attempts=3){
+  if(!currentLaunch?.id||!currentLaunch?.ponsTxHash)throw new Error('Pending Pons transaction is incomplete');
+  let lastError=null;
+  for(let attempt=1;attempt<=attempts;attempt++){
+    setLaunchStatus(`Pons launch submitted. Waiting for Robinhood Chain confirmation${attempt>1?' (retry)':''}…`);
+    try{
+      const out=await api('/api/pons/confirm',{method:'POST',body:JSON.stringify({intent_id:currentLaunch.id,tx_hash:currentLaunch.ponsTxHash})});
+      currentLaunch={...currentLaunch,mint:out.token,createConfirmed:true,createPending:false};
+      const button=document.querySelector('#launchSubmitButton');
+      if(button){button.disabled=true;button.textContent='Launched';}
+      setLaunchStatus(`Pons launch complete. ${currentLaunch.symbol||'Token'} is registered and creator revenue is routed to PROJECT.`,true);
+      setTimeout(()=>{location.hash=`#/token/${encodeURIComponent(out.token)}`;},900);
+      return out;
+    }catch(err){
+      lastError=err;
+      if(!/transaction is not confirmed yet/i.test(String(err?.message||'')))throw err;
+      if(attempt<attempts)await new Promise(r=>setTimeout(r,1800));
+    }
+  }
+  return {ok:false,pending:true,reason:lastError?.message||'Pons confirmation is still pending'};
+}
+
+async function launchTokenOnPons(){
+  if(!currentLaunch)throw new Error('Create the launch intent first');
+  if(currentLaunch.ponsTxHash)return confirmPonsLaunch();
+  const provider=evmProvider();
+  const creator=currentEvmAccount||await connectPonsWallet();
+  await ensureRobinhoodChain(provider);
+  const status=await api(`/api/pons/status?wallet=${encodeURIComponent(creator)}`);
+  if(status.canLaunch===false)throw new Error('Pons V2 currently blocks launches from this wallet. The integration is ready, but Pons must allow this address via canLaunch(wallet).');
+
+  const name=document.querySelector('#launchName')?.value.trim()||'';
+  const symbol=document.querySelector('#launchTicker')?.value.trim().toUpperCase()||'';
+  const description=document.querySelector('#launchDescription')?.value.trim()||'';
+  const website=document.querySelector('#launchWebsite')?.value.trim()||'';
+  const twitter=document.querySelector('#launchX')?.value.trim()||'';
+  const telegram=document.querySelector('#launchTelegram')?.value.trim()||'';
+  const file=document.querySelector('#launchImage')?.files?.[0];
+  if(!name)throw new Error('Enter the token name');
+  if(!symbol)throw new Error('Enter the ticker');
+  if(new TextEncoder().encode(name).length>64)throw new Error('Pons token name must be 64 UTF-8 bytes or fewer');
+  if(new TextEncoder().encode(symbol).length>16)throw new Error('Pons ticker must be 16 UTF-8 bytes or fewer');
+
+  setLaunchStatus('Uploading Pons token image…');
+  const imageBase64=await launchImageBase64(file);
+  const uploaded=await api('/api/pons/logo',{method:'POST',body:JSON.stringify({
+    intent_id:currentLaunch.id,name,symbol,description,website,twitter,telegram,
+    image_base64:imageBase64,image_type:file.type,image_name:file.name
+  })});
+
+  setLaunchStatus('Building Pons V2 launch transaction…');
+  const built=await api('/api/pons/prepare-launch',{method:'POST',body:JSON.stringify({
+    intent_id:currentLaunch.id,from:creator,name,symbol,logo:uploaded.logo,description,website,twitter,telegram
+  })});
+
+  setLaunchStatus(`Approve the Pons V2 launch on Robinhood Chain. Launch fee: ${built.launchFeeEth||'0'} ETH.`);
+  const hash=await provider.request({method:'eth_sendTransaction',params:[{
+    from:creator,to:built.to,data:built.data,value:built.value
+  }]});
+  currentLaunch={...currentLaunch,venue:'pons',ponsTxHash:String(hash),symbol,creatorPubkey:creator,createPending:true};
+  return confirmPonsLaunch();
 }
 
 async function launchTokenOnPump(){
@@ -3086,8 +3244,9 @@ app.addEventListener('click',async e=>{
       }
       return;
     }
+    const launchVenueButton=e.target.closest('[data-launch-venue]');if(launchVenueButton){e.preventDefault();switchLaunchVenue(launchVenueButton.dataset.launchVenue);return;}
     const launchModeButton=e.target.closest('[data-launch-mode]');if(launchModeButton){e.preventDefault();switchLaunchMode(launchModeButton.dataset.launchMode);return;}
-    const a=e.target.closest('[data-action]');if(a){const action=a.dataset.action;if(action==='confirm-opt-out'){e.preventDefault();a.disabled=true;a.textContent='Confirming…';const result=await api('/api/auth/x/opt-out',{method:'POST',body:'{}'});location.hash=`#/opt-out?done=${encodeURIComponent(result.handle)}`;return;}if(action==='confirm-reactivate'){e.preventDefault();a.disabled=true;a.textContent='Reactivating…';const result=await api('/api/auth/x/reactivate',{method:'POST',body:'{}'});location.hash=`#/opt-out?reactivated=${encodeURIComponent(result.handle)}`;return;}if(action==='x-logout'){e.preventDefault();await api('/api/auth/x/logout',{method:'POST',body:'{}'});location.hash='#/opt-out';await render();return;}if(action==='menu')document.querySelector('#mobileMenu')?.classList.toggle('hidden');if(action==='go-launch')location.hash='#/launch';if(action==='reload'){state.home=null;render();}if(action==='connect-wallet'){const pub=await connectWallet();if(pub)setLaunchStatus(`Wallet connected: ${pub}`,true);}if(action==='launch-token')await launchTokenOnPump();if(action==='route-fees')await routeFees();if(action==='verify-mint'){const mint=(document.querySelector('#launchMintSuccess')?.value||document.querySelector('#launchMint')?.value||'').trim();if(!mint)throw new Error('Paste the mint first');const out=await api('/api/tokens/register',{method:'POST',body:JSON.stringify({mint,recipient_handle:currentLaunch?.handle||''})});setLaunchStatus(out.ok?`Registered for @${out.recipient}`:`Not ready: ${out.reason}`,out.ok);}if(action==='copy-fee-address'){const value=String(a.dataset.copyValue||'').trim();if(value&&navigator.clipboard?.writeText){await navigator.clipboard.writeText(value);a.textContent='✓';setTimeout(()=>{a.textContent='⌑';},900);}}}
+    const a=e.target.closest('[data-action]');if(a){const action=a.dataset.action;if(action==='confirm-opt-out'){e.preventDefault();a.disabled=true;a.textContent='Confirming…';const result=await api('/api/auth/x/opt-out',{method:'POST',body:'{}'});location.hash=`#/opt-out?done=${encodeURIComponent(result.handle)}`;return;}if(action==='confirm-reactivate'){e.preventDefault();a.disabled=true;a.textContent='Reactivating…';const result=await api('/api/auth/x/reactivate',{method:'POST',body:'{}'});location.hash=`#/opt-out?reactivated=${encodeURIComponent(result.handle)}`;return;}if(action==='x-logout'){e.preventDefault();await api('/api/auth/x/logout',{method:'POST',body:'{}'});location.hash='#/opt-out';await render();return;}if(action==='menu')document.querySelector('#mobileMenu')?.classList.toggle('hidden');if(action==='go-launch')location.hash='#/launch';if(action==='reload'){state.home=null;render();}if(action==='connect-wallet'){const pub=launchVenue==='pons'?await connectPonsWallet():await connectWallet();if(pub)setLaunchStatus(`Wallet connected: ${pub}`,true);}if(action==='launch-token')await (launchVenue==='pons'?launchTokenOnPons():launchTokenOnPump());if(action==='route-fees')await routeFees();if(action==='verify-mint'){const mint=(document.querySelector('#launchMintSuccess')?.value||document.querySelector('#launchMint')?.value||'').trim();if(!mint)throw new Error('Paste the mint first');const out=await api('/api/tokens/register',{method:'POST',body:JSON.stringify({mint,recipient_handle:currentLaunch?.handle||''})});setLaunchStatus(out.ok?`Registered for @${out.recipient}`:`Not ready: ${out.reason}`,out.ok);}if(action==='copy-fee-address'){const value=String(a.dataset.copyValue||'').trim();if(value&&navigator.clipboard?.writeText){await navigator.clipboard.writeText(value);a.textContent='✓';setTimeout(()=>{a.textContent='⌑';},900);}}}
     const exp=e.target.closest('.expandable');if(exp){exp.classList.toggle('open');exp.querySelector('.details,.tx-details')?.classList.toggle('hidden');}
     const sort=e.target.closest('[data-sort]');if(sort){state.explore.sort=sort.dataset.sort;await refreshTokens();document.querySelector('#launchGrid').innerHTML=state.tokens.map(exploreTokenCard).join('')||'<div class="explore-empty"><span>No launches.</span></div>';document.querySelectorAll('[data-sort]').forEach(b=>b.classList.toggle('active',b.dataset.sort===state.explore.sort));}
     const venue=e.target.closest('[data-venue]');if(venue){state.explore.venue=state.explore.venue===venue.dataset.venue?'':venue.dataset.venue;await refreshTokens();document.querySelector('#launchGrid').innerHTML=state.tokens.map(exploreTokenCard).join('')||'<div class="explore-empty"><span>No launches.</span></div>';document.querySelectorAll('[data-venue]').forEach(b=>b.classList.toggle('active',b.dataset.venue===state.explore.venue));}
@@ -3104,9 +3263,11 @@ app.addEventListener('change',e=>{
   if(e.target.id==='launchImage')setTimeout(()=>updateLaunchMiniImage(e.target),0);
 });
 app.addEventListener('submit',async e=>{if(e.target.id==='launchForm'){e.preventDefault();const button=document.querySelector('#launchSubmitButton');try{
-  if(!currentWallet){
+  const isPons=launchVenue==='pons';
+  const hasWallet=isPons?!!currentEvmAccount:!!currentWallet;
+  if(!hasWallet){
     if(button){button.disabled=true;button.textContent='Connecting wallet…';}
-    const creator=await connectWallet();
+    const creator=isPons?await connectPonsWallet():await connectWallet();
     currentLaunch=null;
     if(!creator){
       if(button){button.disabled=false;button.textContent='Connect wallet';}
@@ -3114,11 +3275,22 @@ app.addEventListener('submit',async e=>{if(e.target.id==='launchForm'){e.prevent
       return;
     }
     if(button){button.disabled=false;button.textContent='Launch token';}
-    setLaunchStatus(`Wallet connected: ${creator}`,true);
+    if(isPons){
+      const ponsStatus=await api(`/api/pons/status?wallet=${encodeURIComponent(creator)}`);
+      setLaunchStatus(ponsStatus.canLaunch===false
+        ? `Wallet connected: ${creator.slice(0,6)}…${creator.slice(-4)}. Pons V2 does not currently allow this wallet to launch.`
+        : `Wallet connected: ${creator}`,ponsStatus.canLaunch!==false);
+    }else setLaunchStatus(`Wallet connected: ${creator}`,true);
     return;
   }
 
-  if(currentLaunch?.mint&&currentLaunch?.createSignature){
+  if(isPons&&currentLaunch?.ponsTxHash){
+    if(button){button.disabled=true;button.textContent='Checking confirmation…';}
+    const resumed=await confirmPonsLaunch();
+    if(resumed?.pending&&button){button.disabled=false;button.textContent='Retry confirmation';}
+    return;
+  }
+  if(!isPons&&currentLaunch?.mint&&currentLaunch?.createSignature){
     if(button){button.disabled=true;button.textContent='Checking confirmation…';}
     const resumed=await finishCurrentLaunch();
     if(resumed?.pending&&button){button.disabled=false;button.textContent='Retry confirmation';}
@@ -3126,25 +3298,25 @@ app.addEventListener('submit',async e=>{if(e.target.id==='launchForm'){e.prevent
   }
 
   const handle=document.querySelector('#launchHandle').value.trim();
-  const creator=currentWallet.publicKey?.toString?.()||await connectWallet();
+  const creator=isPons?currentEvmAccount:(currentWallet.publicKey?.toString?.()||await connectWallet());
   if(button){button.disabled=true;button.textContent='Preparing launch…';}
 
   const out=await api('/api/launch/intents',{
     method:'POST',
-    body:JSON.stringify({recipient_handle:handle,creator_pubkey:creator,mint:null})
+    body:JSON.stringify({recipient_handle:handle,creator_pubkey:creator,mint:null,venue:launchVenue})
   });
-  currentLaunch={...out,handle:handle.replace(/^@/,''),creatorPubkey:creator};
+  currentLaunch={...out,venue:launchVenue,handle:handle.replace(/^@/,''),creatorPubkey:creator};
 
-  if(!out.treasuryAddress)throw new Error('Set TREASURY_ADDRESS on the server before launching');
-
-  setLaunchStatus('Launch intent created. Preparing token transaction…');
+  if(!out.treasuryAddress)throw new Error(isPons?'Set PONS_TREASURY_ADDRESS in Replit Secrets before launching':'Set TREASURY_ADDRESS on the server before launching');
+  setLaunchStatus(`${isPons?'Pons':'Pump'} launch intent created. Preparing token transaction…`);
   if(button)button.textContent='Launching…';
-  const routed=await launchTokenOnPump();
+  const routed=isPons?await launchTokenOnPons():await launchTokenOnPump();
   if(!routed?.ok&&!routed?.pending&&button){button.disabled=false;button.textContent='Launch token';}
 }catch(err){
   if(button){
     button.disabled=false;
-    button.textContent=(currentLaunch?.mint&&currentLaunch?.createSignature)?'Retry confirmation':(currentWallet?'Launch token':'Connect wallet');
+    const pending=(launchVenue==='pons'?currentLaunch?.ponsTxHash:(currentLaunch?.mint&&currentLaunch?.createSignature));
+    button.textContent=pending?'Retry confirmation':((launchVenue==='pons'?currentEvmAccount:currentWallet)?'Launch token':'Connect wallet');
   }
   setLaunchStatus(err.message);
 }}});
@@ -3340,3 +3512,5 @@ window.addEventListener('load',()=>setTimeout(()=>{syncLaunchWalletUi();restoreL
 /* launch-wallet-picker-click-fix-v1 */
 
 /* launch-confirmation-retry-v3 */
+
+/* pons-robinhood-v1 */

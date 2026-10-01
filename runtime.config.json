@@ -8,5 +8,7 @@
   "KRAKEN_LIVE_TRADING": false,
   "PAYOUT_PROVIDER": "manual",
   "EXCHANGE_PROVIDER": "disabled",
-  "USER_SIGNED_LAUNCH_ENABLED": true
+  "USER_SIGNED_LAUNCH_ENABLED": true,
+  "PONS_ENABLED": true,
+  "PONS_INDEXER_ENABLED": true
 }

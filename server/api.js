@@ -3,7 +3,8 @@ import { config } from './config.js';
 import { db, recordClaim, getIndexerStatus } from './db.js';
 import { homeData, listTokens, getToken, moneySummary, profile, listPayments } from './queries.js';
 import { verifyAndRegisterMint, buildFeeRoutingTransaction, buildPumpCreateTransaction, confirmUserSignedTransaction, parseRecipient, fetchSolUsd } from './solana.js';
-import { runDiscovery, runClaims, runPayouts } from './workers.js';
+import { runDiscovery, runClaims, runPayouts, runPonsFees } from './workers.js';
+import { getPonsStatus, buildPonsLaunchTransaction, confirmPonsLaunch } from './pons.js';
 import { confirmPayout, optOutHandle, reactivateHandle } from './payouts.js';
 import { sellSolUsd } from './kraken.js';
 import { startXOAuth, finishXOAuth, createXSession, readXSession, xOAuthConfigured } from './xoauth.js';
@@ -542,9 +543,10 @@ export async function handleApi(req,res,url){
       if(sent) return;
       return json(res,404,{error:'X banner not found'});
     }
-    if(req.method==='GET'&&url.pathname==='/api/health') return json(res,200,{ok:true,name:config.appName,treasuryConfigured:!!config.treasuryAddress,readOnly:config.readOnlyMode,liveChain:config.liveChainTransactions,userSignedLaunch:config.userSignedLaunchEnabled,onchainDiscovery:config.onchainDiscoveryEnabled,claimWorker:!config.readOnlyMode&&config.claimWorkerEnabled&&config.liveChainTransactions,payoutWorker:!config.readOnlyMode&&config.payoutWorkerEnabled,payoutProvider:config.payoutProvider,exchangeProvider:config.exchangeProvider,indexer:getIndexerStatus()});
+    if(req.method==='GET'&&url.pathname==='/api/health') return json(res,200,{ok:true,name:config.appName,treasuryConfigured:!!config.treasuryAddress,ponsConfigured:!!config.ponsTreasuryAddress,ponsEnabled:config.ponsEnabled,ponsIndexer:config.ponsEnabled&&config.ponsIndexerEnabled,readOnly:config.readOnlyMode,liveChain:config.liveChainTransactions,userSignedLaunch:config.userSignedLaunchEnabled,onchainDiscovery:config.onchainDiscoveryEnabled,claimWorker:!config.readOnlyMode&&config.claimWorkerEnabled&&config.liveChainTransactions,payoutWorker:!config.readOnlyMode&&config.payoutWorkerEnabled,payoutProvider:config.payoutProvider,exchangeProvider:config.exchangeProvider,indexer:getIndexerStatus()});
     if(req.method==='GET'&&url.pathname==='/api/indexer/status') return json(res,200,getIndexerStatus());
-    if(req.method==='GET'&&url.pathname==='/api/config') return json(res,200,{name:config.appName,mark:config.appMark,treasuryAddress:config.treasuryAddress,recipientShareBps:config.recipientShareBps,protocolShareBps:config.protocolShareBps,readOnly:config.readOnlyMode,liveChain:config.liveChainTransactions,userSignedLaunch:config.userSignedLaunchEnabled,payoutProvider:config.payoutProvider});
+    if(req.method==='GET'&&url.pathname==='/api/config') return json(res,200,{name:config.appName,mark:config.appMark,treasuryAddress:config.treasuryAddress,ponsEnabled:config.ponsEnabled,ponsTreasuryAddress:config.ponsTreasuryAddress,ponsExplorerUrl:config.ponsExplorerUrl,recipientShareBps:config.recipientShareBps,protocolShareBps:config.protocolShareBps,readOnly:config.readOnlyMode,liveChain:config.liveChainTransactions,userSignedLaunch:config.userSignedLaunchEnabled,payoutProvider:config.payoutProvider});
+    if(req.method==='GET'&&url.pathname==='/api/pons/status') return json(res,200,await getPonsStatus(String(url.searchParams.get('wallet')||'')));
     if(req.method==='GET'&&url.pathname==='/api/home') return json(res,200,homeData());
     if(req.method==='GET'&&url.pathname==='/api/tokens') return json(res,200,{tokens:listTokens({search:url.searchParams.get('search')||'',sort:url.searchParams.get('sort')||'sent',venue:url.searchParams.get('venue')||'',limit:url.searchParams.get('limit')||100})});
     if(req.method==='GET'&&url.pathname.startsWith('/api/tokens/')){ const row=getToken(decodeURIComponent(url.pathname.slice('/api/tokens/'.length))); return row?json(res,200,row):json(res,404,{error:'Not found'}); }
@@ -609,7 +611,61 @@ export async function handleApi(req,res,url){
       });
     }
     if(req.method==='POST'&&url.pathname==='/api/tokens/register'){ const b=await body(req); const out=await verifyAndRegisterMint(b.mint,{fallbackHandle:b.recipient_handle||''}); return json(res,out.ok?200:422,out); }
-    if(req.method==='POST'&&url.pathname==='/api/launch/intents'){ const b=await body(req); const handle=String(b.recipient_handle||'').replace(/^@/,'').trim(); if(!/^[A-Za-z0-9_]{1,15}$/.test(handle))throw Object.assign(new Error('Invalid X handle'),{statusCode:400}); const opted=db.prepare('SELECT opted_out FROM recipients WHERE handle=? COLLATE NOCASE').get(handle); if(opted?.opted_out)throw Object.assign(new Error('Recipient has opted out'),{statusCode:409}); const id=randomUUID(); const line=`Fees to @${handle} via ${config.appName}`; db.prepare(`INSERT INTO launch_intents(id,mint,recipient_handle,creator_pubkey,description_line,status) VALUES(?,?,?,?,?,'draft')`).run(id,b.mint||null,handle,b.creator_pubkey||null,line); return json(res,201,{id,descriptionLine:line,treasuryAddress:config.treasuryAddress,status:'draft'}); }
+    if(req.method==='POST'&&url.pathname==='/api/launch/intents'){ const b=await body(req); const handle=String(b.recipient_handle||'').replace(/^@/,'').trim(); if(!/^[A-Za-z0-9_]{1,15}$/.test(handle))throw Object.assign(new Error('Invalid X handle'),{statusCode:400}); const opted=db.prepare('SELECT opted_out FROM recipients WHERE handle=? COLLATE NOCASE').get(handle); if(opted?.opted_out)throw Object.assign(new Error('Recipient has opted out'),{statusCode:409}); const venue=String(b.venue||'pump').toLowerCase(); if(!['pump','pons'].includes(venue))throw Object.assign(new Error('Unsupported launch venue'),{statusCode:400}); if(venue==='pons'&&!config.ponsEnabled)throw Object.assign(new Error('Pons launch is disabled'),{statusCode:423}); const treasuryAddress=venue==='pons'?config.ponsTreasuryAddress:config.treasuryAddress; const id=randomUUID(); const line=`Fees to @${handle} via ${config.appName}`; db.prepare(`INSERT INTO launch_intents(id,mint,venue,recipient_handle,creator_pubkey,description_line,status) VALUES(?,?,?,?,?,?,?)`).run(id,b.mint||null,venue,handle,b.creator_pubkey||null,line,venue==='pons'?'pons-draft':'draft'); return json(res,201,{id,venue,descriptionLine:line,treasuryAddress,status:venue==='pons'?'pons-draft':'draft'}); }
+
+    /* pons-robinhood-v1 */
+    if(req.method==='POST'&&url.pathname==='/api/pons/logo'){
+      requireUserSignedLaunch();
+      if(!config.ponsEnabled)throw Object.assign(new Error('Pons launch is disabled'),{statusCode:423});
+      const b=await body(req,7_000_000);
+      const intent=db.prepare('SELECT * FROM launch_intents WHERE id=?').get(b.intent_id||'');
+      if(!intent||String(intent.venue||'pump')!=='pons')throw Object.assign(new Error('Pons launch intent not found'),{statusCode:404});
+      const type=String(b.image_type||'').toLowerCase();
+      if(!/^image\/(png|jpeg|gif|webp)$/.test(type))throw Object.assign(new Error('Unsupported token image type'),{statusCode:400});
+      let image;try{image=Buffer.from(String(b.image_base64||''),'base64');}catch{throw Object.assign(new Error('Invalid token image'),{statusCode:400});}
+      if(!image.length||image.length>5_000_000)throw Object.assign(new Error('Token image must be 1 byte to 5 MB'),{statusCode:400});
+      const form=new FormData();
+      const safeName=String(b.image_name||'token-image').replace(/[^A-Za-z0-9._-]/g,'_').slice(-80)||'token-image';
+      form.append('file',new Blob([image],{type}),safeName);
+      form.append('name',String(b.name||'Token'));
+      form.append('symbol',String(b.symbol||'TOKEN'));
+      form.append('description',String(b.description||''));
+      form.append('twitter',String(b.twitter||''));
+      form.append('telegram',String(b.telegram||''));
+      form.append('website',String(b.website||''));
+      form.append('showName','true');
+      const r=await fetch(config.pumpMetadataUploadUrl,{method:'POST',body:form,signal:AbortSignal.timeout(60000)});
+      const raw=await r.text();let payload={};try{payload=JSON.parse(raw);}catch{}
+      if(!r.ok)throw Object.assign(new Error(`Image upload failed (HTTP ${r.status})`),{statusCode:502});
+      const metadataUri=String(payload.metadataUri||payload.metadata_uri||payload.uri||'').trim();
+      let logo=String(payload?.metadata?.image||payload.image||payload.imageUri||payload.image_uri||'').trim();
+      const toHttp=(u)=>u.startsWith('ipfs://')?`https://ipfs.io/ipfs/${u.slice(7)}`:u;
+      if(!logo&&metadataUri){
+        try{const metaRes=await fetch(toHttp(metadataUri),{signal:AbortSignal.timeout(15000)});if(metaRes.ok){const meta=await metaRes.json();logo=String(meta?.image||'').trim();}}catch{}
+      }
+      if(!logo)throw Object.assign(new Error('Image upload did not return a token image URL'),{statusCode:502});
+      return json(res,200,{ok:true,logo:toHttp(logo),metadataUri});
+    }
+    if(req.method==='POST'&&url.pathname==='/api/pons/prepare-launch'){
+      requireUserSignedLaunch();
+      const b=await body(req);
+      const intent=db.prepare('SELECT * FROM launch_intents WHERE id=?').get(b.intent_id||'');
+      if(!intent||String(intent.venue||'pump')!=='pons')throw Object.assign(new Error('Pons launch intent not found'),{statusCode:404});
+      let description=String(b.description||'').trim();
+      if(!description.includes(intent.description_line))description=`${description}${description?'\n\n':''}${intent.description_line}`;
+      const out=await buildPonsLaunchTransaction({
+        from:b.from,name:b.name,symbol:b.symbol,logo:b.logo,description,
+        socials:{twitter:b.twitter,telegram:b.telegram,discord:b.discord,website:b.website,farcaster:b.farcaster}
+      });
+      db.prepare(`UPDATE launch_intents SET creator_pubkey=COALESCE(?,creator_pubkey),status='pons-prepared',updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(b.from||null,intent.id);
+      return json(res,200,out);
+    }
+    if(req.method==='POST'&&url.pathname==='/api/pons/confirm'){
+      requireUserSignedLaunch();
+      const b=await body(req);
+      const out=await confirmPonsLaunch({intentId:b.intent_id,txHash:b.tx_hash});
+      return json(res,200,out);
+    }
     if(req.method==='POST'&&url.pathname==='/api/launch/metadata'){
       requireUserSignedLaunch();
       const b=await body(req,7_000_000);
@@ -776,6 +832,7 @@ export async function handleApi(req,res,url){
     if(req.method==='POST'&&url.pathname==='/api/admin/exchange/sell'){ requireAdmin(req); requireWritable(); const b=await body(req); return json(res,200,await sellSolUsd({claimId:b.claim_id||null,volumeSol:Number(b.volume_sol)})); }
     if(req.method==='POST'&&url.pathname==='/api/admin/run/discovery'){ requireAdmin(req); return json(res,200,await runDiscovery()); }
     if(req.method==='POST'&&url.pathname==='/api/admin/run/claims'){ requireAdmin(req); requireWritable(); return json(res,200,await runClaims()); }
+    if(req.method==='POST'&&url.pathname==='/api/admin/run/pons'){ requireAdmin(req); return json(res,200,await runPonsFees()); }
     if(req.method==='POST'&&url.pathname==='/api/admin/run/payouts'){ requireAdmin(req); requireWritable(); return json(res,200,await runPayouts()); }
     if(req.method==='GET'&&url.pathname==='/api/admin/status'){ requireAdmin(req); return json(res,200,{tokens:db.prepare('SELECT COUNT(*) n FROM tokens').get().n,claims:db.prepare('SELECT COUNT(*) n FROM claims').get().n,payouts:db.prepare('SELECT COUNT(*) n FROM payouts').get().n,buybacksPending:db.prepare(`SELECT COALESCE(SUM(amount_usd),0) v FROM buybacks WHERE status='pending'`).get().v,launchIntents:db.prepare('SELECT COUNT(*) n FROM launch_intents').get().n}); }
     return json(res,404,{error:'API route not found'});
